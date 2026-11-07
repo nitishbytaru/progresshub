@@ -107,7 +107,7 @@ export function ShareDialog({ shareUrl, imagePath, ...stats }: Props) {
             <div className="flex items-center gap-2 rounded-lg border border-border p-1 pl-3">
               <Link2 className="size-4 shrink-0 text-subtle" />
               <span className="min-w-0 flex-1 truncate font-mono text-xs text-muted-foreground" title={shareUrl}>
-                {shareUrl.replace(/^https?:\/\//, "")}
+                {shareUrl.replace(/^https?:\/\//, "").replace(/\?.*$/, "")}
               </span>
               <Button
                 variant="outline"

@@ -74,7 +74,8 @@ async function Overview() {
             delta={latest.delta}
             streak={p.streak}
             rank={rank}
-            shareUrl={`${origin}/u/${profile.handle}`}
+            // ?v changes with the numbers on the card. X caches previews per link, so a new link = a fresh card.
+            shareUrl={`${origin}/u/${profile.handle}?v=${encodeURIComponent(cardVersion({ latest, streak: p.streak, rank }))}`}
             imagePath={cardPath(profile.handle ?? "", cardVersion({ latest, streak: p.streak, rank }))}
           />
           <Link

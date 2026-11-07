@@ -44,8 +44,8 @@ export async function proxy(request: NextRequest) {
     return res;
   };
 
-  // Creator pages (and their share images) are public to everyone, signed in or not.
-  if (path.startsWith("/u/")) return response;
+  // Creator pages, their share cards and robots.txt are public to everyone (and to X's crawler).
+  if (path.startsWith("/u/") || path === "/robots.txt") return response;
   if (!user) return isPublic(path) ? response : redirectTo("/login", true);
 
   const onboarded = Boolean(user.user_metadata?.handle);
