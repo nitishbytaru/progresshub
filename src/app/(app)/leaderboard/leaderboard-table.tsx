@@ -69,17 +69,17 @@ export function LeaderboardTable({ creators }: { creators: Creator[] }) {
         </p>
       )}
 
-      <div className="panel-paper overflow-hidden rounded-2xl">
+      <div className="panel-dark overflow-hidden rounded-2xl">
         {shown.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="font-semibold">No creators match “{query}”.</p>
-            <button onClick={() => setQuery("")} className="mt-2 text-sm font-medium text-paper-muted underline hover:text-paper-foreground">
+            <button onClick={() => setQuery("")} className="mt-2 text-sm font-medium text-muted-foreground underline hover:text-foreground">
               Clear search
             </button>
           </div>
         ) : (
           <ol>
-            <li aria-hidden className="hidden grid-cols-[56px_minmax(0,1.6fr)_120px_minmax(0,1.4fr)_96px_96px_72px] gap-4 border-b border-paper-border px-6 py-3 text-xs text-paper-muted md:grid">
+            <li aria-hidden className="hidden grid-cols-[56px_minmax(0,1.6fr)_120px_minmax(0,1.4fr)_96px_96px_72px] gap-4 border-b border-hairline px-6 py-3 text-xs text-muted-foreground md:grid">
               <span>Rank</span>
               <span>Creator</span>
               <span className="text-right">Impressions</span>
@@ -95,49 +95,49 @@ export function LeaderboardTable({ creators }: { creators: Creator[] }) {
                   key={c.handle}
                   aria-current={c.isYou ? "true" : undefined}
                   className={cn(
-                    "grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-paper-border px-4 py-3.5 last:border-b-0 md:grid-cols-[56px_minmax(0,1.6fr)_120px_minmax(0,1.4fr)_96px_96px_72px] md:gap-4 md:px-6",
-                    c.isYou ? "bg-primary-soft" : "hover:bg-paper-dim",
+                    "grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-hairline px-4 py-3.5 last:border-b-0 md:grid-cols-[56px_minmax(0,1.6fr)_120px_minmax(0,1.4fr)_96px_96px_72px] md:gap-4 md:px-6",
+                    c.isYou ? "bg-primary-soft" : "hover:bg-surface",
                   )}
                 >
                   <span
                     className={cn(
                       "flex h-7 w-fit min-w-7 items-center justify-center rounded-full px-1.5 font-mono text-xs font-semibold",
-                      c.isYou ? "bg-primary text-primary-foreground" : c.rank <= 3 ? "bg-paper-foreground text-paper" : "bg-paper-dim",
+                      c.isYou ? "bg-primary text-primary-foreground" : c.rank <= 3 ? "bg-foreground text-background" : "bg-surface-high",
                     )}
                   >
                     {c.rank}
                   </span>
                   <span className="flex min-w-0 items-center gap-3">
-                    <Initials name={c.name} className="hidden bg-paper-dim sm:inline-flex" />
+                    <Initials name={c.name} className="hidden bg-surface-high text-foreground sm:inline-flex" />
                     <span className="min-w-0">
                       <span className="flex items-center gap-1.5 truncate text-sm font-semibold">
                         {c.name}
                         {c.isYou && (
-                          <span className="rounded-full bg-paper-foreground px-1.5 py-px text-[10px] font-semibold text-paper">You</span>
+                          <span className="rounded-full bg-foreground px-1.5 py-px text-[10px] font-semibold text-background">You</span>
                         )}
                       </span>
-                      <span className="block truncate font-mono text-xs text-paper-muted">@{c.handle}</span>
+                      <span className="block truncate font-mono text-xs text-muted-foreground">@{c.handle}</span>
                     </span>
                   </span>
                   <span className="text-right font-mono text-sm font-semibold md:text-base">{fmt(c.total)}</span>
 
                   <span className="col-span-2 col-start-2 flex items-center gap-2 md:col-span-1 md:col-start-auto">
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-paper-dim">
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-high">
                       <span
-                        className={cn("block h-full rounded-full", c.isYou ? "bg-paper-foreground" : "bg-paper-foreground/70")}
+                        className={cn("block h-full rounded-full", c.isYou ? "bg-primary" : "bg-foreground/70")}
                         style={{ width: `${Math.min(pct, 100)}%` }}
                       />
                     </span>
                     <span className="w-12 text-right font-mono text-xs">{fmtPct(pct)}</span>
                   </span>
-                  <span className="hidden text-right font-mono text-sm text-paper-muted md:block">{fmt(Math.max(0, GOAL - c.total))}</span>
+                  <span className="hidden text-right font-mono text-sm text-muted-foreground md:block">{fmt(Math.max(0, GOAL - c.total))}</span>
                   <span className={cn("hidden text-right font-mono text-sm md:block", sort === "pace" && "font-semibold")}>
                     {fmtSigned(c.pace7)}
                   </span>
                   <span className={cn("hidden text-right font-mono text-sm md:block", sort === "streak" && "font-semibold")}>
                     {c.streak}d
                   </span>
-                  <span className="col-span-2 col-start-2 flex gap-4 font-mono text-[11px] text-paper-muted md:hidden">
+                  <span className="col-span-2 col-start-2 flex gap-4 font-mono text-[11px] text-muted-foreground md:hidden">
                     <span>{fmtSigned(c.pace7)}/day</span>
                     <span>{c.streak}-day streak</span>
                   </span>

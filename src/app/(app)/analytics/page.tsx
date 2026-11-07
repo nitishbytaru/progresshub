@@ -71,35 +71,35 @@ export default function AnalyticsPage() {
 
       <div className="grid gap-6 lg:grid-cols-[340px_minmax(0,1fr)] lg:gap-8">
         {/* Consistency */}
-        <section className="panel-paper flex flex-col rounded-2xl p-5 sm:p-8">
+        <section className="panel-dark flex flex-col rounded-2xl p-5 sm:p-8">
           <h2 className="text-xl font-bold tracking-[-0.015em]">Consistency</h2>
           <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-6 lg:grid-cols-1">
             <div>
-              <dt className="text-sm text-paper-muted">Current streak</dt>
+              <dt className="text-sm text-muted-foreground">Current streak</dt>
               <dd className="mt-1 font-mono text-[2rem] leading-tight font-semibold tracking-[-0.04em]">
-                <span className="rounded-md bg-primary px-1.5">{p.streak}</span>
-                <span className="ml-1.5 font-sans text-sm font-medium tracking-normal text-paper-muted">days</span>
+                <span className="text-primary">{p.streak}</span>
+                <span className="ml-1.5 font-sans text-sm font-medium tracking-normal text-muted-foreground">days</span>
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-paper-muted">Days logged</dt>
+              <dt className="text-sm text-muted-foreground">Days logged</dt>
               <dd className="mt-1 font-mono text-[2rem] leading-tight font-semibold tracking-[-0.04em]">
                 {fmtPct(consistency, 0)}
               </dd>
-              <dd className="text-xs text-paper-muted">
+              <dd className="text-xs text-muted-foreground">
                 {rows.length} of {span} days
               </dd>
             </div>
             <div>
-              <dt className="text-sm text-paper-muted">Pace trend</dt>
+              <dt className="text-sm text-muted-foreground">Pace trend</dt>
               <dd className="mt-1 font-mono text-[2rem] leading-tight font-semibold tracking-[-0.04em]">
                 {acceleration < 0 && <span aria-label="down">▼</span>}
                 {fmtSigned(acceleration)}%
               </dd>
-              <dd className="text-xs text-paper-muted">7-day vs. 28-day pace</dd>
+              <dd className="text-xs text-muted-foreground">7-day vs. 28-day pace</dd>
             </div>
             <div>
-              <dt className="text-sm text-paper-muted">Gained since first log</dt>
+              <dt className="text-sm text-muted-foreground">Gained since first log</dt>
               <dd className="mt-1 font-mono text-[2rem] leading-tight font-semibold tracking-[-0.04em]">
                 {fmt(latest.total - rows[0].total)}
               </dd>

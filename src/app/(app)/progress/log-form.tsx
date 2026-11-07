@@ -82,11 +82,11 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
-        <form onSubmit={save} noValidate className="panel-paper rounded-2xl p-5 sm:p-8">
+        <form onSubmit={save} noValidate className="panel-dark rounded-2xl p-5 sm:p-8">
           <h2 className="text-xl font-bold tracking-[-0.015em]">
             {existing ? `Update ${fmtDate(date)}` : "Log your impressions"}
           </h2>
-          <p className="mt-1 text-sm text-paper-muted">
+          <p className="mt-1 text-sm text-muted-foreground">
             Copy the total from X analytics. We work out the daily gain.
           </p>
 
@@ -102,12 +102,12 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                   className={cn(
                     "flex h-14 flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors",
                     date === d
-                      ? "border-paper-foreground bg-paper-foreground text-paper"
-                      : "border-paper-border hover:bg-paper-dim",
+                      ? "border-primary bg-primary-soft text-foreground"
+                      : "border-hairline hover:bg-surface",
                   )}
                 >
                   {label}
-                  <span className={cn("font-mono text-[11px] font-normal", date === d ? "text-paper/70" : "text-paper-muted")}>
+                  <span className={cn("font-mono text-[11px] font-normal", date === d ? "text-primary" : "text-muted-foreground")}>
                     {sub}
                   </span>
                 </button>
@@ -115,16 +115,16 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
               <label
                 htmlFor={dateId}
                 className={cn(
-                  "relative flex h-14 cursor-pointer flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-paper-foreground",
+                  "relative flex h-14 cursor-pointer flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-foreground",
                   isCustom
-                    ? "border-paper-foreground bg-paper-foreground text-paper"
-                    : "border-paper-border hover:bg-paper-dim",
+                    ? "border-primary bg-primary-soft text-foreground"
+                    : "border-hairline hover:bg-surface",
                 )}
               >
                 <span className="flex items-center gap-1.5">
                   <CalendarDays className="size-4" /> Other
                 </span>
-                <span className={cn("font-mono text-[11px] font-normal", isCustom ? "text-paper/70" : "text-paper-muted")}>
+                <span className={cn("font-mono text-[11px] font-normal", isCustom ? "text-primary" : "text-muted-foreground")}>
                   {isCustom ? fmtDateShort(date) : "pick a day"}
                 </span>
                 <input
@@ -133,7 +133,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                   max={today}
                   value={date}
                   onChange={(e) => e.target.value && pickDate(e.target.value)}
-                  className="absolute inset-0 cursor-pointer opacity-0 [color-scheme:light]"
+                  className="absolute inset-0 cursor-pointer opacity-0 [color-scheme:dark]"
                   aria-label="Pick another day"
                 />
               </label>
@@ -146,8 +146,8 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
             </label>
             <div
               className={cn(
-                "mt-2.5 flex h-16 items-center gap-3 rounded-xl border bg-paper-dim px-4 transition-colors focus-within:border-paper-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary",
-                showError ? "border-paper-foreground" : "border-paper-border",
+                "mt-2.5 flex h-16 items-center gap-3 rounded-xl border bg-surface-high px-4 transition-colors focus-within:border-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary",
+                showError ? "border-foreground" : "border-hairline",
               )}
             >
               <input
@@ -160,38 +160,38 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                 onBlur={() => raw !== "" && setTouched(true)}
                 aria-invalid={Boolean(showError)}
                 aria-describedby={`${inputId}-msg`}
-                className="w-full min-w-0 bg-transparent font-mono text-2xl font-semibold tracking-[-0.03em] text-paper-foreground caret-paper-foreground outline-none placeholder:text-base placeholder:font-normal placeholder:tracking-normal placeholder:text-paper-muted"
+                className="w-full min-w-0 bg-transparent font-mono text-2xl font-semibold tracking-[-0.03em] text-foreground caret-primary outline-none placeholder:text-base placeholder:font-normal placeholder:tracking-normal placeholder:text-muted-foreground"
               />
               {existing && (
-                <span className="shrink-0 rounded-full border border-paper-border px-2.5 py-1 text-[11px] font-medium text-paper-muted">
+                <span className="shrink-0 rounded-full border border-hairline px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
                   Logged
                 </span>
               )}
             </div>
-            <p id={`${inputId}-msg`} className={cn("mt-2 min-h-5 text-sm", showError ? "font-medium" : "text-paper-muted")}>
+            <p id={`${inputId}-msg`} className={cn("mt-2 min-h-5 text-sm", showError ? "font-medium" : "text-muted-foreground")}>
               {showError ? error : before ? `Previous log: ${fmt(before.total)} on ${fmtDateShort(before.date)}.` : "This is your first log."}
             </p>
           </div>
 
-          <div className="mt-4 grid grid-cols-3 divide-x divide-paper-border rounded-xl border border-paper-border">
+          <div className="mt-4 grid grid-cols-3 divide-x divide-hairline rounded-xl border border-hairline">
             {[
               { label: "Daily gain", value: preview?.row.delta != null ? fmtSigned(preview.row.delta) : "—", key: true },
               { label: "Of 500K", value: preview ? fmtPct(preview.row.progressPct, 2) : "—" },
               { label: "500K around", value: preview?.eta ? fmtDateShort(preview.eta.etaDate) : "—" },
             ].map((s) => (
               <div key={s.label} className="p-3 sm:p-4">
-                <p className="text-xs text-paper-muted">{s.label}</p>
+                <p className="text-xs text-muted-foreground">{s.label}</p>
                 <p className="mt-1 font-mono text-base font-semibold tracking-[-0.02em] sm:text-lg">
-                  {s.key && preview ? <span className="rounded bg-primary px-1">{s.value}</span> : s.value}
+                  {s.key && preview ? <span className="text-primary">{s.value}</span> : s.value}
                 </p>
               </div>
             ))}
           </div>
 
           {preview && (
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-paper-dim" aria-hidden>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-surface-high" aria-hidden>
               <div
-                className="h-full rounded-full bg-primary ring-1 ring-paper-foreground/15 transition-[width] duration-500 ease-out"
+                className="h-full rounded-full bg-primary ring-1 ring-foreground/15 transition-[width] duration-500 ease-out"
                 style={{ width: `${Math.min((preview.row.total / GOAL) * 100, 100)}%` }}
               />
             </div>
@@ -203,7 +203,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                 type="button"
                 variant="ghost"
                 onClick={() => pickDate(date)}
-                className="h-12 px-5 text-sm font-semibold text-paper-foreground hover:bg-paper-dim"
+                className="h-12 px-5 text-sm font-semibold text-foreground hover:bg-surface"
               >
                 Reset
               </Button>
@@ -241,9 +241,9 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
         </aside>
       </div>
 
-      <section className="panel-paper rounded-2xl p-5 sm:p-8">
+      <section className="panel-dark rounded-2xl p-5 sm:p-8">
         <h2 className="text-xl font-bold tracking-[-0.015em]">History</h2>
-        <p className="mt-0.5 mb-3 text-sm text-paper-muted">Every log, newest first. Pick a day above to correct it.</p>
+        <p className="mt-0.5 mb-3 text-sm text-muted-foreground">Every log, newest first. Pick a day above to correct it.</p>
         <EntriesTable rows={rows} limit={rows.length} />
       </section>
     </div>

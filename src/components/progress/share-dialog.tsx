@@ -73,12 +73,12 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
         Share on X
       </DialogTrigger>
 
-      <DialogContent className="panel-paper max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto rounded-2xl p-0 ring-0 sm:max-w-[880px] [&>[data-slot=dialog-close]]:top-4 [&>[data-slot=dialog-close]]:right-4 [&>[data-slot=dialog-close]]:text-paper-foreground [&>[data-slot=dialog-close]:hover]:bg-paper-dim">
-        <div className="border-b border-paper-border px-5 py-4 pr-14 sm:px-6">
-          <DialogTitle className="text-lg font-bold tracking-[-0.015em] text-paper-foreground">
+      <DialogContent className="panel-dark max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto rounded-2xl bg-surface-low p-0 ring-0 shadow-[0_24px_64px_#000000b3] sm:max-w-[880px] [&>[data-slot=dialog-close]]:top-4 [&>[data-slot=dialog-close]]:right-4">
+        <div className="border-b border-hairline px-5 py-4 pr-14 sm:px-6">
+          <DialogTitle className="text-lg font-bold tracking-[-0.015em] text-foreground">
             Share your progress
           </DialogTitle>
-          <DialogDescription className="text-sm text-paper-muted">
+          <DialogDescription className="text-sm text-muted-foreground">
             Post where you stand on the road to 500K.
           </DialogDescription>
         </div>
@@ -89,7 +89,7 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
             <div
               className={cn(
                 "flex aspect-[16/9] flex-col justify-between rounded-xl p-4 sm:p-5",
-                dark ? "bg-background text-foreground" : "border border-paper-border bg-paper text-paper-foreground",
+                dark ? "border border-hairline bg-background text-foreground" : "bg-paper text-paper-foreground",
               )}
               style={dark ? { background: "radial-gradient(ellipse at top, #26262a 0%, #0b0b0c 70%)" } : undefined}
               aria-label="Preview of the progress card"
@@ -131,7 +131,7 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
             </div>
 
             <div role="radiogroup" aria-label="Card style" className="flex items-center gap-2 text-xs">
-              <span className="text-paper-muted">Card</span>
+              <span className="text-muted-foreground">Card</span>
               {(["dark", "light"] as const).map((t) => (
                 <button
                   key={t}
@@ -142,8 +142,8 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
                   className={cn(
                     "h-7 rounded-full px-3 font-medium capitalize transition-colors",
                     theme === t
-                      ? "bg-paper-foreground text-paper"
-                      : "text-paper-muted hover:bg-paper-dim hover:text-paper-foreground",
+                      ? "bg-foreground text-background"
+                      : "text-muted-foreground hover:bg-surface hover:text-foreground",
                   )}
                 >
                   {t}
@@ -154,7 +154,7 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
 
           {/* Post text */}
           <div className="flex flex-col gap-3">
-            <label htmlFor={textId} className="text-sm font-semibold text-paper-foreground">
+            <label htmlFor={textId} className="text-sm font-semibold text-foreground">
               Post text
             </label>
             <textarea
@@ -163,11 +163,11 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
               onChange={(e) => setText(e.target.value)}
               rows={7}
               aria-describedby={`${textId}-count`}
-              className="min-h-40 w-full resize-y rounded-lg border border-paper-border bg-paper-dim p-3 text-sm leading-relaxed text-paper-foreground outline-none focus-visible:border-paper-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-paper-foreground"
+              className="min-h-40 w-full resize-y rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-foreground outline-none focus-visible:border-primary"
             />
             <p
               id={`${textId}-count`}
-              className={cn("font-mono text-xs", over ? "font-semibold text-paper-foreground" : "text-paper-muted")}
+              className={cn("font-mono text-xs", over ? "font-semibold text-foreground" : "text-subtle")}
             >
               {text.length} / {X_LIMIT}
               {over && ` · ${text.length - X_LIMIT} over X's limit`}
@@ -185,12 +185,12 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
               <Button
                 variant="outline"
                 onClick={copy}
-                className="h-11 gap-2 border-paper-border bg-paper text-sm font-semibold text-paper-foreground hover:bg-paper-dim"
+                className="h-11 gap-2 border-border bg-transparent text-sm font-semibold text-foreground hover:bg-surface"
               >
                 <Copy className="size-4" />
                 Copy text
               </Button>
-              <p className="text-xs text-paper-muted">
+              <p className="text-xs text-subtle">
                 Opens X in a new tab with your text. Attach a screenshot of the card if you want the visual.
               </p>
             </div>

@@ -5,10 +5,10 @@ import type { DayRow } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
 function Change({ value, className }: { value: number | null; className?: string }) {
-  if (value === null) return <span className={cn("text-paper-muted", className)}>First log</span>;
+  if (value === null) return <span className={cn("text-muted-foreground", className)}>First log</span>;
   const down = value < 0;
   return (
-    <span className={cn(down && "text-paper-muted", className)}>
+    <span className={cn(down && "text-muted-foreground", className)}>
       {down && <span aria-label="down">▼ </span>}
       {fmtSigned(value)}
     </span>
@@ -23,23 +23,23 @@ export function EntriesTable({ rows, limit = 7 }: { rows: DayRow[]; limit?: numb
   return (
     <>
       {/* Mobile list */}
-      <ul className="divide-y divide-paper-border sm:hidden">
+      <ul className="divide-y divide-hairline sm:hidden">
         {recent.map((r) => (
           <li key={r.date} className="flex items-center gap-3 py-3.5">
-            <div className="flex w-11 shrink-0 flex-col items-center rounded-lg bg-paper-dim py-1.5 font-mono leading-tight">
-              <span className="text-[10px] uppercase text-paper-muted">{fmtWeekday(r.date)}</span>
+            <div className="flex w-11 shrink-0 flex-col items-center rounded-lg bg-surface-high py-1.5 font-mono leading-tight">
+              <span className="text-[10px] uppercase text-muted-foreground">{fmtWeekday(r.date)}</span>
               <span className="text-sm font-semibold">{Number(r.date.slice(8))}</span>
             </div>
             <div className="min-w-0 flex-1">
               <p className="font-mono text-base font-semibold">{fmt(r.total)}</p>
-              <p className="text-xs text-paper-muted">
+              <p className="text-xs text-muted-foreground">
                 {r.date === latestDate ? "Latest" : fmtDate(r.date)} · {fmtPct(r.progressPct)} of goal
               </p>
             </div>
             <div className="text-right font-mono">
               <Change value={r.delta} className="block text-sm font-semibold" />
               {r.growthPct !== null && (
-                <span className="text-xs text-paper-muted">{fmtSignedPct(r.growthPct, 2)}</span>
+                <span className="text-xs text-muted-foreground">{fmtSignedPct(r.growthPct, 2)}</span>
               )}
             </div>
           </li>
@@ -50,7 +50,7 @@ export function EntriesTable({ rows, limit = 7 }: { rows: DayRow[]; limit?: numb
       <div className="-mx-2 hidden overflow-x-auto sm:block">
         <table className="w-full min-w-[620px] border-collapse text-sm">
           <thead>
-            <tr className="border-b border-paper-border text-left text-xs text-paper-muted">
+            <tr className="border-b border-hairline text-left text-xs text-muted-foreground">
               <th scope="col" className="px-2 py-3 font-medium">Date</th>
               <th scope="col" className="px-2 py-3 text-right font-medium">Total impressions</th>
               <th scope="col" className="px-2 py-3 text-right font-medium">Daily gain</th>
@@ -61,11 +61,11 @@ export function EntriesTable({ rows, limit = 7 }: { rows: DayRow[]; limit?: numb
               </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-paper-border font-mono">
+          <tbody className="divide-y divide-hairline font-mono">
             {recent.map((r) => {
               const latest = r.date === latestDate;
               return (
-                <tr key={r.date} className="transition-colors hover:bg-paper-dim">
+                <tr key={r.date} className="transition-colors hover:bg-surface">
                   <td className="px-2 py-3.5">
                     <span className="flex items-center gap-2">
                       {fmtDate(r.date)}
@@ -80,14 +80,14 @@ export function EntriesTable({ rows, limit = 7 }: { rows: DayRow[]; limit?: numb
                   <td className="px-2 py-3.5 text-right font-semibold">
                     <Change value={r.delta} />
                   </td>
-                  <td className="px-2 py-3.5 text-right text-paper-muted">
+                  <td className="px-2 py-3.5 text-right text-muted-foreground">
                     {r.growthPct === null ? "—" : fmtSignedPct(r.growthPct, 2)}
                   </td>
                   <td className="px-2 py-3.5 text-right">{fmtPct(r.progressPct)}</td>
                   <td className="px-2 py-3.5 text-right">
                     <Link
                       href={`/progress?date=${r.date}`}
-                      className="inline-flex size-8 items-center justify-center rounded-lg text-paper-muted transition-colors hover:bg-paper-border hover:text-paper-foreground"
+                      className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hairline hover:text-foreground"
                       aria-label={`Edit log for ${fmtDate(r.date)}`}
                     >
                       <Pencil className="size-4" />

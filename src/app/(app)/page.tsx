@@ -61,30 +61,30 @@ export default function OverviewPage() {
       </section>
 
       {/* KPI strip: one white panel, not four cards */}
-      <section aria-label="Key numbers" className="panel-paper grid grid-cols-2 rounded-2xl lg:grid-cols-4">
+      <section aria-label="Key numbers" className="panel-dark grid grid-cols-2 rounded-2xl lg:grid-cols-4">
         {stats.map((s, i) => (
           <div
             key={s.label}
             className={cn(
               "flex flex-col gap-1 p-4 sm:p-6",
-              i % 2 === 1 && "border-l border-paper-border",
-              i >= 2 && "border-t border-paper-border lg:border-t-0",
+              i % 2 === 1 && "border-l border-hairline",
+              i >= 2 && "border-t border-hairline lg:border-t-0",
               i === 2 && "lg:border-l",
             )}
           >
-            <span className="text-xs font-medium text-paper-muted sm:text-sm">{s.label}</span>
+            <span className="text-xs font-medium text-muted-foreground sm:text-sm">{s.label}</span>
             <span
               className={cn(
                 "font-mono text-[1.375rem] leading-tight font-semibold tracking-[-0.04em] sm:text-[2rem]",
               )}
             >
               {s.key ? (
-                <span className="rounded-md bg-primary px-1.5 box-decoration-clone">{s.value}</span>
+                <span className="text-primary">{s.value}</span>
               ) : (
                 s.value
               )}
             </span>
-            <span className="text-xs text-paper-muted">{s.note}</span>
+            <span className="text-xs text-muted-foreground">{s.note}</span>
           </div>
         ))}
       </section>
@@ -124,17 +124,17 @@ export default function OverviewPage() {
       </section>
 
       {/* Recent logs */}
-      <section className="panel-paper rounded-2xl p-5 sm:p-8">
+      <section className="panel-dark rounded-2xl p-5 sm:p-8">
         <div className="mb-3 flex items-baseline justify-between gap-4">
           <div>
             <h2 className="text-xl font-bold tracking-[-0.015em]">Recent logs</h2>
-            <p className="mt-0.5 text-sm text-paper-muted">
+            <p className="mt-0.5 text-sm text-muted-foreground">
               {p.rows.length} days logged since {fmtDate(p.rows[0].date)}
             </p>
           </div>
           <Link
             href="/progress"
-            className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-paper-foreground underline-offset-4 hover:underline"
+            className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-foreground underline-offset-4 hover:underline"
           >
             All logs <ArrowRight className="size-4" />
           </Link>

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { cn } from "@/lib/utils";
 
 /** The progresshub mark: three rising bars, the last one lime — today on the way to 500K. */
 export function BrandMark({ className = "size-8" }: { className?: string }) {
@@ -42,7 +43,7 @@ export function Initials({ name, className = "" }: { name: string; className?: s
   return (
     <span
       aria-hidden
-      className={`inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-paper text-xs font-semibold text-paper-foreground ${className}`}
+      className={cn("inline-flex size-8 shrink-0 items-center justify-center rounded-full bg-foreground text-xs font-semibold text-background", className)}
     >
       {initials}
     </span>

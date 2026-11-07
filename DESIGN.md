@@ -13,7 +13,7 @@ colors:
   on-surface-variant: '#ffffffb3'
   outline: '#ffffff29'
   outline-variant: '#ffffff14'
-  # White family (~40% of the composition)
+  # White family (~40%: text, icons, chips. Never card, table or panel fills)
   inverse-surface: '#ffffff'
   inverse-surface-dim: '#f4f4f5'
   inverse-surface-variant: '#e8e8ea'
@@ -138,7 +138,7 @@ Personality: high-contrast, editorial, confident. Black gives depth, white gives
 
 ## Color Composition: 50 / 40 / 10
 
-Every screen should read as roughly **50% black, 40% white, 10% lime**.
+Every screen should read as roughly **50% black, 40% white, 10% lime**. White's share comes from type, numbers, icons and small chips. **Every card, table, panel and modal is black.** There are no white surfaces in the app.
 
 ### Black (~50%): foundation and depth
 - Page canvas, app shell, sidebar and top nav are `#0b0b0c`.
@@ -146,9 +146,11 @@ Every screen should read as roughly **50% black, 40% white, 10% lime**.
 - Elevation steps: `#111113` → `#161618` → `#1d1d20` → `#26262a`.
 - Hairline borders on dark surfaces: white at 8–16% opacity (`#ffffff14`, `#ffffff29`).
 
-### White (~40%): content and contrast
+### White (~40%): content and contrast, never a surface
 - All primary text on dark surfaces is `#FFFFFF`. Secondary text is white at 70%, tertiary at 45%.
-- **White is also a surface.** Large white panels carry real visual weight: main KPI cards, the "Add Daily Progress" form panel, leaderboard table bodies, modal sheets, and chart panels. Text on white is `#0b0b0c`, with `#0b0b0ca6` for secondary text and `#0b0b0c1f` for dividers.
+- **White is never a surface.** KPI strips, forms, tables, leaderboard bodies, chart panels and modal sheets are all black (`gradient-card` with a hairline border). This is a product-owner decision (Nov 7, 2026) that replaces the earlier white-panel rule.
+- Small white fills are allowed only at chip scale: avatar initials, a selected segment, a rank badge, the "You" tag.
+- The only exception is the optional **light style of the shareable progress card image** posted to X. It is an exported image, not app UI.
 - Alternate black and white blocks to create rhythm, for example a white KPI strip on a black canvas or a black chart card next to a white summary card.
 - Secondary buttons: white fill with black text, or a transparent fill with a 1px white border.
 
@@ -171,7 +173,7 @@ Never use lime for large backgrounds, body text, decorative illustration, border
 ### Charts
 - Primary series: lime line or bars.
 - Comparison or forecast series: white at 60% (dashed for projections).
-- Gridlines: white at 6–8% on dark panels, black at 8% on white panels.
+- Gridlines: white at 6–8% on dark panels.
 - Area fills: lime at 12% fading to transparent.
 
 ## Typography
@@ -183,4 +185,4 @@ Never use lime for large backgrounds, body text, decorative illustration, border
 ## Shape & Elevation
 
 - 8px default radius, 12px on large cards and modals, full radius on pills and badges.
-- No colored shadows. Dark surfaces get a subtle inner top highlight (`#ffffff0f`). White panels get a soft black shadow (`0 8px 24px #0b0b0c40`).
+- No colored shadows. Dark surfaces get a subtle inner top highlight (`#ffffff0f`).

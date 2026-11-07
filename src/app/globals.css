@@ -89,7 +89,7 @@
   --hairline: #ffffff14;
   --input: #ffffff29;
 
-  /* White family (~40%) */
+  /* White family: text, icons, small chips only. Paper tokens exist for the optional light share-card image, never for app panels. */
   --paper: #ffffff;
   --paper-dim: #f4f4f5;
   --paper-foreground: #0b0b0c;
@@ -188,12 +188,6 @@
     background: linear-gradient(145deg, #1d1d20 0%, #0b0b0c 100%);
     border: 1px solid var(--hairline);
     box-shadow: inset 0 1px 0 #ffffff0f;
-  }
-  /* White panel: soft black offset shadow */
-  .panel-paper {
-    background: var(--paper);
-    color: var(--paper-foreground);
-    box-shadow: 0 8px 24px #0b0b0c40;
   }
 }
 
