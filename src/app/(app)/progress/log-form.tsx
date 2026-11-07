@@ -1,14 +1,24 @@
 "use client";
 
-import { useId, useMemo, useRef, useState, useTransition } from "react";
+import { useId, useMemo, useState, useTransition } from "react";
 import { CalendarDays, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EntriesTable } from "@/components/progress/entries-table";
 import { Button } from "@/components/ui/button";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { fmt, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
 import { addDays, forecast, GOAL, paceOver, toUTC, withDeltas, type Entry } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 import { saveEntry } from "./actions";
+
+// react-day-picker works in local time; logs are plain YYYY-MM-DD calendar days.
+const toLocalDate = (d: string) => {
+  const [y, m, day] = d.split("-").map(Number);
+  return new Date(y, m - 1, day);
+};
+const fromLocalDate = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 type Props = { initialEntries: Entry[]; today: string; initialDate?: string };
 
@@ -29,20 +39,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
   const [serverError, setServerError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const inputId = useId();
-  const dateId = useId();
-  const dateRef = useRef<HTMLInputElement>(null);
-
-  const openPicker = () => {
-    const input = dateRef.current;
-    if (!input) return;
-    try {
-      input.showPicker();
-    } catch {
-      // Older browsers without showPicker(): focusing still lets the keyboard/native UI take over.
-      input.focus();
-      input.click();
-    }
-  };
+  const [calendarOpen, setCalendarOpen] = useState(false);
 
   const pickDate = (d: string) => {
     setDate(d);
@@ -136,18 +133,18 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                   </span>
                 </button>
               ))}
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={openPicker}
-                  aria-pressed={isCustom}
-                  aria-haspopup="dialog"
-                  className={cn(
-                    "flex h-14 w-full flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors",
-                    isCustom
-                      ? "border-primary bg-primary-soft text-foreground"
-                      : "border-hairline hover:bg-hover",
-                  )}
+              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+                <PopoverTrigger
+                  render={
+                    <button
+                      type="button"
+                      aria-pressed={isCustom}
+                      className={cn(
+                        "flex h-14 w-full flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors",
+                        isCustom ? "border-primary bg-primary-soft text-foreground" : "border-hairline hover:bg-hover",
+                      )}
+                    />
+                  }
                 >
                   <span className="flex items-center gap-1.5">
                     <CalendarDays className="size-4" /> Other
@@ -155,20 +152,28 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                   <span className={cn("font-mono text-[11px] font-normal", isCustom ? "text-primary" : "text-muted-foreground")}>
                     {isCustom ? fmtDateShort(date) : "pick a day"}
                   </span>
-                </button>
-                {/* Native picker, opened by the button above. Kept in the tree (not display:none) so showPicker() works. */}
-                <input
-                  ref={dateRef}
-                  id={dateId}
-                  type="date"
-                  tabIndex={-1}
-                  aria-hidden
-                  max={today}
-                  value={date}
-                  onChange={(e) => e.target.value && pickDate(e.target.value)}
-                  className="pointer-events-none absolute bottom-0 left-1/2 h-px w-px -translate-x-1/2 opacity-0 [color-scheme:dark]"
-                />
-              </div>
+                </PopoverTrigger>
+                <PopoverContent align="end" sideOffset={8} className="w-auto p-2">
+                  <Calendar
+                    mode="single"
+                    weekStartsOn={1}
+                    selected={toLocalDate(date)}
+                    defaultMonth={toLocalDate(date)}
+                    disabled={{ after: toLocalDate(today) }}
+                    endMonth={toLocalDate(today)}
+                    modifiers={{ logged: entries.map((e) => toLocalDate(e.date)) }}
+                    modifiersClassNames={{ logged: "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-current [&>button]:after:opacity-60" }}
+                    onSelect={(d) => {
+                      if (!d) return;
+                      pickDate(fromLocalDate(d));
+                      setCalendarOpen(false);
+                    }}
+                  />
+                  <p className="flex items-center gap-1.5 px-2 pt-1 pb-1 text-[11px] text-subtle">
+                    <span className="size-1 rounded-full bg-muted-foreground" /> already logged
+                  </p>
+                </PopoverContent>
+              </Popover>
             </div>
           </fieldset>
 
