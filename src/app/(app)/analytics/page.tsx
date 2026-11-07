@@ -57,7 +57,7 @@ async function Analytics() {
       <section className="panel-dark rounded-2xl p-5 sm:p-8">
         <h2 className="text-xl font-bold tracking-[-0.015em]">When you&apos;ll reach 500K</h2>
         <div className="mt-6 grid gap-8 lg:grid-cols-[minmax(0,1fr)_280px]">
-          <TrajectoryChart rows={rows} eta={p.eta} etaSlow={p.etaSlow} />
+          <TrajectoryChart rows={rows} eta={p.eta} pace={p.pace7} etaSlow={p.etaSlow} paceSlow={p.pace28} />
           <dl className="flex flex-col divide-y divide-hairline">
             {scenarios.map((s) => (
               <div key={s.label} className="py-4 first:pt-0">

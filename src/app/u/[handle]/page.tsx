@@ -128,7 +128,7 @@ async function Profile({ params }: Props) {
           {rows.length > 1 && (
             <section className="panel-dark rounded-2xl p-5 sm:p-8">
               <h2 className="mb-8 text-xl font-bold tracking-[-0.015em]">Cumulative impressions</h2>
-              <TrajectoryChart rows={rows} eta={data.eta} />
+              <TrajectoryChart rows={rows} eta={data.eta} pace={data.pace7} />
             </section>
           )}
         </>

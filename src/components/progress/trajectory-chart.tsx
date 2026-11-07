@@ -1,184 +1,245 @@
-import { fmtCompact, fmtDateShort, fmt } from "@/lib/format";
-import { GOAL, MILESTONES, daysBetween, type DayRow, type Forecast } from "@/lib/progress";
+import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtSigned } from "@/lib/format";
+import { GOAL, addDays, daysBetween, type DayRow, type Forecast } from "@/lib/progress";
 
 const W = 1000;
 const H = 300;
-const Y_MAX = GOAL * 1.06;
+/** Share of the plot height the daily-gain bars may use. */
+const BAR_BAND = 0.28;
 
 type Props = {
   rows: DayRow[];
+  /** Projection at the 7-day pace. */
   eta: Forecast;
-  /** Optional slower projection, drawn fainter. */
+  pace: number;
+  /** Optional slower projection (28-day pace), drawn fainter. */
   etaSlow?: Forecast;
+  paceSlow?: number;
   height?: string;
 };
 
+/** Rounds up to a readable axis maximum: 1, 2, 2.5 or 5 × 10ⁿ. */
+function niceCeil(v: number) {
+  if (v <= 0) return 1000;
+  const exp = 10 ** Math.floor(Math.log10(v));
+  const step = [1, 2, 2.5, 5, 10].find((s) => s * exp >= v)!;
+  return step * exp;
+}
+
 /**
- * Logged impressions (lime) and the projection to 500K at the current pace (white, dashed).
- * Drawn in a stretched SVG with non-scaling strokes; labels are HTML so text never distorts.
+ * Logged impressions (lime line + a dot per log), each day's gain (lime bars), and the
+ * projection at the current pace (white, dashed). The window zooms to the creator's real
+ * history plus a short look-ahead; it only stretches to 500K once 500K is close.
  */
-export function TrajectoryChart({ rows, eta, etaSlow, height = "h-64 sm:h-80" }: Props) {
+export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, height = "h-64 sm:h-80" }: Props) {
   const first = rows[0];
   const last = rows[rows.length - 1];
-  const end = [eta?.etaDate, etaSlow?.etaDate, last.date]
-    .filter(Boolean)
-    .sort()
-    .at(-1)!;
+  const history = Math.max(1, daysBetween(first.date, last.date));
+
+  // Look ahead ~60% of the history (at least a week). If 500K lands inside that, show it.
+  const lookAhead = Math.max(7, Math.ceil(history * 0.6));
+  const goalInView = Boolean(eta && daysBetween(last.date, eta.etaDate) <= lookAhead * 2);
+  const end = goalInView && eta ? eta.etaDate : addDays(last.date, lookAhead);
   const span = Math.max(1, daysBetween(first.date, end));
+  const projectAt = (p: number) => Math.min(GOAL, last.total + p * daysBetween(last.date, end));
+  const projectedEnd = goalInView ? GOAL : projectAt(pace);
+
+  const yMax = goalInView ? GOAL * 1.06 : niceCeil(Math.max(projectedEnd, last.total) * 1.1);
+  const ticks = [0.25, 0.5, 0.75, 1].map((f) => yMax * f);
 
   const x = (date: string) => (daysBetween(first.date, date) / span) * W;
-  const y = (v: number) => H - (Math.min(v, Y_MAX) / Y_MAX) * H;
+  const y = (v: number) => H - (Math.min(v, yMax) / yMax) * H;
   const pctX = (date: string) => (x(date) / W) * 100;
   const pctY = (v: number) => (y(v) / H) * 100;
 
   const line = rows.map((r) => `${x(r.date).toFixed(1)},${y(r.total).toFixed(1)}`).join(" ");
   const area = `M ${x(first.date)},${H} L ${line.replaceAll(" ", " L ")} L ${x(last.date)},${H} Z`;
 
-  // Drop the start label when "Today" sits right next to it, so the two never collide.
-  const crowded = pctX(last.date) < 14;
-  const ticks = [crowded ? null : first.date, last.date, eta?.etaDate].filter(Boolean) as string[];
+  // Daily gain bars, scaled to their own band at the bottom.
+  const gains = rows.filter((r) => r.delta !== null && r.delta > 0);
+  const maxGain = Math.max(1, ...gains.map((r) => r.delta!));
+  const dayWidth = W / span;
+  const barW = Math.max(2, Math.min(dayWidth * 0.55, 28));
+
+  const slowEnd =
+    etaSlow && paceSlow !== undefined && paceSlow > 0 && !goalInView
+      ? { date: end, value: projectAt(paceSlow) }
+      : etaSlow && goalInView && etaSlow.etaDate <= end
+        ? { date: etaSlow.etaDate, value: GOAL }
+        : null;
+
+  const showDots = rows.length <= 45;
+  const startLabelCrowded = pctX(last.date) < 16;
 
   return (
     <figure className="m-0">
-      <div className="relative">
-        <div className={`relative ${height}`}>
-          <svg
-            viewBox={`0 0 ${W} ${H}`}
-            preserveAspectRatio="none"
-            className="absolute inset-0 size-full overflow-visible"
-            role="img"
-            aria-label={`Impressions grew from ${fmt(first.total)} to ${fmt(last.total)}${
-              eta ? `; at the current pace 500,000 is reached around ${fmtDateShort(eta.etaDate)}` : ""
-            }.`}
-          >
-            <defs>
-              <linearGradient id="traj-area" x1="0" x2="0" y1="0" y2="1">
-                <stop offset="0%" stopColor="#c8f432" stopOpacity="0.18" />
-                <stop offset="100%" stopColor="#c8f432" stopOpacity="0" />
-              </linearGradient>
-            </defs>
+      <div className={`relative ${height}`}>
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          preserveAspectRatio="none"
+          className="absolute inset-0 size-full overflow-visible"
+          role="img"
+          aria-label={`Impressions grew from ${fmt(first.total)} on ${fmtDate(first.date)} to ${fmt(last.total)} on ${fmtDate(last.date)}${
+            eta ? `; at the current pace 500,000 is reached around ${fmtDate(eta.etaDate)}` : ""
+          }.`}
+        >
+          <defs>
+            <linearGradient id="traj-area" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0%" stopColor="#c8f432" stopOpacity="0.16" />
+              <stop offset="100%" stopColor="#c8f432" stopOpacity="0" />
+            </linearGradient>
+          </defs>
 
-            {MILESTONES.map((m) => (
-              <line
-                key={m}
-                x1="0"
-                x2={W}
-                y1={y(m)}
-                y2={y(m)}
-                stroke={m === GOAL ? "#ffffff3d" : "#ffffff14"}
-                strokeDasharray={m === GOAL ? "6 6" : undefined}
-                vectorEffect="non-scaling-stroke"
-              />
-            ))}
-            <line x1="0" x2={W} y1={H} y2={H} stroke="#ffffff1f" vectorEffect="non-scaling-stroke" />
-
-            {etaSlow && etaSlow.etaDate !== eta?.etaDate && (
-              <line
-                x1={x(last.date)}
-                y1={y(last.total)}
-                x2={x(etaSlow.etaDate)}
-                y2={y(GOAL)}
-                stroke="#ffffff40"
-                strokeWidth="1.5"
-                strokeDasharray="3 6"
-                vectorEffect="non-scaling-stroke"
-              />
-            )}
-            {eta && (
-              <line
-                x1={x(last.date)}
-                y1={y(last.total)}
-                x2={x(eta.etaDate)}
-                y2={y(GOAL)}
-                stroke="#ffffff99"
-                strokeWidth="2"
-                strokeDasharray="7 7"
-                vectorEffect="non-scaling-stroke"
-              />
-            )}
-
-            <path d={area} fill="url(#traj-area)" />
-            <polyline
-              points={line}
-              fill="none"
-              stroke="#c8f432"
-              strokeWidth="2.5"
-              strokeLinejoin="round"
-              strokeLinecap="round"
+          {ticks.map((t) => (
+            <line
+              key={t}
+              x1="0"
+              x2={W}
+              y1={y(t)}
+              y2={y(t)}
+              stroke={goalInView && t === yMax ? "transparent" : "#ffffff12"}
               vectorEffect="non-scaling-stroke"
             />
-          </svg>
-
-          {/* Y labels */}
-          {MILESTONES.map((m) => (
-            <span
-              key={m}
-              className="absolute right-0 -translate-y-[calc(100%+4px)] font-mono text-[11px] text-subtle"
-              style={{ top: `${pctY(m)}%` }}
-            >
-              {fmtCompact(m)}
-            </span>
           ))}
+          {goalInView && (
+            <line x1="0" x2={W} y1={y(GOAL)} y2={y(GOAL)} stroke="#ffffff3d" strokeDasharray="6 6" vectorEffect="non-scaling-stroke" />
+          )}
+          <line x1="0" x2={W} y1={H} y2={H} stroke="#ffffff1f" vectorEffect="non-scaling-stroke" />
 
-          {/* Today point */}
-          <span
-            className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[2.5px] border-primary bg-background"
-            style={{ left: `${pctX(last.date)}%`, top: `${pctY(last.total)}%` }}
-          />
-          <div
-            className="absolute -translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-lg border border-border bg-surface-high px-2.5 py-1.5 font-mono text-[11px] whitespace-nowrap shadow-[0_8px_24px_#0b0b0c80]"
-            style={{ left: `clamp(4.5rem, ${pctX(last.date)}%, calc(100% - 4.5rem))`, top: `${pctY(last.total)}%` }}
-          >
-            <span className="block text-subtle">{fmtDateShort(last.date)} · latest log</span>
-            <span className="font-semibold text-primary">{fmt(last.total)}</span>
-          </div>
+          {gains.map((r) => {
+            const h = (r.delta! / maxGain) * H * BAR_BAND;
+            return (
+              <rect
+                key={r.date}
+                x={x(r.date) - barW / 2}
+                y={H - h}
+                width={barW}
+                height={h}
+                rx={Math.min(3, barW / 3)}
+                fill="#c8f432"
+                fillOpacity="0.28"
+              />
+            );
+          })}
 
-          {/* Goal point */}
-          {eta && (
-            <span
-              className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[2.5px] border-foreground bg-background"
-              style={{ left: `${pctX(eta.etaDate)}%`, top: `${pctY(GOAL)}%` }}
+          {slowEnd && (
+            <line
+              x1={x(last.date)}
+              y1={y(last.total)}
+              x2={x(slowEnd.date)}
+              y2={y(slowEnd.value)}
+              stroke="#ffffff40"
+              strokeWidth="1.5"
+              strokeDasharray="3 6"
+              vectorEffect="non-scaling-stroke"
             />
           )}
+          {pace > 0 && (
+            <line
+              x1={x(last.date)}
+              y1={y(last.total)}
+              x2={x(end)}
+              y2={y(projectedEnd)}
+              stroke="#ffffff99"
+              strokeWidth="2"
+              strokeDasharray="7 7"
+              vectorEffect="non-scaling-stroke"
+            />
+          )}
+
+          <path d={area} fill="url(#traj-area)" />
+          <polyline
+            points={line}
+            fill="none"
+            stroke="#c8f432"
+            strokeWidth="2.5"
+            strokeLinejoin="round"
+            strokeLinecap="round"
+            vectorEffect="non-scaling-stroke"
+          />
+        </svg>
+
+        {/* Y axis labels */}
+        {ticks.map((t) => (
+          <span
+            key={t}
+            className="pointer-events-none absolute right-0 -translate-y-[calc(100%+4px)] font-mono text-[11px] text-subtle"
+            style={{ top: `${pctY(goalInView && t === yMax ? GOAL : t)}%` }}
+          >
+            {goalInView && t === yMax ? "500K" : fmtCompact(t)}
+          </span>
+        ))}
+
+        {/* One dot per log, with the exact numbers on hover */}
+        {showDots &&
+          rows.slice(0, -1).map((r) => (
+            <span
+              key={r.date}
+              title={`${fmtDate(r.date)}: ${fmt(r.total)}${r.delta !== null ? ` (${fmtSigned(r.delta)})` : ""}`}
+              className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
+              style={{ left: `${pctX(r.date)}%`, top: `${pctY(r.total)}%` }}
+            />
+          ))}
+
+        {/* Latest point + label */}
+        <span
+          title={`${fmtDate(last.date)}: ${fmt(last.total)}${last.delta !== null ? ` (${fmtSigned(last.delta)})` : ""}`}
+          className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[2.5px] border-primary bg-background"
+          style={{ left: `${pctX(last.date)}%`, top: `${pctY(last.total)}%` }}
+        />
+        <div
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-lg border border-border bg-background px-2.5 py-1.5 font-mono text-[11px] whitespace-nowrap"
+          style={{ left: `clamp(4.5rem, ${pctX(last.date)}%, calc(100% - 4.5rem))`, top: `${pctY(last.total)}%` }}
+        >
+          <span className="block text-subtle">
+            {fmtDateShort(last.date)}
+            {last.delta !== null && ` · ${fmtSigned(last.delta)}`}
+          </span>
+          <span className="font-semibold text-primary">{fmt(last.total)}</span>
         </div>
 
-        {/* X labels */}
-        <div className="relative mt-3 h-4 font-mono text-[11px]">
-          {ticks.map((t, i) => (
-            <span
-              key={t + i}
-              className={
-                t === first.date && t !== last.date
-                  ? "absolute left-0 text-subtle"
-                  : i === ticks.length - 1 && t === eta?.etaDate
-                    ? "absolute right-0 font-semibold text-foreground"
-                    : "absolute -translate-x-1/2 font-semibold text-primary"
-              }
-              style={
-                (t === first.date && t !== last.date) || (i === ticks.length - 1 && t === eta?.etaDate)
-                  ? undefined
-                  : { left: `clamp(1.5rem, ${pctX(t)}%, calc(100% - 1.5rem))` }
-              }
-            >
-              {t === last.date ? "Today" : fmtDateShort(t)}
-              {t === eta?.etaDate && " · 500K"}
-            </span>
-          ))}
-        </div>
+        {goalInView && eta && (
+          <span
+            className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[2.5px] border-foreground bg-background"
+            style={{ left: `${pctX(eta.etaDate)}%`, top: `${pctY(GOAL)}%` }}
+          />
+        )}
       </div>
 
-      <figcaption className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
-        <span className="flex items-center gap-2">
-          <span className="h-0.5 w-4 rounded bg-primary" /> Logged impressions
+      {/* X axis */}
+      <div className="relative mt-3 h-4 font-mono text-[11px]">
+        {!startLabelCrowded && <span className="absolute left-0 text-subtle">{fmtDateShort(first.date)}</span>}
+        <span
+          className="absolute -translate-x-1/2 font-semibold text-primary"
+          style={{ left: `clamp(1.5rem, ${pctX(last.date)}%, calc(100% - 1.5rem))` }}
+        >
+          Latest
         </span>
-        {eta && (
+        <span className="absolute right-0 text-muted-foreground">
+          {fmtDateShort(end)}
+          {goalInView ? " · 500K" : ""}
+        </span>
+      </div>
+
+      <figcaption className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+        <span className="flex items-center gap-2">
+          <span className="h-0.5 w-4 rounded bg-primary" /> Total impressions
+        </span>
+        <span className="flex items-center gap-2">
+          <span className="h-2.5 w-2 rounded-sm bg-primary/30" /> Gained that day
+        </span>
+        {pace > 0 && (
           <span className="flex items-center gap-2">
             <span className="w-4 border-t-2 border-dashed border-white/60" /> Projected at 7-day pace
           </span>
         )}
-        {etaSlow && etaSlow.etaDate !== eta?.etaDate && (
+        {slowEnd && (
           <span className="flex items-center gap-2">
-            <span className="w-4 border-t-2 border-dotted border-white/30" /> Projected at 28-day pace
+            <span className="w-4 border-t-2 border-dotted border-white/30" /> 28-day pace
+          </span>
+        )}
+        {!goalInView && eta && (
+          <span className="sm:ml-auto">
+            500K around <span className="font-mono font-semibold text-foreground">{fmtDate(eta.etaDate)}</span>
           </span>
         )}
       </figcaption>
