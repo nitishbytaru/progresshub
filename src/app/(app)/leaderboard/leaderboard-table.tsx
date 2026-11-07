@@ -96,13 +96,13 @@ export function LeaderboardTable({ creators }: { creators: Creator[] }) {
                   aria-current={c.isYou ? "true" : undefined}
                   className={cn(
                     "grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-hairline px-4 py-3.5 last:border-b-0 md:grid-cols-[56px_minmax(0,1.6fr)_120px_minmax(0,1.4fr)_96px_96px_72px] md:gap-4 md:px-6",
-                    c.isYou ? "bg-primary-soft" : "hover:bg-surface",
+                    c.isYou ? "bg-primary-soft" : "hover:bg-hover",
                   )}
                 >
                   <span
                     className={cn(
                       "flex h-7 w-fit min-w-7 items-center justify-center rounded-full px-1.5 font-mono text-xs font-semibold",
-                      c.isYou ? "bg-primary text-primary-foreground" : c.rank <= 3 ? "bg-foreground text-background" : "bg-surface-high",
+                      c.isYou ? "bg-primary text-primary-foreground" : c.rank <= 3 ? "bg-foreground text-background" : "border border-border",
                     )}
                   >
                     {c.rank}
@@ -122,7 +122,7 @@ export function LeaderboardTable({ creators }: { creators: Creator[] }) {
                   <span className="text-right font-mono text-sm font-semibold md:text-base">{fmt(c.total)}</span>
 
                   <span className="col-span-2 col-start-2 flex items-center gap-2 md:col-span-1 md:col-start-auto">
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-high">
+                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-highest">
                       <span
                         className={cn("block h-full rounded-full", c.isYou ? "bg-primary" : "bg-foreground/70")}
                         style={{ width: `${Math.min(pct, 100)}%` }}

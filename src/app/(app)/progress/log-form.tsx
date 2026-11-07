@@ -103,7 +103,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                     "flex h-14 flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors",
                     date === d
                       ? "border-primary bg-primary-soft text-foreground"
-                      : "border-hairline hover:bg-surface",
+                      : "border-hairline hover:bg-hover",
                   )}
                 >
                   {label}
@@ -118,7 +118,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                   "relative flex h-14 cursor-pointer flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-foreground",
                   isCustom
                     ? "border-primary bg-primary-soft text-foreground"
-                    : "border-hairline hover:bg-surface",
+                    : "border-hairline hover:bg-hover",
                 )}
               >
                 <span className="flex items-center gap-1.5">
@@ -189,7 +189,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
           </div>
 
           {preview && (
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-surface-high" aria-hidden>
+            <div className="mt-5 h-2 overflow-hidden rounded-full bg-surface-highest" aria-hidden>
               <div
                 className="h-full rounded-full bg-primary ring-1 ring-foreground/15 transition-[width] duration-500 ease-out"
                 style={{ width: `${Math.min((preview.row.total / GOAL) * 100, 100)}%` }}
@@ -203,7 +203,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                 type="button"
                 variant="ghost"
                 onClick={() => pickDate(date)}
-                className="h-12 px-5 text-sm font-semibold text-foreground hover:bg-surface"
+                className="h-12 px-5 text-sm font-semibold text-foreground hover:bg-hover"
               >
                 Reset
               </Button>

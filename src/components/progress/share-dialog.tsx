@@ -65,7 +65,7 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
         render={
           <Button
             variant="outline"
-            className="h-11 gap-2 border-border bg-transparent px-4 text-sm font-semibold text-foreground hover:bg-surface"
+            className="h-11 gap-2 border-border bg-transparent px-4 text-sm font-semibold text-foreground hover:bg-hover"
           />
         }
       >
@@ -73,7 +73,7 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
         Share on X
       </DialogTrigger>
 
-      <DialogContent className="panel-dark max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto rounded-2xl bg-surface-low p-0 ring-0 shadow-[0_24px_64px_#000000b3] sm:max-w-[880px] [&>[data-slot=dialog-close]]:top-4 [&>[data-slot=dialog-close]]:right-4">
+      <DialogContent className="panel-dark max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto rounded-2xl p-0 ring-0 sm:max-w-[880px] [&>[data-slot=dialog-close]]:top-4 [&>[data-slot=dialog-close]]:right-4">
         <div className="border-b border-hairline px-5 py-4 pr-14 sm:px-6">
           <DialogTitle className="text-lg font-bold tracking-[-0.015em] text-foreground">
             Share your progress
@@ -91,7 +91,6 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
                 "flex aspect-[16/9] flex-col justify-between rounded-xl p-4 sm:p-5",
                 dark ? "border border-hairline bg-background text-foreground" : "bg-paper text-paper-foreground",
               )}
-              style={dark ? { background: "radial-gradient(ellipse at top, #26262a 0%, #0b0b0c 70%)" } : undefined}
               aria-label="Preview of the progress card"
             >
               <div className="flex items-center justify-between">
@@ -143,7 +142,7 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
                     "h-7 rounded-full px-3 font-medium capitalize transition-colors",
                     theme === t
                       ? "bg-foreground text-background"
-                      : "text-muted-foreground hover:bg-surface hover:text-foreground",
+                      : "text-muted-foreground hover:bg-hover hover:text-foreground",
                   )}
                 >
                   {t}
@@ -185,7 +184,7 @@ export function ShareDialog({ name, handle, total, delta, streak }: Props) {
               <Button
                 variant="outline"
                 onClick={copy}
-                className="h-11 gap-2 border-border bg-transparent text-sm font-semibold text-foreground hover:bg-surface"
+                className="h-11 gap-2 border-border bg-transparent text-sm font-semibold text-foreground hover:bg-hover"
               >
                 <Copy className="size-4" />
                 Copy text

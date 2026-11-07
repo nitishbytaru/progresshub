@@ -34,7 +34,7 @@ export function SidebarNav() {
               "group flex h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors",
               active
                 ? "bg-surface font-semibold text-foreground"
-                : "text-muted-foreground hover:bg-surface-low hover:text-foreground",
+                : "text-muted-foreground hover:bg-hover hover:text-foreground",
             )}
           >
             <Icon className={cn("size-[18px]", active && "text-primary")} strokeWidth={1.75} />

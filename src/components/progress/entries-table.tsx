@@ -26,7 +26,7 @@ export function EntriesTable({ rows, limit = 7 }: { rows: DayRow[]; limit?: numb
       <ul className="divide-y divide-hairline sm:hidden">
         {recent.map((r) => (
           <li key={r.date} className="flex items-center gap-3 py-3.5">
-            <div className="flex w-11 shrink-0 flex-col items-center rounded-lg bg-surface-high py-1.5 font-mono leading-tight">
+            <div className="flex w-11 shrink-0 flex-col items-center rounded-lg border border-border py-1.5 font-mono leading-tight">
               <span className="text-[10px] uppercase text-muted-foreground">{fmtWeekday(r.date)}</span>
               <span className="text-sm font-semibold">{Number(r.date.slice(8))}</span>
             </div>
@@ -65,7 +65,7 @@ export function EntriesTable({ rows, limit = 7 }: { rows: DayRow[]; limit?: numb
             {recent.map((r) => {
               const latest = r.date === latestDate;
               return (
-                <tr key={r.date} className="transition-colors hover:bg-surface">
+                <tr key={r.date} className="transition-colors hover:bg-hover">
                   <td className="px-2 py-3.5">
                     <span className="flex items-center gap-2">
                       {fmtDate(r.date)}

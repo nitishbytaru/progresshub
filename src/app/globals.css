@@ -49,6 +49,7 @@
   --color-surface: var(--surface);
   --color-surface-high: var(--surface-high);
   --color-surface-highest: var(--surface-highest);
+  --color-hover: var(--hover);
   --color-subtle: var(--subtle);
   --color-hairline: var(--hairline);
   --color-paper: var(--paper);
@@ -77,11 +78,13 @@
 
   /* Black family (~50%) */
   --background: #0b0b0c;
-  --surface-lowest: #070708;
-  --surface-low: #111113;
-  --surface: #161618;
-  --surface-high: #1d1d20;
-  --surface-highest: #26262a;
+  /* Every surface is solid black. Separation comes from hairline borders, not grey fills. */
+  --surface-lowest: #0b0b0c;
+  --surface-low: #0b0b0c;
+  --surface: #0b0b0c;
+  --surface-high: #0b0b0c;
+  --surface-highest: #2a2a2e; /* only for thin progress tracks and scrollbar thumbs */
+  --hover: #ffffff0d; /* momentary hover/pressed feedback only */
   --foreground: #ffffff;
   --muted-foreground: #ffffffb3; /* secondary text, 70% */
   --subtle: #ffffff8c; /* tertiary text, 55% keeps >= 4.5:1 on #0b0b0c */
@@ -105,14 +108,14 @@
   --ring: #c8f432;
 
   /* shadcn semantic mapping */
-  --card: #111113;
+  --card: #0b0b0c;
   --card-foreground: #ffffff;
-  --popover: #161618;
+  --popover: #0b0b0c;
   --popover-foreground: #ffffff;
   --secondary: #ffffff;
   --secondary-foreground: #0b0b0c;
-  --muted: #1d1d20;
-  --accent: #1d1d20;
+  --muted: #0b0b0c;
+  --accent: #0b0b0c;
   --accent-foreground: #ffffff;
   --destructive: #ffffff; /* no red: errors are white with an explicit message */
 
@@ -122,11 +125,11 @@
   --chart-4: #ffffff29;
   --chart-5: #ffffff14;
 
-  --sidebar: #070708;
+  --sidebar: #0b0b0c;
   --sidebar-foreground: #ffffffb3;
   --sidebar-primary: #c8f432;
   --sidebar-primary-foreground: #0b0b0c;
-  --sidebar-accent: #161618;
+  --sidebar-accent: #0b0b0c;
   --sidebar-accent-foreground: #ffffff;
   --sidebar-border: #ffffff14;
   --sidebar-ring: #c8f432;
@@ -143,8 +146,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    background-image: linear-gradient(180deg, #161618 0%, #0b0b0c 480px);
-    background-repeat: no-repeat;
     caret-color: var(--primary);
     font-feature-settings: "ss01", "cv11";
   }
@@ -183,11 +184,10 @@
 }
 
 @layer components {
-  /* Dark panel: black gradient + inner top highlight (DESIGN.md elevation) */
+  /* Panel: solid black, hairline border. No gradients, no grey. */
   .panel-dark {
-    background: linear-gradient(145deg, #1d1d20 0%, #0b0b0c 100%);
-    border: 1px solid var(--hairline);
-    box-shadow: inset 0 1px 0 #ffffff0f;
+    background: var(--background);
+    border: 1px solid var(--border);
   }
 }
 

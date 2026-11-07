@@ -35,11 +35,11 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
               title={r ? `${fmtDate(d)}: ${fmtSigned(r.delta ?? 0)} (${fmt(r.total)} total)` : fmtDate(d)}
               className={cn(
                 "flex aspect-square flex-col justify-between rounded-md p-1 font-mono text-[10px] sm:aspect-[5/4] sm:p-1.5 sm:text-[11px]",
-                future ? "opacity-0" : r ? "" : "border border-dashed border-hairline",
+                future ? "opacity-0" : r && lv ? "" : r ? "border border-border" : "border border-dashed border-hairline",
                 lv >= 3 ? "text-primary-foreground" : "text-muted-foreground",
                 d === today && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
               )}
-              style={{ background: r && lv ? fills[lv] : r ? "var(--surface-high)" : undefined }}
+              style={{ background: r && lv ? fills[lv] : undefined }}
             >
               <span className={lv >= 3 ? "" : "text-subtle"}>{Number(d.slice(8))}</span>
               {r?.delta != null && (

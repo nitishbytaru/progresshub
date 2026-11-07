@@ -4,11 +4,13 @@ colors:
   # Black family (~50% of the composition)
   canvas: '#0b0b0c'
   surface: '#0b0b0c'
-  surface-container-lowest: '#070708'
-  surface-container-low: '#111113'
-  surface-container: '#161618'
-  surface-container-high: '#1d1d20'
-  surface-container-highest: '#26262a'
+  surface-container-lowest: '#0b0b0c'
+  surface-container-low: '#0b0b0c'
+  surface-container: '#0b0b0c'
+  surface-container-high: '#0b0b0c'
+  surface-container-highest: '#0b0b0c'
+  track: '#2a2a2e'
+  hover: '#ffffff0d'
   on-surface: '#ffffff'
   on-surface-variant: '#ffffffb3'
   outline: '#ffffff29'
@@ -27,10 +29,6 @@ colors:
   primary-pressed: '#b3dc22'
   primary-soft: '#c8f4321f'
   focus-ring: '#c8f432'
-  # Gradients (black family only)
-  gradient-canvas: 'linear-gradient(180deg, #161618 0%, #0b0b0c 60%)'
-  gradient-card: 'linear-gradient(145deg, #1d1d20 0%, #0b0b0c 100%)'
-  gradient-radial-glow: 'radial-gradient(ellipse at top, #26262a 0%, #0b0b0c 70%)'
 typography:
   headline-xl:
     fontFamily: Plus Jakarta Sans
@@ -142,13 +140,14 @@ Every screen should read as roughly **50% black, 40% white, 10% lime**. White's 
 
 ### Black (~50%): foundation and depth
 - Page canvas, app shell, sidebar and top nav are `#0b0b0c`.
-- Depth comes from **gradients and shades of the black itself**, never from colored surfaces: `gradient-canvas` on page backgrounds, `gradient-card` on dark cards, `gradient-radial-glow` behind hero metrics.
-- Elevation steps: `#111113` → `#161618` → `#1d1d20` → `#26262a`.
+- **Everything is solid `#0b0b0c`:** page, sidebar, top bar, cards, tables, inputs, modals. There are no gradients and no grey elevation shades. This is a product-owner decision (Nov 7, 2026): the user rejected the grey cast of `#111113`–`#26262a` surfaces and black gradients.
+- Separation comes only from hairline borders (`#ffffff1f` for panels and inputs, `#ffffff14` for dividers).
+- The single grey tone, `track` `#2a2a2e`, is reserved for thin progress-bar tracks and scrollbar thumbs.
 - Hairline borders on dark surfaces: white at 8–16% opacity (`#ffffff14`, `#ffffff29`).
 
 ### White (~40%): content and contrast, never a surface
 - All primary text on dark surfaces is `#FFFFFF`. Secondary text is white at 70%, tertiary at 45%.
-- **White is never a surface.** KPI strips, forms, tables, leaderboard bodies, chart panels and modal sheets are all black (`gradient-card` with a hairline border). This is a product-owner decision (Nov 7, 2026) that replaces the earlier white-panel rule.
+- **White is never a surface.** KPI strips, forms, tables, leaderboard bodies, chart panels and modal sheets are all solid black with a hairline border. This is a product-owner decision (Nov 7, 2026) that replaces the earlier white-panel rule.
 - Small white fills are allowed only at chip scale: avatar initials, a selected segment, a rank badge, the "You" tag.
 - The only exception is the optional **light style of the shareable progress card image** posted to X. It is an exported image, not app UI.
 - Alternate black and white blocks to create rhythm, for example a white KPI strip on a black canvas or a black chart card next to a white summary card.
@@ -168,7 +167,7 @@ Never use lime for large backgrounds, body text, decorative illustration, border
 - Positive change: lime text or lime badge with ▲.
 - Negative change: white (on black) or black (on white) text with ▼ and reduced opacity. **No red.**
 - Disabled: 30% opacity of the base color.
-- Hover on lime: `#d4f75c`; pressed: `#b3dc22`. Hover on black surfaces: step one elevation lighter.
+- Hover on lime: `#d4f75c`; pressed: `#b3dc22`. Hover on black surfaces: a momentary `#ffffff0d` wash (feedback only, never a resting fill).
 
 ### Charts
 - Primary series: lime line or bars.
@@ -185,4 +184,4 @@ Never use lime for large backgrounds, body text, decorative illustration, border
 ## Shape & Elevation
 
 - 8px default radius, 12px on large cards and modals, full radius on pills and badges.
-- No colored shadows. Dark surfaces get a subtle inner top highlight (`#ffffff0f`).
+- No colored shadows, no inner highlights, no glows. Flat black with hairline borders.
