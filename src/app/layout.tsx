@@ -16,7 +16,14 @@ const jetbrains = JetBrains_Mono({
   weight: ["400", "500", "600"],
 });
 
+const siteUrl =
+  process.env.NEXT_PUBLIC_SITE_URL ??
+  (process.env.VERCEL_PROJECT_PRODUCTION_URL
+    ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`
+    : "http://localhost:3000");
+
 export const metadata: Metadata = {
+  metadataBase: new URL(siteUrl),
   title: { default: "progresshub", template: "%s · progresshub" },
   description: "Log your X impressions daily and race other creators to 500K.",
 };

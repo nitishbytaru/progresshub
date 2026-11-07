@@ -34,7 +34,9 @@ export function TrajectoryChart({ rows, eta, etaSlow, height = "h-64 sm:h-80" }:
   const line = rows.map((r) => `${x(r.date).toFixed(1)},${y(r.total).toFixed(1)}`).join(" ");
   const area = `M ${x(first.date)},${H} L ${line.replaceAll(" ", " L ")} L ${x(last.date)},${H} Z`;
 
-  const ticks = [first.date, last.date, eta?.etaDate].filter(Boolean) as string[];
+  // Drop the start label when "Today" sits right next to it, so the two never collide.
+  const crowded = pctX(last.date) < 14;
+  const ticks = [crowded ? null : first.date, last.date, eta?.etaDate].filter(Boolean) as string[];
 
   return (
     <figure className="m-0">
@@ -146,15 +148,19 @@ export function TrajectoryChart({ rows, eta, etaSlow, height = "h-64 sm:h-80" }:
             <span
               key={t + i}
               className={
-                i === 0
+                t === first.date && t !== last.date
                   ? "absolute left-0 text-subtle"
                   : i === ticks.length - 1 && t === eta?.etaDate
                     ? "absolute right-0 font-semibold text-foreground"
                     : "absolute -translate-x-1/2 font-semibold text-primary"
               }
-              style={i === 0 || (i === ticks.length - 1 && t === eta?.etaDate) ? undefined : { left: `${pctX(t)}%` }}
+              style={
+                (t === first.date && t !== last.date) || (i === ticks.length - 1 && t === eta?.etaDate)
+                  ? undefined
+                  : { left: `clamp(1.5rem, ${pctX(t)}%, calc(100% - 1.5rem))` }
+              }
             >
-              {i === 1 ? "Today" : fmtDateShort(t)}
+              {t === last.date ? "Today" : fmtDateShort(t)}
               {t === eta?.etaDate && " · 500K"}
             </span>
           ))}

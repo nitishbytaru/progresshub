@@ -6,6 +6,7 @@ import { GoalTrack } from "@/components/progress/goal-track";
 import { ShareDialog } from "@/components/progress/share-dialog";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { getProgress } from "@/lib/data";
+import { getOrigin, getRank } from "@/lib/public";
 import { fmt, fmtDate, fmtPct, fmtSigned, fmtSignedPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 import { FirstLogPrompt, PageSkeleton } from "@/components/progress/page-skeleton";
@@ -22,6 +23,7 @@ export default function OverviewPage() {
 async function Overview() {
   const p = await getProgress();
   const { latest, profile } = p;
+  const [rank, origin] = await Promise.all([getRank(profile.id), getOrigin()]);
   const name = profile.display_name || profile.handle || "there";
   const firstName = name.split(" ")[0];
 
@@ -67,11 +69,12 @@ async function Overview() {
         </div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row">
           <ShareDialog
-            name={name}
             handle={profile.handle ?? ""}
             total={latest.total}
             delta={latest.delta}
             streak={p.streak}
+            rank={rank}
+            shareUrl={`${origin}/u/${profile.handle}`}
           />
           <Link
             href="/progress"
