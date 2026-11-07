@@ -39,3 +39,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# AI tooling (Claude Code, Impeccable, MCP servers) - local only
+.claude/
+CLAUDE.md
+CLAUDE.local.md
+.mcp.json
+.impeccable/
