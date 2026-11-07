@@ -2,11 +2,20 @@
 
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
-import { Initials } from "@/components/shell/brand";
+import { Avatar } from "@/components/shell/brand";
 import { fmt, fmtPct, fmtSigned } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
-import type { Creator } from "@/lib/sample-data";
 import { cn } from "@/lib/utils";
+
+export type Creator = {
+  name: string;
+  handle: string;
+  total: number;
+  pace7: number;
+  streak: number;
+  avatarUrl: string | null;
+  isYou: boolean;
+};
 
 const SORTS = {
   total: { label: "Closest to 500K", phrase: "total impressions", by: (c: Creator) => c.total },
@@ -70,7 +79,12 @@ export function LeaderboardTable({ creators }: { creators: Creator[] }) {
       )}
 
       <div className="panel-dark overflow-hidden rounded-2xl">
-        {shown.length === 0 ? (
+        {ranked.length === 0 ? (
+          <div className="px-6 py-16 text-center">
+            <p className="font-semibold">No one is on the board yet.</p>
+            <p className="mt-1 text-sm text-muted-foreground">Log your first day and you&apos;ll be the first creator here.</p>
+          </div>
+        ) : shown.length === 0 ? (
           <div className="px-6 py-16 text-center">
             <p className="font-semibold">No creators match “{query}”.</p>
             <button onClick={() => setQuery("")} className="mt-2 text-sm font-medium text-muted-foreground underline hover:text-foreground">
@@ -108,7 +122,7 @@ export function LeaderboardTable({ creators }: { creators: Creator[] }) {
                     {c.rank}
                   </span>
                   <span className="flex min-w-0 items-center gap-3">
-                    <Initials name={c.name} className="hidden bg-surface-high text-foreground sm:inline-flex" />
+                    <Avatar name={c.name} src={c.avatarUrl} className="hidden border border-border bg-background text-foreground sm:inline-flex" />
                     <span className="min-w-0">
                       <span className="flex items-center gap-1.5 truncate text-sm font-semibold">
                         {c.name}

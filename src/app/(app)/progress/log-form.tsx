@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState } from "react";
+import { useId, useMemo, useState, useTransition } from "react";
 import { CalendarDays, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EntriesTable } from "@/components/progress/entries-table";
@@ -8,18 +8,25 @@ import { Button } from "@/components/ui/button";
 import { fmt, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
 import { addDays, forecast, GOAL, paceOver, toUTC, withDeltas, type Entry } from "@/lib/progress";
 import { cn } from "@/lib/utils";
+import { saveEntry } from "./actions";
 
 type Props = { initialEntries: Entry[]; today: string; initialDate?: string };
 
 export function LogForm({ initialEntries, today, initialDate }: Props) {
-  const [entries, setEntries] = useState(initialEntries);
+  // The last saved log is applied locally so the page updates instantly; fresh props replace it after revalidation.
+  const [justSaved, setJustSaved] = useState<Entry | null>(null);
+  const entries = useMemo(
+    () => (justSaved ? [...initialEntries.filter((e) => e.date !== justSaved.date), justSaved] : initialEntries),
+    [initialEntries, justSaved],
+  );
   const yesterday = addDays(today, -1);
   const startDate =
     initialDate && toUTC(initialDate) <= toUTC(today) ? initialDate : today;
   const [date, setDate] = useState(startDate);
   const existing = entries.find((e) => e.date === date);
   const [raw, setRaw] = useState(existing ? String(existing.total) : "");
-  const [saving, setSaving] = useState(false);
+  const [saving, startSaving] = useTransition();
+  const [serverError, setServerError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
   const inputId = useId();
   const dateId = useId();
@@ -29,6 +36,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
     const found = entries.find((e) => e.date === d);
     setRaw(found ? String(found.total) : "");
     setTouched(false);
+    setServerError(null);
   };
 
   const value = raw === "" ? null : Number(raw);
@@ -56,22 +64,25 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
     return { row, eta };
   }, [value, error, entries, date]);
 
-  const save = async (e: React.FormEvent) => {
+  const save = (e: React.FormEvent) => {
     e.preventDefault();
     setTouched(true);
+    setServerError(null);
     if (error || value === null) return;
-    setSaving(true);
-    // TODO(supabase): upsert { user_id, date, total } into progress_entries.
-    await new Promise((r) => setTimeout(r, 350));
-    setEntries((prev) => [...prev.filter((p) => p.date !== date), { date, total: value }]);
-    setSaving(false);
-    toast.success(`${existing ? "Updated" : "Logged"} ${fmtDate(date)}: ${fmt(value)}`, {
-      description: "Sample mode: kept for this session only until your account is connected.",
+    startSaving(async () => {
+      const result = await saveEntry(date, value);
+      if (!result.ok) {
+        setServerError(result.error);
+        toast.error(result.error);
+        return;
+      }
+      setJustSaved({ date, total: value });
+      toast.success(`${result.created ? "Logged" : "Updated"} ${fmtDate(date)}: ${fmt(value)}`);
     });
   };
 
   const rows = useMemo(() => withDeltas(entries), [entries]);
-  const showError = touched && error;
+  const showError = serverError ?? (touched && error);
 
   const dateChoices = [
     { d: today, label: "Today", sub: fmtDateShort(today) },
@@ -169,7 +180,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
               )}
             </div>
             <p id={`${inputId}-msg`} className={cn("mt-2 min-h-5 text-sm", showError ? "font-medium" : "text-muted-foreground")}>
-              {showError ? error : before ? `Previous log: ${fmt(before.total)} on ${fmtDateShort(before.date)}.` : "This is your first log."}
+              {showError ? showError : before ? `Previous log: ${fmt(before.total)} on ${fmtDateShort(before.date)}.` : "This is your first log."}
             </p>
           </div>
 
@@ -224,7 +235,9 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
             <p className="font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.04em] text-primary">
               {rows.length}
             </p>
-            <p className="mt-2 text-sm text-muted-foreground">days logged since {fmtDate(rows[0].date)}</p>
+            <p className="mt-2 text-sm text-muted-foreground">
+              {rows.length ? `days logged since ${fmtDate(rows[0].date)}` : "days logged. Your first one starts the clock."}
+            </p>
           </div>
           <div className="h-px bg-hairline" />
           <div>
@@ -241,11 +254,13 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
         </aside>
       </div>
 
+      {rows.length > 0 && (
       <section className="panel-dark rounded-2xl p-5 sm:p-8">
         <h2 className="text-xl font-bold tracking-[-0.015em]">History</h2>
         <p className="mt-0.5 mb-3 text-sm text-muted-foreground">Every log, newest first. Pick a day above to correct it.</p>
         <EntriesTable rows={rows} limit={rows.length} />
       </section>
+      )}
     </div>
   );
 }

@@ -1,4 +1,6 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { FirstLogPrompt, PageSkeleton } from "@/components/progress/page-skeleton";
 import { GainHeatmap } from "@/components/progress/gain-heatmap";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { getProgress } from "@/lib/data";
@@ -8,8 +10,27 @@ import { daysBetween, GOAL } from "@/lib/progress";
 export const metadata: Metadata = { title: "Analytics" };
 
 export default function AnalyticsPage() {
-  const p = getProgress();
+  return (
+    <Suspense fallback={<PageSkeleton blocks={["h-[72px]", "h-[480px]", "h-[420px]"]} />}>
+      <Analytics />
+    </Suspense>
+  );
+}
+
+async function Analytics() {
+  const p = await getProgress();
   const { latest, rows } = p;
+  if (!latest || rows.length < 2) {
+    return (
+      <div className="flex flex-col gap-6 lg:gap-8">
+        <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Analytics</h1>
+        <FirstLogPrompt
+          title={latest ? "One more day and the forecast unlocks" : "Nothing to analyse yet"}
+          body="Projections need at least two days of logs to measure your pace. Log today, then come back tomorrow."
+        />
+      </div>
+    );
+  }
   const remaining = Math.max(0, GOAL - latest.total);
   const yearEnd = `${latest.date.slice(0, 4)}-12-31`;
   const daysToYearEnd = Math.max(1, daysBetween(latest.date, yearEnd));

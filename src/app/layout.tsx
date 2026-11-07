@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
+import { TimezoneCookie } from "@/components/shell/timezone-cookie";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
@@ -31,6 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full">
         {children}
         <Toaster />
+        <TimezoneCookie />
       </body>
     </html>
   );

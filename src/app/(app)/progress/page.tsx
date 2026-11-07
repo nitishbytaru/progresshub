@@ -1,17 +1,16 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { SAMPLE_TODAY, sampleEntries } from "@/lib/sample-data";
+import { PageSkeleton } from "@/components/progress/page-skeleton";
+import { getProgress } from "@/lib/data";
 import { LogForm } from "./log-form";
 
 export const metadata: Metadata = { title: "Daily progress" };
 
-/** Reads `?date=` (set by the Edit links) at request time, inside Suspense so the shell can prerender. */
+/** Reads `?date=` (set by the Edit links) and the viewer's logs at request time. */
 async function LogFormForDate({ searchParams }: { searchParams: PageProps<"/progress">["searchParams"] }) {
-  const { date } = await searchParams;
+  const [{ date }, { entries, today }] = await Promise.all([searchParams, getProgress()]);
   const initialDate = typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined;
-  return (
-    <LogForm key={initialDate ?? "today"} initialEntries={sampleEntries} today={SAMPLE_TODAY} initialDate={initialDate} />
-  );
+  return <LogForm key={initialDate ?? "today"} initialEntries={entries} today={today} initialDate={initialDate} />;
 }
 
 export default function ProgressPage({ searchParams }: PageProps<"/progress">) {
@@ -21,7 +20,7 @@ export default function ProgressPage({ searchParams }: PageProps<"/progress">) {
         <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Daily progress</h1>
         <p className="mt-1 text-sm text-muted-foreground">One number a day. It takes ten seconds.</p>
       </header>
-      <Suspense fallback={<LogForm initialEntries={sampleEntries} today={SAMPLE_TODAY} />}>
+      <Suspense fallback={<PageSkeleton blocks={["h-[520px]", "h-64"]} />}>
         <LogFormForDate searchParams={searchParams} />
       </Suspense>
     </div>

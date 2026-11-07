@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { PageSkeleton } from "@/components/progress/page-skeleton";
+import { getLeaderboard, getViewer } from "@/lib/data";
 import { fmt, fmtSigned } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
-import { sampleCreators } from "@/lib/sample-data";
-import { LeaderboardTable } from "./leaderboard-table";
+import { LeaderboardTable, type Creator } from "./leaderboard-table";
 
 export const metadata: Metadata = { title: "Leaderboard" };
 
@@ -13,10 +15,27 @@ function median(values: number[]) {
 }
 
 export default function LeaderboardPage() {
-  const creators = sampleCreators;
+  return (
+    <Suspense fallback={<PageSkeleton blocks={["h-[180px]", "h-[100px]", "h-[480px]"]} />}>
+      <Leaderboard />
+    </Suspense>
+  );
+}
+
+async function Leaderboard() {
+  const [rows, { profile }] = await Promise.all([getLeaderboard(), getViewer()]);
+  const creators: Creator[] = rows.map((r) => ({
+    name: r.display_name || r.handle,
+    handle: r.handle,
+    total: r.total,
+    pace7: r.pace7,
+    streak: r.streak,
+    avatarUrl: r.avatar_url,
+    isYou: r.user_id === profile.id,
+  }));
   const stats = [
     { label: "Creators racing", value: fmt(creators.length) },
-    { label: "Median 7-day pace", value: `${fmtSigned(median(creators.map((c) => c.pace7)))}/day` },
+    { label: "Median 7-day pace", value: creators.length ? `${fmtSigned(median(creators.map((c) => c.pace7)))}/day` : "—" },
     { label: "Past 250K", value: fmt(creators.filter((c) => c.total >= 250_000).length) },
     { label: "Reached 500K", value: fmt(creators.filter((c) => c.total >= GOAL).length) },
   ];

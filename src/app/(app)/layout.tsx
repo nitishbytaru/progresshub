@@ -1,14 +1,42 @@
-import { Brand, BrandMark, Initials, SampleBadge } from "@/components/shell/brand";
+import { Suspense } from "react";
+import { Brand, BrandMark } from "@/components/shell/brand";
 import { BottomNav, MobileTitle, SidebarNav } from "@/components/shell/nav";
+import { UserMenu } from "@/components/shell/user-menu";
+import { getProgress, getToday } from "@/lib/data";
 import { fmt, fmtDate, fmtPct } from "@/lib/format";
-import { getProgress } from "@/lib/data";
 import { GOAL } from "@/lib/progress";
-import { IS_SAMPLE, currentUser } from "@/lib/sample-data";
+
+async function GoalMini() {
+  const { latest } = await getProgress();
+  const total = latest?.total ?? 0;
+  const pct = (total / GOAL) * 100;
+  return (
+    <div className="rounded-xl border border-border p-3">
+      <div className="flex items-baseline justify-between text-xs">
+        <span className="text-muted-foreground">Goal</span>
+        <span className="font-mono font-semibold text-primary">{fmtPct(pct)}</span>
+      </div>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-highest">
+        <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(pct, 100)}%` }} />
+      </div>
+      <div className="mt-2 flex justify-between font-mono text-xs">
+        <span className="text-foreground">{fmt(total)}</span>
+        <span className="text-subtle">{fmt(GOAL)}</span>
+      </div>
+    </div>
+  );
+}
+
+async function TodayLabel() {
+  const today = await getToday();
+  return <time dateTime={today}>{fmtDate(today)}</time>;
+}
+
+const Placeholder = ({ className }: { className: string }) => (
+  <div aria-hidden className={`animate-pulse rounded-xl border border-hairline ${className}`} />
+);
 
 export default function AppLayout({ children }: LayoutProps<"/">) {
-  const { latest, today } = getProgress();
-  const pct = (latest.total / GOAL) * 100;
-
   return (
     <div className="min-h-dvh lg:pl-64">
       {/* Desktop sidebar */}
@@ -17,35 +45,18 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <div className="px-1 pt-1">
             <Brand />
           </div>
-
-          <div className="rounded-xl border border-hairline bg-surface-low p-3">
-            <div className="flex items-baseline justify-between text-xs">
-              <span className="text-muted-foreground">Goal</span>
-              <span className="font-mono font-semibold text-primary">{fmtPct(pct)}</span>
-            </div>
-            <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-surface-highest">
-              <div className="h-full rounded-full bg-primary" style={{ width: `${Math.min(pct, 100)}%` }} />
-            </div>
-            <div className="mt-2 flex justify-between font-mono text-xs">
-              <span className="text-foreground">{fmt(latest.total)}</span>
-              <span className="text-subtle">{fmt(GOAL)}</span>
-            </div>
-          </div>
-
+          <Suspense fallback={<Placeholder className="h-[86px]" />}>
+            <GoalMini />
+          </Suspense>
           <SidebarNav />
         </div>
-
-        <div className="flex items-center gap-3 rounded-xl border border-hairline bg-surface-low p-2.5">
-          <Initials name={currentUser.name} />
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold">{currentUser.name}</p>
-            <p className="truncate font-mono text-xs text-subtle">@{currentUser.handle}</p>
-          </div>
-        </div>
+        <Suspense fallback={<Placeholder className="h-[54px]" />}>
+          <UserMenu variant="sidebar" />
+        </Suspense>
       </aside>
 
       {/* Top bar */}
-      <header className="sticky top-0 z-30 border-b border-hairline bg-background/85 backdrop-blur-md">
+      <header className="sticky top-0 z-30 border-b border-hairline bg-background/90 backdrop-blur-md">
         <div className="flex h-14 items-center justify-between gap-3 px-4 sm:px-6 lg:h-16 lg:px-8">
           <div className="flex items-center gap-2.5 lg:hidden">
             <BrandMark className="size-7" />
@@ -55,11 +66,14 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
             </div>
           </div>
           <p className="hidden font-mono text-xs text-muted-foreground lg:block">
-            <time dateTime={today}>{fmtDate(today)}</time>
+            <Suspense fallback={<span>&nbsp;</span>}>
+              <TodayLabel />
+            </Suspense>
           </p>
-          <div className="flex items-center gap-3">
-            {IS_SAMPLE && <SampleBadge />}
-            <Initials name={currentUser.name} className="lg:hidden" />
+          <div className="lg:hidden">
+            <Suspense fallback={<span className="block size-8 rounded-full border border-hairline" />}>
+              <UserMenu variant="avatar" />
+            </Suspense>
           </div>
         </div>
       </header>

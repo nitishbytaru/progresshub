@@ -23,17 +23,6 @@ export function Brand() {
   );
 }
 
-export function SampleBadge() {
-  return (
-    <span
-      title="Showing fictional sample data until your account is connected"
-      className="inline-flex h-6 items-center rounded-full border border-border px-2.5 text-[11px] font-medium text-muted-foreground"
-    >
-      Sample data
-    </span>
-  );
-}
-
 export function Initials({ name, className = "" }: { name: string; className?: string }) {
   const initials = name
     .split(" ")
@@ -47,5 +36,19 @@ export function Initials({ name, className = "" }: { name: string; className?: s
     >
       {initials}
     </span>
+  );
+}
+
+/** Profile photo when the creator has one (Google), otherwise initials. */
+export function Avatar({ name, src, className }: { name: string; src?: string | null; className?: string }) {
+  if (!src) return <Initials name={name} className={className} />;
+  return (
+    // eslint-disable-next-line @next/next/no-img-element -- remote avatar from the auth provider
+    <img
+      src={src}
+      alt=""
+      referrerPolicy="no-referrer"
+      className={cn("size-8 shrink-0 rounded-full object-cover", className)}
+    />
   );
 }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Suspense } from "react";
 import { ArrowRight, Plus } from "lucide-react";
 import { EntriesTable } from "@/components/progress/entries-table";
 import { GoalTrack } from "@/components/progress/goal-track";
@@ -7,15 +8,37 @@ import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { getProgress } from "@/lib/data";
 import { fmt, fmtDate, fmtPct, fmtSigned, fmtSignedPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
-import { currentUser } from "@/lib/sample-data";
+import { FirstLogPrompt, PageSkeleton } from "@/components/progress/page-skeleton";
 import { cn } from "@/lib/utils";
 
 export default function OverviewPage() {
-  const p = getProgress();
-  const { latest } = p;
+  return (
+    <Suspense fallback={<PageSkeleton blocks={["h-[72px]", "h-[132px]", "h-[200px]", "h-[420px]"]} />}>
+      <Overview />
+    </Suspense>
+  );
+}
+
+async function Overview() {
+  const p = await getProgress();
+  const { latest, profile } = p;
+  const name = profile.display_name || profile.handle || "there";
+  const firstName = name.split(" ")[0];
+
+  if (!latest) {
+    return (
+      <div className="flex flex-col gap-6 lg:gap-8">
+        <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Welcome, {firstName}</h1>
+        <FirstLogPrompt
+          title="Your road to 500K starts with one number"
+          body="Open X analytics, copy your total impressions, and log it. From the second day on you'll see your daily gain, your pace, and when you'll reach 500K."
+        />
+      </div>
+    );
+  }
+
   const remaining = Math.max(0, GOAL - latest.total);
   const loggedToday = latest.date === p.today;
-  const firstName = currentUser.name.split(" ")[0];
 
   const stats = [
     { label: "Total impressions", value: fmt(latest.total), note: `as of ${fmtDate(latest.date)}` },
@@ -37,15 +60,15 @@ export default function OverviewPage() {
             Welcome back, {firstName}
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            <span className="font-mono">@{currentUser.handle}</span> ·{" "}
+            <span className="font-mono">@{profile.handle}</span> ·{" "}
             {loggedToday ? "Today is logged" : "Today isn't logged yet"} ·{" "}
             <span className="font-mono">{p.streak}</span>-day streak
           </p>
         </div>
         <div className="flex flex-col-reverse gap-2 sm:flex-row">
           <ShareDialog
-            name={currentUser.name}
-            handle={currentUser.handle}
+            name={name}
+            handle={profile.handle ?? ""}
             total={latest.total}
             delta={latest.delta}
             streak={p.streak}
