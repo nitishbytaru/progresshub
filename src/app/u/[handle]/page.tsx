@@ -8,7 +8,7 @@ import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { Avatar, Brand } from "@/components/shell/brand";
 import { fmt, fmtDate, fmtPct, fmtSigned } from "@/lib/format";
 import { GOAL, milestones } from "@/lib/progress";
-import { getPublicProgress } from "@/lib/public";
+import { cardPath, cardVersion, getPublicProgress } from "@/lib/public";
 
 type Props = { params: Promise<{ handle: string }> };
 
@@ -20,11 +20,17 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const total = data.latest?.total ?? 0;
   const rank = data.rank ? `#${data.rank.rank} of ${data.rank.of} · ` : "";
   const description = `${rank}${fmt(total)} / 500,000 impressions on X (${fmtPct((total / GOAL) * 100)}). Follow @${h}'s road to 500K.`;
+  const image = {
+    url: cardPath(h, cardVersion(data)),
+    width: 1200,
+    height: 630,
+    alt: `@${h}: ${fmt(total)} of 500,000 impressions on X`,
+  };
   return {
     title: `@${h} on the road to 500K`,
     description,
-    openGraph: { title: `@${h} on the road to 500K`, description, type: "profile", siteName: "progresshub" },
-    twitter: { card: "summary_large_image", title: `@${h} on the road to 500K`, description },
+    openGraph: { title: `@${h} on the road to 500K`, description, type: "profile", siteName: "progresshub", images: [image] },
+    twitter: { card: "summary_large_image", title: `@${h} on the road to 500K`, description, images: [image] },
   };
 }
 

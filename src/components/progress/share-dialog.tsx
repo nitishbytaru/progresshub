@@ -17,6 +17,8 @@ type Props = {
   rank: { rank: number; of: number } | null;
   /** Absolute public URL of the creator page, e.g. https://progresshub24.vercel.app/u/alexbuilds */
   shareUrl: string;
+  /** Versioned share-card image path, so the preview never shows stale numbers. */
+  imagePath: string;
 };
 
 // X counts every link as 23 characters, whatever its real length.
@@ -31,7 +33,7 @@ function XLogo({ className }: { className?: string }) {
   );
 }
 
-function defaultText({ handle, total, delta, streak, rank }: Omit<Props, "shareUrl">) {
+function defaultText({ handle, total, delta, streak, rank }: Omit<Props, "shareUrl" | "imagePath">) {
   const facts = [delta !== null ? `Latest day: ${fmtSigned(delta)}` : null, streak > 1 ? `${streak}-day streak` : null]
     .filter(Boolean)
     .join(" · ");
@@ -46,13 +48,12 @@ function defaultText({ handle, total, delta, streak, rank }: Omit<Props, "shareU
     .join("\n");
 }
 
-export function ShareDialog({ shareUrl, ...stats }: Props) {
+export function ShareDialog({ shareUrl, imagePath, ...stats }: Props) {
   const [text, setText] = useState(() => defaultText(stats));
   const [copied, setCopied] = useState<"link" | "text" | null>(null);
   const textId = useId();
   const length = text.length + 1 + X_LINK_LENGTH; // text + newline + link
   const over = length > X_LIMIT;
-  const imagePath = `${new URL(shareUrl).pathname}/opengraph-image`;
 
   const post = () => {
     const url = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(shareUrl)}`;

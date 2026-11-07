@@ -6,7 +6,7 @@ import { GoalTrack } from "@/components/progress/goal-track";
 import { ShareDialog } from "@/components/progress/share-dialog";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { getProgress } from "@/lib/data";
-import { getOrigin, getRank } from "@/lib/public";
+import { cardPath, cardVersion, getOrigin, getRank } from "@/lib/public";
 import { fmt, fmtDate, fmtPct, fmtSigned, fmtSignedPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 import { FirstLogPrompt, PageSkeleton } from "@/components/progress/page-skeleton";
@@ -75,6 +75,7 @@ async function Overview() {
             streak={p.streak}
             rank={rank}
             shareUrl={`${origin}/u/${profile.handle}`}
+            imagePath={cardPath(profile.handle ?? "", cardVersion({ latest, streak: p.streak, rank }))}
           />
           <Link
             href="/progress"

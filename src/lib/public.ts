@@ -71,3 +71,15 @@ export async function getOrigin() {
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
   return `${proto}://${host}`;
 }
+
+/** Changes whenever anything printed on the share card changes; used to bust image caches. */
+export function cardVersion(d: {
+  latest: { date: string; total: number } | null;
+  streak: number;
+  rank: { rank: number; of: number } | null;
+}) {
+  return [d.latest?.date ?? "none", d.latest?.total ?? 0, d.streak, d.rank?.rank ?? 0, d.rank?.of ?? 0].join("-");
+}
+
+export const cardPath = (handle: string, version: string) => `/u/${handle}/card?v=${encodeURIComponent(version)}`;
+

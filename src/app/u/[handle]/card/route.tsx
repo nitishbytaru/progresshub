@@ -5,9 +5,7 @@ import { fmt, fmtCompact, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 import { getPublicProgress } from "@/lib/public";
 
-export const alt = "Progress toward 500K impressions on X, tracked on progresshub";
-export const size = { width: 1200, height: 630 };
-export const contentType = "image/png";
+const size = { width: 1200, height: 630 };
 
 const font = (file: string) => readFile(join(process.cwd(), "assets/fonts", file));
 
@@ -18,7 +16,12 @@ const MUTED = "#ffffffb3";
 const SUBTLE = "#ffffff8c";
 const LINE = "#ffffff1f";
 
-export default async function Image({ params }: { params: Promise<{ handle: string }> }) {
+/**
+ * The share card X shows under a progresshub link (1200×630 PNG).
+ * Served at /u/<handle>/card?v=<version>; the version changes whenever the numbers on the card do,
+ * so browsers and X fetch a fresh image instead of a cached one.
+ */
+export async function GET(_request: Request, { params }: { params: Promise<{ handle: string }> }) {
   const { handle } = await params;
   const [data, jakarta500, jakarta700, mono500, mono600] = await Promise.all([
     getPublicProgress(handle),
@@ -124,6 +127,10 @@ export default async function Image({ params }: { params: Promise<{ handle: stri
         { name: "JetBrains Mono", data: mono500, weight: 500, style: "normal" },
         { name: "JetBrains Mono", data: mono600, weight: 600, style: "normal" },
       ],
+      headers: {
+        // Versioned URLs make long caching safe; unversioned hits stay short-lived.
+        "Cache-Control": "public, max-age=300, s-maxage=300, stale-while-revalidate=86400",
+      },
     },
   );
 }
