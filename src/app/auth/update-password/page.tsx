@@ -8,7 +8,7 @@ export default function UpdatePasswordPage() {
   const [state, action, pending] = useActionState<AuthState, FormData>(updatePassword, null);
   return (
     <AuthShell title="Set a new password" subtitle="You're signed in from the reset link. Choose a new password.">
-      <form action={action} className="flex flex-col gap-4">
+      <form action={action} noValidate className="flex flex-col gap-4">
         <Field
           label="New password"
           name="password"
@@ -16,7 +16,7 @@ export default function UpdatePasswordPage() {
           autoComplete="new-password"
           minLength={8}
           required
-          placeholder="At least 8 characters"
+          placeholder="8+ characters, with a letter and a number"
         />
         {state?.error && <FormNotice tone="error">{state.error}</FormNotice>}
         <SubmitButton pending={pending}>{pending ? "Saving…" : "Save password"}</SubmitButton>

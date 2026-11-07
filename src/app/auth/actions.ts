@@ -3,6 +3,7 @@
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { validateEmail, validateNewPassword } from "@/lib/validation";
 
 export type AuthState = { error?: string; message?: string; email?: string } | null;
 
@@ -38,12 +39,16 @@ const friendly = (msg: string) => {
   if (/email not confirmed/i.test(msg)) return "Confirm your email first. Check your inbox for the link we sent.";
   if (/already registered/i.test(msg)) return "That email already has an account. Sign in instead.";
   if (/rate limit/i.test(msg)) return "Too many attempts. Wait a minute and try again.";
+  if (/weak|pwned|leaked/i.test(msg)) return "That password is too easy to guess. Choose a stronger one.";
+  if (/should be different/i.test(msg)) return "Choose a password different from your current one.";
   return msg;
 };
 
 export async function signIn(_: AuthState, formData: FormData): Promise<AuthState> {
   const { email, password } = readCredentials(formData);
-  if (!email || !password) return { error: "Enter your email and password.", email };
+  const emailError = validateEmail(email);
+  if (emailError) return { error: emailError, email };
+  if (!password) return { error: "Enter your password.", email };
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: friendly(error.message), email };
@@ -52,8 +57,8 @@ export async function signIn(_: AuthState, formData: FormData): Promise<AuthStat
 
 export async function signUp(_: AuthState, formData: FormData): Promise<AuthState> {
   const { email, password } = readCredentials(formData);
-  if (!email) return { error: "Enter your email.", email };
-  if (password.length < 8) return { error: "Use at least 8 characters for your password.", email };
+  const problem = validateEmail(email) ?? validateNewPassword(password);
+  if (problem) return { error: problem, email };
   const supabase = await createClient();
   await rememberNext("/onboarding");
   const { data, error } = await supabase.auth.signUp({
@@ -71,6 +76,8 @@ export async function signUp(_: AuthState, formData: FormData): Promise<AuthStat
 export async function requestPasswordReset(_: AuthState, formData: FormData): Promise<AuthState> {
   const { email } = readCredentials(formData);
   if (!email) return { error: "Enter the email you signed up with.", email };
+  const emailError = validateEmail(email);
+  if (emailError) return { error: emailError, email };
   const supabase = await createClient();
   await rememberNext("/auth/update-password");
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -82,7 +89,8 @@ export async function requestPasswordReset(_: AuthState, formData: FormData): Pr
 
 export async function updatePassword(_: AuthState, formData: FormData): Promise<AuthState> {
   const password = String(formData.get("password") ?? "");
-  if (password.length < 8) return { error: "Use at least 8 characters." };
+  const problem = validateNewPassword(password);
+  if (problem) return { error: problem };
   const supabase = await createClient();
   const { error } = await supabase.auth.updateUser({ password });
   if (error) return { error: friendly(error.message) };

@@ -7,7 +7,7 @@ import { completeOnboarding, type OnboardingState } from "./actions";
 export function OnboardingForm({ defaultName }: { defaultName: string }) {
   const [state, action, pending] = useActionState<OnboardingState, FormData>(completeOnboarding, null);
   return (
-    <form action={action} className="flex flex-col gap-4">
+    <form action={action} noValidate className="flex flex-col gap-4">
       <Field
         label="X handle"
         name="handle"
@@ -16,7 +16,6 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
         autoCapitalize="none"
         spellCheck={false}
         maxLength={16}
-        pattern="@?[A-Za-z0-9_]{1,15}"
         placeholder="@yourhandle"
         defaultValue={state?.handle}
       />

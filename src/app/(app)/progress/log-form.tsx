@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { fmt, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
 import { addDays, forecast, GOAL, paceOver, toUTC, withDeltas, type Entry } from "@/lib/progress";
 import { cn } from "@/lib/utils";
+import { LIMITS, parseImpressions, validateEntry } from "@/lib/validation";
 import { saveEntry } from "./actions";
 
 // react-day-picker works in local time; logs are plain YYYY-MM-DD calendar days.
@@ -34,7 +35,8 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
     initialDate && toUTC(initialDate) <= toUTC(today) ? initialDate : today;
   const [date, setDate] = useState(startDate);
   const existing = entries.find((e) => e.date === date);
-  const [raw, setRaw] = useState(existing ? String(existing.total) : "");
+  // Exactly what the creator typed (digits only once it parses), so format mistakes can be explained.
+  const [text, setText] = useState(existing ? String(existing.total) : "");
   const [saving, startSaving] = useTransition();
   const [serverError, setServerError] = useState<string | null>(null);
   const [touched, setTouched] = useState(false);
@@ -44,35 +46,27 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
   const pickDate = (d: string) => {
     setDate(d);
     const found = entries.find((e) => e.date === d);
-    setRaw(found ? String(found.total) : "");
+    setText(found ? String(found.total) : "");
     setTouched(false);
     setServerError(null);
   };
 
-  const value = raw === "" ? null : Number(raw);
+  const parsed = parseImpressions(text);
+  const value = parsed.value;
+  const minDate = addDays(today, -LIMITS.maxBackfillDays);
   const sorted = useMemo(() => [...entries].sort((a, b) => toUTC(a.date) - toUTC(b.date)), [entries]);
   const before = [...sorted].reverse().find((e) => toUTC(e.date) < toUTC(date)) ?? null;
   const after = sorted.find((e) => toUTC(e.date) > toUTC(date)) ?? null;
 
-  const error =
-    value === null
-      ? "Enter your total impressions from X analytics."
-      : value <= 0
-        ? "Enter a number above zero."
-        : before && value < before.total
-          ? `That's lower than your ${fmtDateShort(before.date)} total of ${fmt(before.total)}. Totals only go up, so check the number in X analytics.`
-          : after && value > after.total
-            ? `That's higher than your ${fmtDateShort(after.date)} total of ${fmt(after.total)}. Fix that day first or check this number.`
-            : null;
+  const error = parsed.error ?? validateEntry({ date, total: value, today, before, after });
 
-  const preview = useMemo(() => {
+  const preview = (() => {
     if (value === null || error) return null;
     const next = withDeltas([...entries.filter((e) => e.date !== date), { date, total: value }]);
     const row = next.find((r) => r.date === date)!;
     const last = next[next.length - 1];
-    const eta = forecast(last.total, paceOver(next, 7), last.date);
-    return { row, eta };
-  }, [value, error, entries, date]);
+    return { row, eta: forecast(last.total, paceOver(next, 7), last.date) };
+  })();
 
   const save = (e: React.FormEvent) => {
     e.preventDefault();
@@ -92,7 +86,8 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
   };
 
   const rows = useMemo(() => withDeltas(entries), [entries]);
-  const showError = serverError ?? (touched && error);
+  // Format and range problems show as you type; "enter a number" waits until you've tried.
+  const showError = serverError ?? (value === null && !parsed.error ? (touched ? error : null) : error);
 
   const dateChoices = [
     { d: today, label: "Today", sub: fmtDateShort(today) },
@@ -159,7 +154,8 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                     weekStartsOn={1}
                     selected={toLocalDate(date)}
                     defaultMonth={toLocalDate(date)}
-                    disabled={{ after: toLocalDate(today) }}
+                    disabled={[{ after: toLocalDate(today) }, { before: toLocalDate(minDate) }]}
+                    startMonth={toLocalDate(minDate)}
                     endMonth={toLocalDate(today)}
                     modifiers={{ logged: entries.map((e) => toLocalDate(e.date)) }}
                     modifiersClassNames={{ logged: "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-current [&>button]:after:opacity-60" }}
@@ -192,9 +188,16 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                 inputMode="numeric"
                 autoComplete="off"
                 placeholder={before ? `more than ${fmt(before.total)}` : "e.g. 157,400"}
-                value={raw === "" ? "" : fmt(Number(raw))}
-                onChange={(e) => setRaw(e.target.value.replace(/\D/g, "").slice(0, 10))}
-                onBlur={() => raw !== "" && setTouched(true)}
+                maxLength={24}
+                value={/^\d+$/.test(text) ? fmt(Number(text)) : text}
+                onChange={(e) => {
+                  setServerError(null);
+                  const typed = e.target.value;
+                  const digits = typed.replace(/[\s,]/g, "");
+                  // Clean digits are stored bare (and shown formatted); anything else is kept so its error can explain it.
+                  setText(/^\d*$/.test(digits) ? digits.slice(0, LIMITS.maxDigits + 1) : typed);
+                }}
+                onBlur={() => setTouched(true)}
                 aria-invalid={Boolean(showError)}
                 aria-describedby={`${inputId}-msg`}
                 className="w-full min-w-0 bg-transparent font-mono text-2xl font-semibold tracking-[-0.03em] text-foreground caret-primary outline-none placeholder:text-base placeholder:font-normal placeholder:tracking-normal placeholder:text-muted-foreground"
@@ -235,7 +238,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
           )}
 
           <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            {raw !== (existing ? String(existing.total) : "") && (
+            {text !== (existing ? String(existing.total) : "") && (
               <Button
                 type="button"
                 variant="ghost"

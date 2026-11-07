@@ -88,7 +88,7 @@ export function AuthForm() {
 
       {(linkError || googleError) && <FormNotice tone="error">{googleError ?? linkError}</FormNotice>}
 
-      <form key={mode} action={formAction} className="flex flex-col gap-4">
+      <form key={mode} action={formAction} noValidate className="flex flex-col gap-4">
         <input type="hidden" name="next" value={next} />
         <input type="hidden" name="mode" value={mode} />
         <Field
@@ -108,7 +108,7 @@ export function AuthForm() {
             autoComplete={mode === "signup" ? "new-password" : "current-password"}
             required
             minLength={mode === "signup" ? 8 : undefined}
-            placeholder={mode === "signup" ? "At least 8 characters" : undefined}
+            placeholder={mode === "signup" ? "8+ characters, with a letter and a number" : undefined}
             hint={
               mode === "signin" && (
                 <button

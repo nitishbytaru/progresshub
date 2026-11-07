@@ -2,17 +2,14 @@
 
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { validateDisplayName, validateHandle } from "@/lib/validation";
 
 export type OnboardingState = { error?: string; handle?: string; name?: string } | null;
 
 export async function completeOnboarding(_: OnboardingState, formData: FormData): Promise<OnboardingState> {
-  const handle = String(formData.get("handle") ?? "").trim().replace(/^@/, "");
-  const name = String(formData.get("name") ?? "").trim().slice(0, 50);
-
-  if (!/^[A-Za-z0-9_]{1,15}$/.test(handle)) {
-    return { error: "X handles are 1–15 letters, numbers or underscores.", handle, name };
-  }
-  if (!name) return { error: "Add the name you want on the leaderboard.", handle, name };
+  const { handle, error: handleError } = validateHandle(String(formData.get("handle") ?? ""));
+  const { name, error: nameError } = validateDisplayName(String(formData.get("name") ?? ""));
+  if (handleError || nameError) return { error: handleError ?? nameError ?? undefined, handle, name };
 
   const supabase = await createClient();
   const {
