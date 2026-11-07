@@ -2,7 +2,7 @@
  * Shared validation for everything a creator types in. Used by the forms (instant feedback)
  * and the server actions (the real gate), so the rules and messages never drift apart.
  */
-import { fmt, fmtDate } from "./format";
+import { fmt, fmtDate, fmtDateShort } from "./format";
 import { addDays, daysBetween, toUTC, type Entry } from "./progress";
 
 export const LIMITS = {
@@ -46,6 +46,13 @@ export function validateDate(date: string, today: string): string | null {
  * Full check for one log. `before`/`after` are the nearest existing logs on either side of `date`
  * (excluding the one being edited), so totals stay non-decreasing and daily gains stay believable.
  */
+/** "today (Nov 8)", "yesterday (Nov 7)" or "Nov 5, 2026": names the day the way the creator thinks of it. */
+function dayName(date: string, today: string) {
+  if (date === today) return `today (${fmtDateShort(date)})`;
+  if (date === addDays(today, -1)) return `yesterday (${fmtDateShort(date)})`;
+  return fmtDate(date);
+}
+
 export function validateEntry(args: {
   date: string;
   total: number | null;
@@ -66,7 +73,7 @@ export function validateEntry(args: {
 
   if (before) {
     if (total < before.total) {
-      return `That's lower than your ${fmtDate(before.date)} total of ${fmt(before.total)}. Totals only go up, so check the number in X analytics.`;
+      return `This can't be lower than ${dayName(before.date, today)}, which is ${fmt(before.total)}. Totals only go up, so enter ${fmt(before.total)} or more.`;
     }
     const days = Math.max(1, daysBetween(before.date, date));
     const perDay = (total - before.total) / days;
@@ -76,7 +83,7 @@ export function validateEntry(args: {
   }
   if (after) {
     if (total > after.total) {
-      return `That's higher than your ${fmtDate(after.date)} total of ${fmt(after.total)}. Fix that day first or check this number.`;
+      return `This can't be higher than ${dayName(after.date, today)}, which is ${fmt(after.total)}. An earlier day must be ${fmt(after.total)} or less. If ${dayName(after.date, today)} is wrong, fix it first.`;
     }
     const days = Math.max(1, daysBetween(date, after.date));
     if ((after.total - total) / days > LIMITS.maxDailyGain) {

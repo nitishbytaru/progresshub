@@ -209,7 +209,13 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
               )}
             </div>
             <p id={`${inputId}-msg`} className={cn("mt-2 min-h-5 text-sm", showError ? "font-medium" : "text-muted-foreground")}>
-              {showError ? showError : before ? `Previous log: ${fmt(before.total)} on ${fmtDateShort(before.date)}.` : "This is your first log."}
+              {showError
+                ? showError
+                : after
+                  ? `Must be between ${fmt(before?.total ?? 1)} (${before ? fmtDateShort(before.date) : "minimum"}) and ${fmt(after.total)} (${fmtDateShort(after.date)}).`
+                  : before
+                    ? `Previous log: ${fmt(before.total)} on ${fmtDateShort(before.date)}.`
+                    : "This is your first log."}
             </p>
           </div>
 
