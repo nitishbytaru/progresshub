@@ -1,6 +1,6 @@
 "use client";
 
-import { useId, useMemo, useState, useTransition } from "react";
+import { useId, useMemo, useRef, useState, useTransition } from "react";
 import { CalendarDays, Check, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { EntriesTable } from "@/components/progress/entries-table";
@@ -30,6 +30,19 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
   const [touched, setTouched] = useState(false);
   const inputId = useId();
   const dateId = useId();
+  const dateRef = useRef<HTMLInputElement>(null);
+
+  const openPicker = () => {
+    const input = dateRef.current;
+    if (!input) return;
+    try {
+      input.showPicker();
+    } catch {
+      // Older browsers without showPicker(): focusing still lets the keyboard/native UI take over.
+      input.focus();
+      input.click();
+    }
+  };
 
   const pickDate = (d: string) => {
     setDate(d);
@@ -123,31 +136,39 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                   </span>
                 </button>
               ))}
-              <label
-                htmlFor={dateId}
-                className={cn(
-                  "relative flex h-14 cursor-pointer flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-foreground",
-                  isCustom
-                    ? "border-primary bg-primary-soft text-foreground"
-                    : "border-hairline hover:bg-hover",
-                )}
-              >
-                <span className="flex items-center gap-1.5">
-                  <CalendarDays className="size-4" /> Other
-                </span>
-                <span className={cn("font-mono text-[11px] font-normal", isCustom ? "text-primary" : "text-muted-foreground")}>
-                  {isCustom ? fmtDateShort(date) : "pick a day"}
-                </span>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={openPicker}
+                  aria-pressed={isCustom}
+                  aria-haspopup="dialog"
+                  className={cn(
+                    "flex h-14 w-full flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors",
+                    isCustom
+                      ? "border-primary bg-primary-soft text-foreground"
+                      : "border-hairline hover:bg-hover",
+                  )}
+                >
+                  <span className="flex items-center gap-1.5">
+                    <CalendarDays className="size-4" /> Other
+                  </span>
+                  <span className={cn("font-mono text-[11px] font-normal", isCustom ? "text-primary" : "text-muted-foreground")}>
+                    {isCustom ? fmtDateShort(date) : "pick a day"}
+                  </span>
+                </button>
+                {/* Native picker, opened by the button above. Kept in the tree (not display:none) so showPicker() works. */}
                 <input
+                  ref={dateRef}
                   id={dateId}
                   type="date"
+                  tabIndex={-1}
+                  aria-hidden
                   max={today}
                   value={date}
                   onChange={(e) => e.target.value && pickDate(e.target.value)}
-                  className="absolute inset-0 cursor-pointer opacity-0 [color-scheme:dark]"
-                  aria-label="Pick another day"
+                  className="pointer-events-none absolute bottom-0 left-1/2 h-px w-px -translate-x-1/2 opacity-0 [color-scheme:dark]"
                 />
-              </label>
+              </div>
             </div>
           </fieldset>
 
