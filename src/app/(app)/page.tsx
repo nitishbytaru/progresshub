@@ -146,7 +146,7 @@ async function Overview() {
             Analytics <ArrowRight className="size-4" />
           </Link>
         </div>
-        <TrajectoryChart rows={p.rows} eta={p.eta} pace={p.pace7} />
+        <TrajectoryChart rows={p.rows} eta={p.eta} pace={p.pace7} projection={false} />
       </section>
 
       {/* Recent logs */}

@@ -1,5 +1,6 @@
 import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtSigned } from "@/lib/format";
 import { GOAL, addDays, daysBetween, type DayRow, type Forecast } from "@/lib/progress";
+import { cn } from "@/lib/utils";
 
 const W = 1000;
 const H = 300;
@@ -14,14 +15,16 @@ type Props = {
   /** Optional slower projection (28-day pace), drawn fainter. */
   etaSlow?: Forecast;
   paceSlow?: number;
+  /** false = history only (up to the latest log), no projection. */
+  projection?: boolean;
   height?: string;
 };
 
-/** Rounds up to a readable axis maximum: 1, 2, 2.5 or 5 × 10ⁿ. */
+/** Rounds up to a readable axis maximum (1, 1.5, 2, 2.5, 3, 4, 5, 6 or 8 × 10ⁿ). */
 function niceCeil(v: number) {
   if (v <= 0) return 1000;
   const exp = 10 ** Math.floor(Math.log10(v));
-  const step = [1, 2, 2.5, 5, 10].find((s) => s * exp >= v)!;
+  const step = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find((s) => s * exp >= v)!;
   return step * exp;
 }
 
@@ -30,18 +33,19 @@ function niceCeil(v: number) {
  * projection at the current pace (white, dashed). The window zooms to the creator's real
  * history plus a short look-ahead; it only stretches to 500K once 500K is close.
  */
-export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, height = "h-64 sm:h-80" }: Props) {
+export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection = true, height = "h-64 sm:h-80" }: Props) {
   const first = rows[0];
   const last = rows[rows.length - 1];
   const history = Math.max(1, daysBetween(first.date, last.date));
 
   // Look ahead ~60% of the history (at least a week). If 500K lands inside that, show it.
   const lookAhead = Math.max(7, Math.ceil(history * 0.6));
-  const goalInView = Boolean(eta && daysBetween(last.date, eta.etaDate) <= lookAhead * 2);
-  const end = goalInView && eta ? eta.etaDate : addDays(last.date, lookAhead);
-  const span = Math.max(1, daysBetween(first.date, end));
+  const goalInView = projection && Boolean(eta && daysBetween(last.date, eta.etaDate) <= lookAhead * 2);
+  const end = !projection ? last.date : goalInView && eta ? eta.etaDate : addDays(last.date, lookAhead);
+  // History-only keeps a little room on the right so the latest bar and point aren't clipped.
+  const span = projection ? Math.max(1, daysBetween(first.date, end)) : history + Math.max(0.3, history * 0.04);
   const projectAt = (p: number) => Math.min(GOAL, last.total + p * daysBetween(last.date, end));
-  const projectedEnd = goalInView ? GOAL : projectAt(pace);
+  const projectedEnd = !projection ? last.total : goalInView ? GOAL : projectAt(pace);
 
   const yMax = goalInView ? GOAL * 1.06 : niceCeil(Math.max(projectedEnd, last.total) * 1.1);
   const ticks = [0.25, 0.5, 0.75, 1].map((f) => yMax * f);
@@ -61,7 +65,9 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, height = "
   const barW = Math.max(2, Math.min(dayWidth * 0.55, 28));
 
   const slowEnd =
-    etaSlow && paceSlow !== undefined && paceSlow > 0 && !goalInView
+    !projection
+      ? null
+      : etaSlow && paceSlow !== undefined && paceSlow > 0 && !goalInView
       ? { date: end, value: projectAt(paceSlow) }
       : etaSlow && goalInView && etaSlow.etaDate <= end
         ? { date: etaSlow.etaDate, value: GOAL }
@@ -133,7 +139,7 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, height = "
               vectorEffect="non-scaling-stroke"
             />
           )}
-          {pace > 0 && (
+          {projection && pace > 0 && (
             <line
               x1={x(last.date)}
               y1={y(last.total)}
@@ -187,8 +193,14 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, height = "
           style={{ left: `${pctX(last.date)}%`, top: `${pctY(last.total)}%` }}
         />
         <div
-          className="pointer-events-none absolute -translate-x-1/2 -translate-y-[calc(100%+14px)] rounded-lg border border-border bg-background px-2.5 py-1.5 font-mono text-[11px] whitespace-nowrap"
-          style={{ left: `clamp(4.5rem, ${pctX(last.date)}%, calc(100% - 4.5rem))`, top: `${pctY(last.total)}%` }}
+          className={cn(
+            "pointer-events-none absolute rounded-lg border border-border bg-background px-2.5 py-1.5 font-mono text-[11px] whitespace-nowrap",
+            projection ? "-translate-x-1/2 -translate-y-[calc(100%+14px)]" : "-translate-x-[calc(100%+10px)] -translate-y-[calc(100%+6px)]",
+          )}
+          style={{
+            left: projection ? `clamp(4.5rem, ${pctX(last.date)}%, calc(100% - 4.5rem))` : `${pctX(last.date)}%`,
+            top: `${pctY(last.total)}%`,
+          }}
         >
           <span className="block text-subtle">
             {fmtDateShort(last.date)}
@@ -208,16 +220,27 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, height = "
       {/* X axis */}
       <div className="relative mt-3 h-4 font-mono text-[11px]">
         {!startLabelCrowded && <span className="absolute left-0 text-subtle">{fmtDateShort(first.date)}</span>}
-        <span
-          className="absolute -translate-x-1/2 font-semibold text-primary"
-          style={{ left: `clamp(1.5rem, ${pctX(last.date)}%, calc(100% - 1.5rem))` }}
-        >
-          Latest
-        </span>
-        <span className="absolute right-0 text-muted-foreground">
-          {fmtDateShort(end)}
-          {goalInView ? " · 500K" : ""}
-        </span>
+        {projection ? (
+          <span
+            className="absolute -translate-x-1/2 font-semibold text-primary"
+            style={{ left: `clamp(1.5rem, ${pctX(last.date)}%, calc(100% - 1.5rem))` }}
+          >
+            Latest
+          </span>
+        ) : (
+          <span
+            className="absolute -translate-x-full font-semibold whitespace-nowrap text-primary"
+            style={{ left: `calc(${pctX(last.date)}% + 0.75rem)` }}
+          >
+            {fmtDateShort(last.date)} · latest
+          </span>
+        )}
+        {projection && (
+          <span className="absolute right-0 text-muted-foreground">
+            {fmtDateShort(end)}
+            {goalInView ? " · 500K" : ""}
+          </span>
+        )}
       </div>
 
       <figcaption className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
@@ -227,7 +250,7 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, height = "
         <span className="flex items-center gap-2">
           <span className="h-2.5 w-2 rounded-sm bg-primary/30" /> Gained that day
         </span>
-        {pace > 0 && (
+        {projection && pace > 0 && (
           <span className="flex items-center gap-2">
             <span className="w-4 border-t-2 border-dashed border-white/60" /> Projected at 7-day pace
           </span>
@@ -237,7 +260,7 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, height = "
             <span className="w-4 border-t-2 border-dotted border-white/30" /> 28-day pace
           </span>
         )}
-        {!goalInView && eta && (
+        {projection && !goalInView && eta && (
           <span className="sm:ml-auto">
             500K around <span className="font-mono font-semibold text-foreground">{fmtDate(eta.etaDate)}</span>
           </span>
