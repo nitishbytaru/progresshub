@@ -1,6 +1,7 @@
 import "server-only";
 import { createClient as createSupabase } from "@supabase/supabase-js";
 import { headers } from "next/headers";
+import { connection } from "next/server";
 import { cache } from "react";
 import { SUPABASE_KEY, SUPABASE_URL } from "./supabase/env";
 import { forecast, paceOver, streak, withDeltas, type Entry } from "./progress";
@@ -14,6 +15,7 @@ export type PublicProfile = { id: string; handle: string; display_name: string; 
 const escapeLike = (s: string) => s.replace(/[\\%_]/g, (c) => `\\${c}`);
 
 export const getPublicProfile = cache(async (handle: string): Promise<PublicProfile | null> => {
+  await connection(); // live data + clock reads below: request-time only
   if (!/^[A-Za-z0-9_]{1,15}$/.test(handle)) return null;
   const { data } = await anon()
     .from("profiles")
@@ -26,6 +28,7 @@ export const getPublicProfile = cache(async (handle: string): Promise<PublicProf
 
 /** Rank by total impressions (1 = closest to 500K) and how many creators are on the board. */
 export const getRank = cache(async (userId: string) => {
+  await connection();
   const db = anon();
   const { data: me } = await db.from("leaderboard").select("total").eq("user_id", userId).maybeSingle();
   if (!me) return null;

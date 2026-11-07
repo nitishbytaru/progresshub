@@ -8,7 +8,8 @@ import { createClient } from "@/lib/supabase/server";
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = request.nextUrl;
-  const rawNext = searchParams.get("next") ?? "/";
+  // `next` comes from the auth_next cookie (set before leaving), or a legacy ?next= param.
+  const rawNext = searchParams.get("next") ?? decodeURIComponent(request.cookies.get("auth_next")?.value ?? "/");
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
 
   const supabase = await createClient();
@@ -27,8 +28,9 @@ export async function GET(request: NextRequest) {
     error = "This sign-in link is missing its code.";
   }
 
-  if (error) {
-    return NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error)}`);
-  }
-  return NextResponse.redirect(`${origin}${next}`);
+  const res = error
+    ? NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error)}`)
+    : NextResponse.redirect(`${origin}${type === "recovery" ? "/auth/update-password" : next}`);
+  res.cookies.delete("auth_next");
+  return res;
 }

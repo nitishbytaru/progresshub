@@ -1,6 +1,6 @@
 "use server";
 
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 
@@ -11,6 +11,14 @@ async function origin() {
   const host = h.get("x-forwarded-host") ?? h.get("host");
   const proto = h.get("x-forwarded-proto") ?? (host?.startsWith("localhost") ? "http" : "https");
   return process.env.NEXT_PUBLIC_SITE_URL ?? `${proto}://${host}`;
+}
+
+/**
+ * Where to land after an auth link. Kept in a cookie (not the callback URL) so the callback URL
+ * exactly matches Supabase's Redirect URLs allow list.
+ */
+async function rememberNext(path: string) {
+  (await cookies()).set("auth_next", path, { path: "/", maxAge: 60 * 60, sameSite: "lax", httpOnly: true });
 }
 
 /** Only allow same-site relative redirects. */
@@ -47,10 +55,11 @@ export async function signUp(_: AuthState, formData: FormData): Promise<AuthStat
   if (!email) return { error: "Enter your email.", email };
   if (password.length < 8) return { error: "Use at least 8 characters for your password.", email };
   const supabase = await createClient();
+  await rememberNext("/onboarding");
   const { data, error } = await supabase.auth.signUp({
     email,
     password,
-    options: { emailRedirectTo: `${await origin()}/auth/callback?next=/onboarding` },
+    options: { emailRedirectTo: `${await origin()}/auth/callback` },
   });
   if (error) return { error: friendly(error.message), email };
   if (!data.session) {
@@ -63,8 +72,9 @@ export async function requestPasswordReset(_: AuthState, formData: FormData): Pr
   const { email } = readCredentials(formData);
   if (!email) return { error: "Enter the email you signed up with.", email };
   const supabase = await createClient();
+  await rememberNext("/auth/update-password");
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${await origin()}/auth/callback?next=/auth/update-password`,
+    redirectTo: `${await origin()}/auth/callback`,
   });
   if (error) return { error: friendly(error.message), email };
   return { message: `If ${email} has an account, a reset link is on its way.`, email };

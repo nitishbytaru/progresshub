@@ -35,9 +35,11 @@ export function AuthForm() {
   const google = async () => {
     setGooglePending(true);
     setGoogleError(null);
+    document.cookie = `auth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`;
     const { error } = await createClient().auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(next)}` },
+      // Exact callback URL (no query) so it matches Supabase's Redirect URLs allow list; `next` rides in a cookie.
+      options: { redirectTo: `${window.location.origin}/auth/callback` },
     });
     if (error) {
       setGooglePending(false);

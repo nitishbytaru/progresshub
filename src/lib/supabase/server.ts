@@ -1,10 +1,14 @@
 import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { SUPABASE_KEY, SUPABASE_URL } from "./env";
 
 /** Per-request Supabase client for Server Components, Server Actions and Route Handlers. */
 export async function createClient() {
+  // Auth checks read the clock (token expiry), so everything using this client is request-time only.
+  // Without this, Partial Prefetching flags `Date.now()` as unstable during prerender.
+  await connection();
   const cookieStore = await cookies();
   return createServerClient(SUPABASE_URL, SUPABASE_KEY, {
     cookies: {

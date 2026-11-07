@@ -1,5 +1,6 @@
 import "server-only";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "./supabase/server";
@@ -27,6 +28,7 @@ export type LeaderRow = {
 
 /** The viewer's calendar date (YYYY-MM-DD) in their own time zone, from the `tz` cookie. */
 export const getToday = cache(async (): Promise<string> => {
+  await connection(); // reads the clock
   const raw = (await cookies()).get("tz")?.value;
   const tz = raw ? decodeURIComponent(raw) : undefined;
   try {
