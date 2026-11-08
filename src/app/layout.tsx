@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Analytics } from "@vercel/analytics/next";
+import { SiteAnalytics } from "@/components/site-analytics";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { TimezoneCookie } from "@/components/shell/timezone-cookie";
 import { Toaster } from "@/components/ui/sonner";
@@ -41,7 +41,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         {children}
         <Toaster />
         <TimezoneCookie />
-        <Analytics />
+        <SiteAnalytics />
       </body>
     </html>
   );
