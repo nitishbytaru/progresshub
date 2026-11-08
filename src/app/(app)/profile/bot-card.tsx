@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BellRing, Check, Loader2, RefreshCw, type LucideIcon } from "lucide-react";
+import { BellRing, Check, Loader2, PenLine, RefreshCw, Trophy, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fmtDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
@@ -22,6 +22,14 @@ type Props = {
   remindAction: (on: unknown) => Promise<Result>;
   disconnectAction: () => Promise<Result>;
 };
+
+const outline = "border-border bg-transparent text-foreground hover:bg-hover dark:border-border dark:bg-transparent dark:hover:bg-hover";
+
+const FEATURES = [
+  { icon: BellRing, label: "Nudge", meaning: "A reminder on days you haven't logged", tags: ["missed days"] },
+  { icon: PenLine, label: "Log", meaning: "Log by sending a number, like 28,400 or +1,200", tags: ["28,400", "+1,200"] },
+  { icon: Trophy, label: "Stats", meaning: "Rank, streak and milestones, each with a share-on-X link", tags: ["rank", "streak", "share"] },
+];
 
 /** Connect a progresshub chat bot: daily reminders, logging by message, stats with share links. */
 export function BotCard({ id, channel, icon: Icon, doneLabel, link, openUrl, connectAction, remindAction, disconnectAction }: Props) {
@@ -49,8 +57,8 @@ export function BotCard({ id, channel, icon: Icon, doneLabel, link, openUrl, con
     });
 
   return (
-    <section aria-labelledby={titleId} className="panel-dark rounded-2xl">
-      <div className="flex items-center justify-between gap-3 px-5 pt-5 sm:px-6 sm:pt-6">
+    <section aria-labelledby={titleId} className="panel-dark divide-y divide-hairline rounded-2xl">
+      <div className="flex items-center justify-between gap-3 px-5 py-4 sm:px-6">
         <div className="flex items-center gap-2.5">
           <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary" aria-hidden>
             <Icon className="size-4" />
@@ -67,7 +75,7 @@ export function BotCard({ id, channel, icon: Icon, doneLabel, link, openUrl, con
       </div>
 
       {link ? (
-        <div className="mt-4 divide-y divide-hairline border-t border-hairline">
+        <div className="divide-y divide-hairline">
           <div className="flex items-center gap-3 px-5 py-3.5 sm:px-6">
             <BellRing className="size-4 shrink-0 text-muted-foreground" aria-hidden />
             <span className="min-w-0 flex-1">
@@ -102,7 +110,7 @@ export function BotCard({ id, channel, icon: Icon, doneLabel, link, openUrl, con
                   href={openUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-hover"
+                  className="inline-flex h-9 items-center rounded-lg border border-border px-3 text-xs font-semibold text-foreground transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
                 >
                   Open bot
                 </a>
@@ -119,37 +127,48 @@ export function BotCard({ id, channel, icon: Icon, doneLabel, link, openUrl, con
           </div>
         </div>
       ) : (
-        <div className="px-5 pt-3 pb-5 sm:px-6 sm:pb-6">
-          <ul className="flex flex-col gap-1.5 text-sm text-muted-foreground">
-            <li>⏰ A nudge on days you haven&apos;t logged</li>
-            <li>📝 Log by sending a number, like 28,400 or +1,200</li>
-            <li>🏆 Rank, streak and milestones, each with a share-on-X link</li>
+        <>
+          <ul className="divide-y divide-hairline">
+            {FEATURES.map(({ icon: FeatureIcon, label, meaning, tags }) => (
+              <li key={label} title={meaning} className="flex items-center justify-between gap-3 px-5 py-3.5 sm:px-6">
+                <span className="flex items-center gap-3">
+                  <FeatureIcon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                  <span className="text-sm font-semibold">{label}</span>
+                  <span className="sr-only">{meaning}</span>
+                </span>
+                <span className="flex flex-wrap justify-end gap-1.5" aria-hidden>
+                  {tags.map((tag) => (
+                    <span key={tag} className="rounded-md border border-hairline px-2 py-0.5 font-mono text-xs text-muted-foreground tabular-nums">
+                      {tag}
+                    </span>
+                  ))}
+                </span>
+              </li>
+            ))}
           </ul>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <Button
-              onClick={connect}
-              disabled={pending || !openUrl}
-              className="h-10 gap-2 bg-primary px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed"
-            >
-              {pending ? <Loader2 className="size-4 animate-spin" /> : <Icon className="size-4" />}
-              Connect {channel}
-            </Button>
-            {opened && (
+          <div className="px-5 py-4 sm:px-6">
+            <div className="flex flex-wrap gap-2">
               <Button
-                variant="outline"
-                onClick={() => router.refresh()}
-                className="h-10 gap-2 border-border bg-transparent px-4 text-sm font-semibold text-foreground hover:bg-hover"
+                onClick={connect}
+                disabled={pending || !openUrl}
+                className="h-10 min-w-[min(100%,14rem)] flex-1 gap-2 border-primary bg-primary bg-clip-border px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed"
               >
-                <RefreshCw className="size-4" /> {doneLabel}
+                {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <Icon className="size-4" aria-hidden />}
+                Connect {channel}
               </Button>
-            )}
+              {opened && (
+                <Button variant="outline" onClick={() => router.refresh()} className={`h-10 gap-2 px-4 text-sm font-semibold ${outline}`}>
+                  <RefreshCw className="size-4" aria-hidden /> {doneLabel}
+                </Button>
+              )}
+            </div>
+            {!openUrl && <p className="mt-2 text-xs text-subtle">The bot isn&apos;t set up on this site yet.</p>}
           </div>
-          {!openUrl && <p className="mt-2 text-xs text-subtle">The bot isn&apos;t set up on this site yet.</p>}
-        </div>
+        </>
       )}
 
       {problem && (
-        <p role="alert" className="px-5 pb-4 text-sm font-medium text-foreground sm:px-6">
+        <p role="alert" className="px-5 py-3 text-sm font-medium text-foreground sm:px-6">
           {problem}
         </p>
       )}
