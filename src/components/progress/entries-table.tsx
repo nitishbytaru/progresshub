@@ -18,13 +18,15 @@ function Change({ value, className }: { value: number | null; className?: string
 type Props = {
   rows: DayRow[];
   limit?: number;
+  /** Rows to skip from the newest, for paging. */
+  offset?: number;
   /** The viewer's today, for the edit dialog's date rules. */
   today: string;
   onSaved?: (entry: Entry) => void;
 };
 
-export function EntriesTable({ rows, limit = 7, today, onSaved }: Props) {
-  const recent = [...rows].reverse().slice(0, limit);
+export function EntriesTable({ rows, limit = 7, offset = 0, today, onSaved }: Props) {
+  const recent = [...rows].reverse().slice(offset, offset + limit);
   const latestDate = rows[rows.length - 1]?.date;
   const entries = rows.map(({ date, total }) => ({ date, total }));
   const edit = (date: string) => <EditEntryDialog date={date} entries={entries} today={today} onSaved={onSaved} />;
