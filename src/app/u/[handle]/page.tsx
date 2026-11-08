@@ -2,12 +2,15 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { ConsistencyCard } from "@/components/progress/consistency-card";
+import { GainHeatmap } from "@/components/progress/gain-heatmap";
 import { GoalTrack } from "@/components/progress/goal-track";
+import { MilestoneBadges } from "@/components/progress/milestone-badges";
 import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { Avatar, Brand } from "@/components/shell/brand";
 import { fmt, fmtDate, fmtPct, fmtSigned } from "@/lib/format";
-import { GOAL, milestones } from "@/lib/progress";
+import { GOAL, milestones, paceOver } from "@/lib/progress";
 import { cardPath, cardVersion, getPublicProgress } from "@/lib/public";
 import { getPublicShareData } from "@/lib/share-data";
 import { buildShareCard, isShareKind } from "@/lib/share-cards";
@@ -59,7 +62,7 @@ export default function PublicProfilePage({ params }: Props) {
   return (
     <div className="min-h-dvh">
       <header className="border-b border-hairline">
-        <div className="mx-auto flex h-16 max-w-[1000px] items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="mx-auto flex h-16 max-w-[1200px] items-center justify-between gap-4 px-4 sm:px-6">
           <Brand />
           <Link
             href="/login"
@@ -69,8 +72,8 @@ export default function PublicProfilePage({ params }: Props) {
           </Link>
         </div>
       </header>
-      <main className="mx-auto max-w-[1000px] px-4 py-8 sm:px-6 sm:py-12">
-        <Suspense fallback={<PageSkeleton blocks={["h-[160px]", "h-[200px]", "h-[400px]"]} />}>
+      <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-12">
+        <Suspense fallback={<PageSkeleton blocks={["h-[96px]", "h-[260px]", "h-[420px]", "h-[360px]"]} />}>
           <Profile params={params} />
         </Suspense>
       </main>
@@ -84,6 +87,7 @@ async function Profile({ params }: Props) {
   if (!data) notFound();
   const { profile, latest, rows, rank } = data;
   const name = profile.display_name || profile.handle;
+  const today = new Date().toISOString().slice(0, 10);
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
@@ -102,14 +106,6 @@ async function Profile({ params }: Props) {
             </a>
           </div>
         </div>
-        {rank && (
-          <Link href="/leaderboard" className="group flex flex-col sm:items-end">
-            <span className="font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.04em]">#{rank.rank}</span>
-            <span className="mt-1 text-sm text-muted-foreground group-hover:text-foreground">
-              of {rank.of} {rank.of === 1 ? "creator" : "creators"} on the leaderboard
-            </span>
-          </Link>
-        )}
       </section>
 
       {!latest ? (
@@ -117,14 +113,13 @@ async function Profile({ params }: Props) {
           @{profile.handle} hasn&apos;t logged any impressions yet.
         </section>
       ) : (
-        <>
-          <section className="panel-dark rounded-2xl p-5 sm:p-8">
+        <div className="grid gap-6 lg:grid-cols-3">
+          {/* Row 1: the total and the road to 500K (wide) + rank and latest day */}
+          <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-              <p className="font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.04em] sm:text-[3.5rem]">
+              <p className="font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.04em] sm:text-[3.25rem]">
                 {fmt(latest.total)}
-                <span className="ml-3 font-sans text-base font-medium tracking-normal text-muted-foreground">
-                  / 500K impressions
-                </span>
+                <span className="ml-3 font-sans text-base font-medium tracking-normal text-muted-foreground">/ 500K</span>
               </p>
               <p className="text-sm text-muted-foreground">
                 {data.eta ? (
@@ -136,37 +131,73 @@ async function Profile({ params }: Props) {
                 )}
               </p>
             </div>
-            <div className="mt-4" />
             <GoalTrack total={latest.total} milestones={milestones(rows, data.pace7)} />
-            <dl className="grid grid-cols-3 gap-px overflow-hidden rounded-xl border border-hairline bg-hairline">
-              {[
-                { k: "Latest day", v: latest.delta === null ? "—" : fmtSigned(latest.delta) },
-                { k: "7-day pace", v: `${fmtSigned(data.pace7)}/day` },
-                { k: "Streak", v: `${data.streak} days` },
-              ].map((s) => (
-                <div key={s.k} className="bg-background p-3 sm:p-4">
-                  <dt className="text-xs text-muted-foreground">{s.k}</dt>
-                  <dd className="mt-1 font-mono text-base font-semibold sm:text-lg">{s.v}</dd>
-                </div>
-              ))}
-            </dl>
           </section>
 
+          <section aria-label="Rank and latest day" className="panel-dark flex flex-col rounded-2xl">
+            <Link href="/leaderboard" className="group flex flex-1 flex-col justify-center p-5 transition-colors hover:bg-hover sm:p-6">
+              <span className="text-sm text-muted-foreground">Leaderboard</span>
+              <span className="mt-1 font-mono text-[3rem] leading-none font-semibold tracking-[-0.05em] text-primary">
+                {rank ? `#${rank.rank}` : "—"}
+              </span>
+              {rank && (
+                <span className="mt-1.5 text-xs text-subtle group-hover:text-muted-foreground">
+                  of {fmt(rank.of)} {rank.of === 1 ? "creator" : "creators"}
+                </span>
+              )}
+            </Link>
+            <div className="grid grid-cols-2 divide-x divide-hairline border-t border-hairline">
+              <div className="p-4">
+                <p className="text-xs text-muted-foreground">Latest day</p>
+                <p className="mt-1 font-mono text-lg font-semibold">{latest.delta === null ? "—" : fmtSigned(latest.delta)}</p>
+              </div>
+              <div className="p-4">
+                <p className="text-xs text-muted-foreground">7-day pace</p>
+                <p className="mt-1 font-mono text-lg font-semibold">
+                  {fmtSigned(data.pace7)}
+                  <span className="text-xs font-medium text-subtle">/day</span>
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Row 2: trajectory (wide) + consistency */}
           {rows.length > 1 && (
-            <section className="panel-dark rounded-2xl p-5 sm:p-8">
-              <h2 className="mb-8 text-xl font-bold tracking-[-0.015em]">Cumulative impressions</h2>
+            <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
+              <h2 className="mb-6 text-xl font-bold tracking-[-0.015em]">Cumulative impressions</h2>
               <TrajectoryChart rows={rows} eta={data.eta} pace={data.pace7} />
             </section>
           )}
-        </>
+          {rows.length > 1 && (
+            <ConsistencyCard rows={rows} today={today} streak={data.streak} pace7={data.pace7} pace28={paceOver(rows, 28)} />
+          )}
+
+          {/* Row 3: milestones + daily gains (wide) */}
+          <MilestoneBadges rows={rows} />
+          <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
+            <h2 className="mb-5 text-xl font-bold tracking-[-0.015em]">Daily gains</h2>
+            <GainHeatmap rows={rows} today={today} />
+          </section>
+
+          {/* Row 4: invite: every public page promotes progresshub */}
+          <section className="panel-dark flex flex-col items-start justify-between gap-4 rounded-2xl border-primary/40 p-5 sm:flex-row sm:items-center sm:p-6 lg:col-span-3">
+            <div>
+              <p className="text-lg font-bold tracking-[-0.015em]">
+                Race <span className="text-primary">@{profile.handle}</span> to 500K
+              </p>
+              <p className="mt-0.5 text-sm text-muted-foreground">Log your X impressions daily. Free.</p>
+            </div>
+            <Link
+              href="/login"
+              className="inline-flex h-11 shrink-0 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed"
+            >
+              Track your own
+            </Link>
+          </section>
+        </div>
       )}
 
-      <p className="text-center text-sm text-muted-foreground">
-        Totals are self-reported daily from X analytics.{" "}
-        <Link href="/login" className="font-semibold text-foreground underline-offset-4 hover:underline">
-          Start tracking your road to 500K
-        </Link>
-      </p>
+      <p className="text-center text-xs text-subtle">Totals are self-reported daily from X analytics.</p>
     </div>
   );
 }
