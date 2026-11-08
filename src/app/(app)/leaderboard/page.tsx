@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { TrendingUp, Trophy } from "lucide-react";
 import { PageSkeleton } from "@/components/progress/page-skeleton";
-import { getLeaderboard, getViewer } from "@/lib/data";
+import { getLeaderboard, getToday, getViewer } from "@/lib/data";
 import { fmt } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 import { cn } from "@/lib/utils";
@@ -19,7 +19,7 @@ export default function LeaderboardPage() {
 }
 
 async function Leaderboard() {
-  const [rows, { profile }] = await Promise.all([getLeaderboard(), getViewer()]);
+  const [rows, { profile }, today] = await Promise.all([getLeaderboard(), getViewer(), getToday()]);
   const creators: Creator[] = rows.map((r) => ({
     name: r.display_name || r.handle,
     handle: r.handle,
@@ -28,6 +28,8 @@ async function Leaderboard() {
     streak: r.streak,
     avatarUrl: r.avatar_url,
     isYou: r.user_id === profile.id,
+    lastGain: r.last_gain,
+    lastLoggedOn: r.last_logged_on,
   }));
   const of = Math.max(creators.length, 1);
   const stats = [
@@ -55,6 +57,7 @@ async function Leaderboard() {
 
       <LeaderboardTable
         creators={creators}
+        today={today}
         extras={
           // Add-on stats: small chips, so the table stays the focus.
           <ul aria-label="Board stats" className="flex flex-wrap items-center gap-2">

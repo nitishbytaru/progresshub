@@ -24,6 +24,8 @@ export type LeaderRow = {
   streak: number;
   last_logged_on: string;
   first_logged_on: string;
+  /** Latest log minus the one before it; null for a single log (or before the view migration). */
+  last_gain: number | null;
 };
 
 /** The viewer's calendar date (YYYY-MM-DD) in their own time zone, from the `tz` cookie. */
@@ -94,16 +96,19 @@ export type Progress = Awaited<ReturnType<typeof getProgress>>;
 
 export const getLeaderboard = cache(async (): Promise<LeaderRow[]> => {
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("leaderboard")
-    .select("user_id, handle, display_name, avatar_url, total, pace7, streak, last_logged_on, first_logged_on")
-    .order("total", { ascending: false })
-    .limit(500);
+  const base = "user_id, handle, display_name, avatar_url, total, pace7, streak, last_logged_on, first_logged_on";
+  const query = (columns: string) =>
+    supabase.from("leaderboard").select(columns).order("total", { ascending: false }).limit(500);
+
+  let { data, error } = await query(`${base}, last_gain`);
+  // 42703 = column missing: the last_gain migration isn't applied yet, so load the board without it.
+  if (error?.code === "42703") ({ data, error } = await query(base));
   if (error) throw new Error(`Couldn't load the leaderboard: ${error.message}`);
-  return (data ?? []).map((r) => ({
-    ...r,
+  return ((data ?? []) as unknown as Record<string, unknown>[]).map((r) => ({
+    ...(r as Omit<LeaderRow, "total" | "pace7" | "streak" | "last_gain">),
     total: Number(r.total),
     pace7: Math.round(Number(r.pace7)),
     streak: Number(r.streak ?? 0),
-  })) as LeaderRow[];
+    last_gain: r.last_gain == null ? null : Number(r.last_gain),
+  }));
 });

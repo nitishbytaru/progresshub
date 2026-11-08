@@ -3,8 +3,8 @@
 import { useMemo, useState } from "react";
 import { Search } from "lucide-react";
 import { Avatar } from "@/components/shell/brand";
-import { fmt, fmtPct, fmtSigned } from "@/lib/format";
-import { GOAL } from "@/lib/progress";
+import { fmt, fmtCompact, fmtPct, fmtSigned } from "@/lib/format";
+import { daysBetween, GOAL } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
 export type Creator = {
@@ -15,7 +15,16 @@ export type Creator = {
   streak: number;
   avatarUrl: string | null;
   isYou: boolean;
+  /** Most recent gain (latest log minus the one before) and when that latest log was. */
+  lastGain: number | null;
+  lastLoggedOn: string;
 };
+
+/** "today", "yesterday" or "5d ago" for a log date, relative to the viewer's today. */
+function ago(date: string, today: string) {
+  const d = daysBetween(date, today);
+  return d <= 0 ? "today" : d === 1 ? "yesterday" : `${d}d ago`;
+}
 
 const SORTS = {
   total: { label: "Closest to 500K", phrase: "total impressions", by: (c: Creator) => c.total },
@@ -25,7 +34,7 @@ const SORTS = {
 type SortKey = keyof typeof SORTS;
 
 /** `extras`: small add-on stats shown under the controls, beside your rank. */
-export function LeaderboardTable({ creators, extras }: { creators: Creator[]; extras?: React.ReactNode }) {
+export function LeaderboardTable({ creators, today, extras }: { creators: Creator[]; today: string; extras?: React.ReactNode }) {
   const [sort, setSort] = useState<SortKey>("total");
   const [query, setQuery] = useState("");
 
@@ -101,12 +110,11 @@ export function LeaderboardTable({ creators, extras }: { creators: Creator[]; ex
           </div>
         ) : (
           <ol>
-            <li aria-hidden className="hidden grid-cols-[56px_minmax(0,1.6fr)_120px_minmax(0,1.4fr)_96px_96px_72px] gap-4 border-b border-hairline px-6 py-3 text-xs text-muted-foreground md:grid">
+            <li aria-hidden className="hidden grid-cols-[56px_minmax(0,1.3fr)_minmax(0,2fr)_104px_96px_72px] gap-6 border-b border-hairline px-6 py-3 text-xs text-muted-foreground md:grid">
               <span>Rank</span>
               <span>Creator</span>
-              <span className="text-right">Impressions</span>
-              <span>Progress</span>
-              <span className="text-right">To go</span>
+              <span>Progress to 500K</span>
+              <span className="text-right">Latest gain</span>
               <span className="text-right">7-day pace</span>
               <span className="text-right">Streak</span>
             </li>
@@ -116,11 +124,18 @@ export function LeaderboardTable({ creators, extras }: { creators: Creator[]; ex
                 <li
                   key={c.handle}
                   aria-current={c.isYou ? "true" : undefined}
-                  className={cn(
-                    "grid grid-cols-[40px_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-2 border-b border-hairline px-4 py-3.5 last:border-b-0 md:grid-cols-[56px_minmax(0,1.6fr)_120px_minmax(0,1.4fr)_96px_96px_72px] md:gap-4 md:px-6",
-                    c.isYou ? "bg-primary-soft" : "hover:bg-hover",
-                  )}
+                  className="border-b border-hairline last:border-b-0"
                 >
+                  {/* The whole row opens the creator's X profile (the X app on phones that have it). */}
+                  <a
+                    href={`https://x.com/${c.handle}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={cn(
+                      "grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5 px-4 py-3.5 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary md:grid-cols-[56px_minmax(0,1.3fr)_minmax(0,2fr)_104px_96px_72px] md:gap-x-6 md:px-6",
+                      c.isYou ? "bg-primary-soft hover:bg-primary-soft/70" : "hover:bg-hover",
+                    )}
+                  >
                   <span
                     className={cn(
                       "flex h-7 w-fit min-w-7 items-center justify-center rounded-full px-1.5 font-mono text-xs font-semibold",
@@ -141,28 +156,49 @@ export function LeaderboardTable({ creators, extras }: { creators: Creator[]; ex
                       <span className="block truncate font-mono text-xs text-muted-foreground">@{c.handle}</span>
                     </span>
                   </span>
-                  <span className="text-right font-mono text-sm font-semibold md:text-base">{fmt(c.total)}</span>
-
-                  <span className="col-span-2 col-start-2 flex items-center gap-2 md:col-span-1 md:col-start-auto">
-                    <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-surface-highest">
+                  {/* Impressions, % of 500K and what's left, in one cell */}
+                  <span className="col-start-2 flex min-w-0 flex-col gap-1.5 md:col-start-auto">
+                    <span className="flex items-baseline justify-between gap-3">
+                      <span className="font-mono text-sm font-semibold md:text-base">{fmt(c.total)}</span>
+                      <span className="shrink-0 font-mono text-xs text-muted-foreground">
+                        <span className={cn(c.isYou && "text-primary")}>{fmtPct(pct)}</span>
+                        <span className="text-subtle"> · {c.total >= GOAL ? "done" : `${fmtCompact(GOAL - c.total)} left`}</span>
+                      </span>
+                    </span>
+                    <span
+                      className="h-1.5 overflow-hidden rounded-full bg-surface-highest"
+                      role="img"
+                      aria-label={`${fmt(c.total)} of 500,000, ${c.total >= GOAL ? "goal reached" : `${fmt(GOAL - c.total)} to go`}`}
+                    >
                       <span
-                        className={cn("block h-full rounded-full", c.isYou ? "bg-primary" : "bg-foreground/70")}
+                        className={cn("block h-full rounded-full", c.isYou || c.total >= GOAL ? "bg-primary" : "bg-foreground/70")}
                         style={{ width: `${Math.min(pct, 100)}%` }}
                       />
                     </span>
-                    <span className="w-12 text-right font-mono text-xs">{fmtPct(pct)}</span>
                   </span>
-                  <span className="hidden text-right font-mono text-sm text-muted-foreground md:block">{fmt(Math.max(0, GOAL - c.total))}</span>
+                  <span className="hidden flex-col items-end md:flex">
+                    <span className={cn("font-mono text-sm font-semibold", c.lastGain && c.lastGain > 0 && "text-primary")}>
+                      {c.lastGain == null ? "—" : fmtSigned(c.lastGain)}
+                    </span>
+                    <span className="font-mono text-[11px] text-subtle">{c.lastGain == null ? "first log" : ago(c.lastLoggedOn, today)}</span>
+                  </span>
                   <span className={cn("hidden text-right font-mono text-sm md:block", sort === "pace" && "font-semibold")}>
                     {fmtSigned(c.pace7)}
                   </span>
                   <span className={cn("hidden text-right font-mono text-sm md:block", sort === "streak" && "font-semibold")}>
                     {c.streak}d
                   </span>
-                  <span className="col-span-2 col-start-2 flex gap-4 font-mono text-[11px] text-muted-foreground md:hidden">
+                  <span className="col-start-2 flex gap-4 font-mono text-[11px] text-muted-foreground md:hidden">
+                    {c.lastGain != null && (
+                      <span className="text-foreground">
+                        {fmtSigned(c.lastGain)} {ago(c.lastLoggedOn, today)}
+                      </span>
+                    )}
                     <span>{fmtSigned(c.pace7)}/day</span>
                     <span>{c.streak}-day streak</span>
                   </span>
+                  <span className="sr-only">(opens @{c.handle} on X)</span>
+                  </a>
                 </li>
               );
             })}
