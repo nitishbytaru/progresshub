@@ -2,7 +2,7 @@ import { Suspense } from "react";
 import { Brand, BrandMark } from "@/components/shell/brand";
 import { BottomNav, MobileTitle, SidebarNav } from "@/components/shell/nav";
 import { UserMenu } from "@/components/shell/user-menu";
-import { getProgress, getToday } from "@/lib/data";
+import { getProgress, getToday, isTelegramConnected } from "@/lib/data";
 import { fmt, fmtDate, fmtPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 
@@ -32,6 +32,14 @@ async function TodayLabel() {
   return <time dateTime={today}>{fmtDate(today)}</time>;
 }
 
+async function SidebarBottomNav() {
+  return <SidebarNav section="bottom" connectBadge={!(await isTelegramConnected())} />;
+}
+
+async function PhoneNav() {
+  return <BottomNav connectBadge={!(await isTelegramConnected())} />;
+}
+
 const Placeholder = ({ className }: { className: string }) => (
   <div aria-hidden className={`animate-pulse rounded-xl border border-hairline ${className}`} />
 );
@@ -48,11 +56,16 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
           <Suspense fallback={<Placeholder className="h-[86px]" />}>
             <GoalMini />
           </Suspense>
-          <SidebarNav />
+          <SidebarNav section="main" />
         </div>
-        <Suspense fallback={<Placeholder className="h-[54px]" />}>
-          <UserMenu variant="sidebar" />
-        </Suspense>
+        <div className="flex flex-col gap-3">
+          <Suspense fallback={<SidebarNav section="bottom" />}>
+            <SidebarBottomNav />
+          </Suspense>
+          <Suspense fallback={<Placeholder className="h-[54px]" />}>
+            <UserMenu variant="sidebar" />
+          </Suspense>
+        </div>
       </aside>
 
       {/* Top bar */}
@@ -82,7 +95,9 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         {children}
       </main>
 
-      <BottomNav />
+      <Suspense fallback={<BottomNav />}>
+        <PhoneNav />
+      </Suspense>
     </div>
   );
 }

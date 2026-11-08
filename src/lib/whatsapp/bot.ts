@@ -181,7 +181,7 @@ export async function handleInbound({ from, messageId, text, action }: Inbound) 
   const code = typed.match(LINK_RE)?.[1];
   if (code) {
     const linked = await redeemLinkToken(code, from);
-    if (!linked) return sendText(from, "That connect link expired. Open progresshub → Profile → Connect WhatsApp to get a fresh one.");
+    if (!linked) return sendText(from, "That connect link expired. Open progresshub → Connect to get a fresh one.");
     return sendMenu(from, linkedText(linked.handle));
   }
 
@@ -189,9 +189,9 @@ export async function handleInbound({ from, messageId, text, action }: Inbound) 
   if (!link) {
     return sendLinkButton(
       from,
-      toWhatsApp("👋 This number isn't linked yet.\n\nOpen <b>progresshub → Profile → Connect WhatsApp</b> and tap the button there. It brings you back here, linked."),
+      toWhatsApp("👋 This number isn't linked yet.\n\nOpen <b>progresshub → Connect</b> and tap the button there. It brings you back here, linked."),
       "Open progresshub",
-      `${siteOrigin()}/profile`,
+      `${siteOrigin()}/connect`,
     );
   }
 
@@ -204,7 +204,7 @@ export async function handleInbound({ from, messageId, text, action }: Inbound) 
   }
   if (word === "stop") {
     await stopReminders(from);
-    return sendText(from, "Reminders are off. Turn them back on in progresshub → Profile.");
+    return sendText(from, "Reminders are off. Turn them back on in progresshub → Connect.");
   }
   if (COMMANDS[word]) return handleAction(from, link, COMMANDS[word]);
   return handleText(from, link, typed, messageId);

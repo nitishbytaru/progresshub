@@ -2,17 +2,18 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartSpline, CirclePlus, LayoutGrid, Share2, Trophy, type LucideIcon } from "lucide-react";
+import { Bot, ChartSpline, CirclePlus, LayoutGrid, Share2, Trophy, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-type NavItem = { href: string; label: string; short: string; icon: LucideIcon };
+type NavItem = { href: string; label: string; short: string; icon: LucideIcon; badge?: boolean };
 
 export const NAV: NavItem[] = [
   { href: "/", label: "Overview", short: "Overview", icon: LayoutGrid },
   { href: "/progress", label: "Daily progress", short: "Log", icon: CirclePlus },
   { href: "/analytics", label: "Analytics", short: "Analytics", icon: ChartSpline },
-  { href: "/leaderboard", label: "Leaderboard", short: "Leaderboard", icon: Trophy },
+  { href: "/leaderboard", label: "Leaderboard", short: "Ranks", icon: Trophy },
   { href: "/share", label: "Share on X", short: "Share", icon: Share2 },
+  { href: "/connect", label: "Connect", short: "Connect", icon: Bot, badge: true },
 ];
 
 function useActive() {
@@ -20,11 +21,29 @@ function useActive() {
   return (href: string) => (href === "/" ? pathname === "/" : pathname.startsWith(href));
 }
 
-export function SidebarNav() {
-  const isActive = useActive();
+function ConnectBadge({ className }: { className: string }) {
   return (
-    <nav aria-label="Main" className="flex flex-col gap-1">
-      {NAV.map(({ href, label, icon: Icon }) => {
+    <span className={cn("absolute size-2 rounded-full bg-danger", className)}>
+      <span className="sr-only">Telegram not connected</span>
+    </span>
+  );
+}
+
+// These two sit at the bottom of the sidebar, just above the profile button.
+const BOTTOM_HREFS = new Set(["/share", "/connect"]);
+
+type SidebarProps = {
+  section: "main" | "bottom";
+  /** True while the creator hasn't connected the Telegram bot. */
+  connectBadge?: boolean;
+};
+
+export function SidebarNav({ section, connectBadge = false }: SidebarProps) {
+  const isActive = useActive();
+  const items = NAV.filter(({ href }) => BOTTOM_HREFS.has(href) === (section === "bottom"));
+  return (
+    <nav aria-label={section === "main" ? "Main" : "More"} className="flex flex-col gap-1">
+      {items.map(({ href, label, icon: Icon, badge }) => {
         const active = isActive(href);
         return (
           <Link
@@ -32,7 +51,7 @@ export function SidebarNav() {
             href={href}
             aria-current={active ? "page" : undefined}
             className={cn(
-              "group flex h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors",
+              "group relative flex h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors",
               active
                 ? "bg-surface font-semibold text-foreground"
                 : "text-muted-foreground hover:bg-hover hover:text-foreground",
@@ -41,6 +60,7 @@ export function SidebarNav() {
             <Icon className={cn("size-[18px]", active && "text-primary")} strokeWidth={1.75} />
             <span className="flex-1">{label}</span>
             {active && <span aria-hidden className="size-1.5 rounded-full bg-primary" />}
+            {badge && connectBadge && <ConnectBadge className="top-1.5 right-1.5" />}
           </Link>
         );
       })}
@@ -48,15 +68,15 @@ export function SidebarNav() {
   );
 }
 
-export function BottomNav() {
+export function BottomNav({ connectBadge = false }: { connectBadge?: boolean }) {
   const isActive = useActive();
   return (
     <nav
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-surface-lowest/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-5">
-        {NAV.map(({ href, short, icon: Icon }) => {
+      <ul className="mx-auto grid max-w-md grid-cols-6">
+        {NAV.map(({ href, short, icon: Icon, badge }) => {
           const active = isActive(href);
           return (
             <li key={href}>
@@ -68,7 +88,10 @@ export function BottomNav() {
                   active ? "text-primary" : "text-subtle hover:text-foreground",
                 )}
               >
-                <Icon className="size-5" strokeWidth={active ? 2 : 1.75} />
+                <span className="relative">
+                  <Icon className="size-5" strokeWidth={active ? 2 : 1.75} />
+                  {badge && connectBadge && <ConnectBadge className="-top-0.5 -right-1" />}
+                </span>
                 {short}
               </Link>
             </li>

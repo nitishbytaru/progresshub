@@ -78,6 +78,13 @@ export const getAccount = cache(async () => {
   return user;
 });
 
+/** Whether the creator has linked the Telegram bot. On a failed read, says yes so no false alert shows. */
+export const isTelegramConnected = cache(async (): Promise<boolean> => {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("telegram_links").select("user_id").maybeSingle();
+  return Boolean(data) || Boolean(error);
+});
+
 export const getEntries = cache(async (userId: string): Promise<Entry[]> => {
   const supabase = await createClient();
   const { data, error } = await supabase

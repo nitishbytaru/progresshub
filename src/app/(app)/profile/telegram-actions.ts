@@ -42,7 +42,7 @@ export async function setTelegramReminders(on: unknown): Promise<Result> {
   if (!user) return { ok: false, error: "Your session expired. Sign in again." };
   const { error } = await supabase.from("telegram_links").update({ remind: on === true }).eq("user_id", user.id);
   if (error) return { ok: false, error: "Couldn't change reminders. Try again." };
-  revalidatePath("/profile");
+  revalidatePath("/connect");
   return { ok: true };
 }
 
@@ -54,6 +54,6 @@ export async function disconnectTelegram(): Promise<Result> {
   if (!user) return { ok: false, error: "Your session expired. Sign in again." };
   const { error } = await supabase.from("telegram_links").delete().eq("user_id", user.id);
   if (error) return { ok: false, error: "Couldn't disconnect. Try again." };
-  revalidatePath("/profile");
+  revalidatePath("/connect");
   return { ok: true };
 }

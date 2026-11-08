@@ -50,8 +50,8 @@ const MENU = () =>
 
 function connectPrompt() {
   return {
-    text: "👋 This chat isn't linked yet.\n\nOpen <b>progresshub → Profile → Connect Telegram</b> and tap the button there. It brings you back here, linked.",
-    keyboard: new InlineKeyboard().url("Open progresshub", `${siteOrigin()}/profile`),
+    text: "👋 This chat isn't linked yet.\n\nOpen <b>progresshub → Connect</b> and tap the button there. It brings you back here, linked.",
+    keyboard: new InlineKeyboard().url("Open progresshub", `${siteOrigin()}/connect`),
   };
 }
 
@@ -174,7 +174,7 @@ export function createBot(token = process.env.TELEGRAM_BOT_TOKEN) {
     const code = ctx.match.trim();
     if (code) {
       const linked = await redeemLinkToken(code, ctx.chat.id);
-      if (!linked) return ctx.reply("That connect link expired. Open progresshub → Profile → Connect Telegram to get a fresh one.");
+      if (!linked) return ctx.reply("That connect link expired. Open progresshub → Connect to get a fresh one.");
       return ctx.reply(linkedText(linked.handle), { ...html, reply_markup: MENU() });
     }
     const link = await getLinkByChat(ctx.chat.id);

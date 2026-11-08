@@ -14,6 +14,6 @@ export async function voteForWhatsApp(): Promise<Result> {
 
   const { error } = await supabase.from("whatsapp_votes").upsert({ user_id: user.id }, { onConflict: "user_id", ignoreDuplicates: true });
   if (error) return { ok: false, error: "Couldn't save your vote. Try again in a moment." };
-  revalidatePath("/profile");
+  revalidatePath("/connect");
   return { ok: true };
 }
