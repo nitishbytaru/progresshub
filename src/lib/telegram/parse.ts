@@ -28,9 +28,23 @@ const NUMBER_RE = /(\+)?(\d+(?:[,\s]\d{3})*(?:\.\d+)?)\s*(k|thousand|mn|m|millio
 const GAIN_RE = /\b(added|add|gained|gain|got|more|new|extra|increase[d]?|up)\b/i;
 const TOTAL_RE = /\b(total|at|now|reached|overall|cumulative)\b/i;
 
+// The only words a message may contain for the code path to trust it. Anything else (questions,
+// "followers", "poem"…) goes to the Groq fallback, which declines when it isn't a log.
+const LOG_WORDS = new Set(
+  (
+    "i ive i've im i'm my me is was am are at the a of so far on in x twitter impression impressions views " +
+    "today todays today's yesterday total overall now added add gained gain got more new extra up increase " +
+    "increased around about approx approximately reached hit its it's cumulative analytics day " +
+    "k m mn thousand million l lakh lakhs and plus"
+  ).split(" "),
+);
+
 export function parseLogMessage(text: string, today: string): ParsedLog | null {
   const msg = text.trim().toLowerCase();
   if (!msg || msg.length > 200) return null;
+
+  const words = msg.replace(NUMBER_RE, " ").match(/[a-z']+/g) ?? [];
+  if (words.some((w) => !LOG_WORDS.has(w)) || msg.includes("?")) return null;
 
   const numbers = [...msg.matchAll(NUMBER_RE)];
   if (numbers.length !== 1) return null; // none, or ambiguous ("nov 7 27900")

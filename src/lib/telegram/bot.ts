@@ -2,12 +2,12 @@ import "server-only";
 import { Bot, InlineKeyboard, type Context } from "grammy";
 import { saveEntryFor } from "../entries";
 import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "../format";
-import { addDays, GOAL, MILESTONE_STEP, milestoneCrossed, toUTC } from "../progress";
+import { addDays, daysBetween, GOAL, isValidTarget, MILESTONE_STEP, milestoneCrossed, targetPlan, toUTC, type Entry } from "../progress";
 import { buildShareCard, reachedMilestones, type ShareKind } from "../share-cards";
 import { validateEntry } from "../validation";
 import { db, getLinkByChat, loadCreator, redeemLinkToken, siteOrigin, todayIn, unlinkChat, type Creator, type Link } from "./data";
-import { extractWithGroq } from "./groq";
-import { parseLogMessage } from "./parse";
+import { interpretMessage } from "./groq";
+import { parseLogMessage, type ParsedLog } from "./parse";
 
 /**
  * The progresshub Telegram bot: link an account, log a day in plain words (code parser first,
@@ -60,7 +60,7 @@ function shareKeyboard(c: Creator, kind: ShareKind) {
   const url = `${siteOrigin()}${card.sharePath}`;
   const intent = `https://x.com/intent/post?text=${encodeURIComponent(card.postText)}&url=${encodeURIComponent(url)}`;
   return {
-    note: `\n\n🔗 Share link (shows a preview card on X):\n${esc(url)}`,
+    note: "", // the link travels inside the Post on X button, not the message text
     kb: kb.url("𝕏 Post on X", intent).copyText("📋 Copy link", url).row().text("☰ Menu", "m:menu"),
   };
 }
@@ -122,28 +122,105 @@ async function sendShareMenu(ctx: Context, link: Link) {
   return ctx.reply("🔗 Which card do you want to post on X?", { reply_markup: kb.row().text("☰ Menu", "m:menu") });
 }
 
-/** Parse → (Groq) → resolve gains to a total → validate → ask to confirm. */
-async function handleLogText(ctx: Context, link: Link, text: string) {
+const OFF_TOPIC =
+  "I only help with your progresshub log and stats. Send today's total like <b>28,400</b>, or ask things like <i>when will I reach 500K?</i> Or pick an option below.";
+
+/**
+ * A typed message. A clean log ("28,400", "+1.2k") is read by code with no LLM call. Anything
+ * else goes to Groq, which only classifies it; the answer itself always comes from the database.
+ * (Menu buttons never reach this: they're handled directly, with no LLM.)
+ */
+async function handleText(ctx: Context, link: Link, text: string) {
   const c = await loadCreator(link);
   if (!c) return ctx.reply("Couldn't load your account. Try again in a moment.");
-  const parsed = parseLogMessage(text, c.today) ?? (await extractWithGroq(text, c.today));
-  if (!parsed) {
-    return ctx.reply("I didn't catch a number. Send today's total like <b>28,400</b>, or what you added like <b>+1,200</b>.", {
-      ...html,
-      reply_markup: MENU(),
-    });
-  }
 
-  const before = [...c.rows].reverse().find((r) => toUTC(r.date) < toUTC(parsed.date)) ?? null;
-  const after = c.rows.find((r) => toUTC(r.date) > toUTC(parsed.date)) ?? null;
+  const direct = parseLogMessage(text, c.today);
+  if (direct) return confirmLog(ctx, c, direct);
+
+  await ctx.replyWithChatAction("typing");
+  const intent = await interpretMessage(text, c.today);
+  switch (intent?.kind) {
+    case "log":
+      return confirmLog(ctx, c, intent.log);
+    case "eta":
+      return replyEta(ctx, c);
+    case "target":
+      return replyTarget(ctx, c, intent.date);
+    case "progress":
+    case "rank":
+    case "streak":
+    case "milestones":
+      return sendStat(ctx, link, intent.kind);
+    case "share":
+      return sendShareMenu(ctx, link);
+    case "help":
+      return ctx.reply("Hi! Send your total any time, or ask about your pace, rank, streak or milestones.", { reply_markup: MENU() });
+    default:
+      return ctx.reply(OFF_TOPIC, { ...html, reply_markup: MENU() });
+  }
+}
+
+/** "When will I reach 500K at this pace?" */
+function replyEta(ctx: Context, c: Creator) {
+  if (!c.latest) return ctx.reply("Log your first day and I can estimate your 500K date.", { reply_markup: MENU() });
+  if (c.latest.total >= GOAL) return ctx.reply("🏁 You've already reached 500K!", { reply_markup: MENU() });
+  if (!c.eta || c.pace7 <= 0) {
+    return ctx.reply("I need a few days of gains to estimate that. Keep logging and ask again.", { reply_markup: MENU() });
+  }
+  const left = GOAL - c.latest.total;
+  const { note, kb } = shareKeyboard(c, "progress");
+  return ctx.reply(
+    [
+      `⏳ At your 7-day pace of <b>${fmtSigned(c.pace7)}/day</b>, you'll reach 500K around <b>${fmtDate(c.eta.etaDate)}</b>.`,
+      `That's <b>${fmt(c.eta.daysLeft)} days</b> from your last log, with ${fmt(left)} to go.`,
+      `<i>An estimate: it assumes your pace stays the same.</i>`,
+    ].join("\n") + note,
+    { ...html, reply_markup: kb },
+  );
+}
+
+/** "How much per day to hit 500K by <date>?" */
+function replyTarget(ctx: Context, c: Creator, target: string) {
+  if (!c.latest) return ctx.reply("Log your first day, then ask again.", { reply_markup: MENU() });
+  if (!isValidTarget(target, c.latest.date)) {
+    return ctx.reply("Pick a date after your last log and within 5 years, like <i>by December 31</i>.", { ...html, reply_markup: MENU() });
+  }
+  const plan = targetPlan(c.latest.total, c.latest.date, target);
+  if (plan.remaining === 0) return ctx.reply("🏁 You've already reached 500K!", { reply_markup: MENU() });
+  const onTrack = c.pace7 >= plan.perDay;
+  const card = buildShareCard("target", c, { target });
+  const shareable = card.available && c.handle && c.isPublic;
+  const kb = new InlineKeyboard();
+  if (shareable) {
+    const url = `${siteOrigin()}${card.sharePath}`;
+    kb.url("𝕏 Post on X", `https://x.com/intent/post?text=${encodeURIComponent(card.postText)}&url=${encodeURIComponent(url)}`)
+      .copyText("📋 Copy link", url)
+      .row();
+  }
+  return ctx.reply(
+    [
+      `📅 Target: <b>${fmtDate(target)}</b>`,
+      `You need <b>${fmtSigned(plan.perDay)}/day</b>: ${fmt(plan.remaining)} to go in ${fmt(plan.days)} days.`,
+      onTrack ? `✅ Your 7-day pace (${fmtSigned(c.pace7)}/day) is enough.` : `Your 7-day pace is ${fmtSigned(c.pace7)}/day.`,
+    ].join("\n"),
+    { ...html, reply_markup: kb.text("☰ Menu", "m:menu") },
+  );
+}
+
+/** Resolve a gain to a total, validate, then ask to confirm before saving. */
+async function confirmLog(ctx: Context, c: Creator, parsed: ParsedLog) {
+  const rows: Entry[] = c.rows;
+  const before = [...rows].reverse().find((r) => toUTC(r.date) < toUTC(parsed.date)) ?? null;
+  const after = rows.find((r) => toUTC(r.date) > toUTC(parsed.date)) ?? null;
   const total = parsed.kind === "gain" ? (before?.total ?? 0) + parsed.value : parsed.value;
   const problem = validateEntry({ date: parsed.date, total, today: c.today, before, after });
   if (problem) return ctx.reply(`⚠️ ${esc(problem)}`, { ...html, reply_markup: MENU() });
 
   const gain = before ? total - before.total : null;
   const day = parsed.date === c.today ? `today (${fmtDateShort(parsed.date)})` : fmtDate(parsed.date);
+  const span = before ? daysBetween(before.date, parsed.date) : 0;
   return ctx.reply(
-    `Save <b>${fmt(total)}</b> for ${day}?${gain != null ? `\nThat's <b>${fmtSigned(gain)}</b> since ${fmtDateShort(before!.date)}.` : ""}`,
+    `Save <b>${fmt(total)}</b> for ${day}?${gain != null ? `\nThat's <b>${fmtSigned(gain)}</b> since ${fmtDateShort(before!.date)}${span > 1 ? ` (${span} days)` : ""}.` : ""}`,
     { ...html, reply_markup: new InlineKeyboard().text("✅ Save", `save:${parsed.date}:${total}`).text("✖ Cancel", "x") },
   );
 }
@@ -245,7 +322,7 @@ export function createBot(token = process.env.TELEGRAM_BOT_TOKEN) {
     return ctx.editMessageText("Cancelled. Send the number again whenever you're ready.", { reply_markup: MENU() });
   });
 
-  bot.on("message:text", (ctx) => handleLogText(ctx, ctx.link!, ctx.message.text));
+  bot.on("message:text", (ctx) => handleText(ctx, ctx.link!, ctx.message.text));
 
   bot.catch((err) => console.error("telegram bot error", err.error));
   return bot;

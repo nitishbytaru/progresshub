@@ -6,8 +6,8 @@ import { fmt, fmtDate, fmtDateShort } from "./format";
 import { addDays, daysBetween, toUTC, type Entry } from "./progress";
 
 export const LIMITS = {
-  /** Highest cumulative total accepted. 2× the goal: anything above is almost surely a typo. */
-  maxTotal: 1_000_000,
+  /** Highest cumulative total accepted: the 500K finish line itself. */
+  maxTotal: 500_000,
   /** Highest gain accepted for a single day: the whole 500K goal. */
   maxDailyGain: 500_000,
   /** How far back a log may be added or corrected. */
@@ -29,7 +29,7 @@ export function parseImpressions(input: string): { value: number | null; error: 
   }
   if (/[.]/.test(compact)) return { value: null, error: "Use a whole number. Impressions don't have decimals." };
   if (!/^\d+$/.test(compact)) return { value: null, error: "Use digits only." };
-  if (compact.length > LIMITS.maxDigits) return { value: null, error: `That number is too long. Totals above ${fmt(LIMITS.maxTotal)} aren't accepted.` };
+  if (compact.length > LIMITS.maxDigits) return { value: null, error: `That number is too long. The highest total is 500,000, the finish line.` };
   return { value: Number(compact), error: null };
 }
 
@@ -68,7 +68,7 @@ export function validateEntry(args: {
   if (!Number.isSafeInteger(total)) return "Use a whole number.";
   if (total <= 0) return "Enter a number above zero.";
   if (total > LIMITS.maxTotal) {
-    return `${fmt(total)} is over the ${fmt(LIMITS.maxTotal)} limit. Check you copied total impressions, not another metric.`;
+    return `${fmt(total)} is past the 500K finish line, the highest total progresshub takes. Check you copied total impressions, not another metric. If you've really passed 500K, log 500,000.`;
   }
 
   if (before) {
