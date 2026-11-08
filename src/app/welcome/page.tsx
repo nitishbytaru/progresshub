@@ -6,10 +6,16 @@ import { CountUp, HeroScreen, MotionRoot, Reveal, ScreenFrame, TypedLog, WipeIn 
 import { RaceTrack, Stop } from "@/components/landing/race-track";
 import { FinishMark, PhoneChat } from "@/components/landing/telegram-finale";
 
+const SHARE_TITLE = "progresshub: race other X creators to 500K impressions";
+const SHARE_DESCRIPTION = "Log your X impressions once a day, see your pace and estimated 500K date, and race every other creator to the same finish line.";
+const SHARE_IMAGE = { url: "/landing/og.png", width: 1200, height: 630, alt: "progresshub: One finish line. 500K." };
+
 export const metadata: Metadata = {
-  title: { absolute: "progresshub: race other X creators to 500K impressions" },
-  description: "Log your X impressions once a day, see your pace and estimated 500K date, and race every other creator to the same finish line.",
+  title: { absolute: SHARE_TITLE },
+  description: SHARE_DESCRIPTION,
   alternates: { canonical: "/" },
+  openGraph: { title: SHARE_TITLE, description: SHARE_DESCRIPTION, url: "/", type: "website", siteName: "progresshub", images: [SHARE_IMAGE] },
+  twitter: { card: "summary_large_image", title: SHARE_TITLE, description: SHARE_DESCRIPTION, images: [SHARE_IMAGE] },
 };
 
 const SIGN_UP = "/login?mode=signup";
