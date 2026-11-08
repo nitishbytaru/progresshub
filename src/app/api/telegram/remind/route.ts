@@ -1,5 +1,5 @@
 import { Api, InlineKeyboard } from "grammy";
-import { db, todayIn } from "@/lib/telegram/data";
+import { db, siteOrigin, todayIn } from "@/lib/telegram/data";
 
 /**
  * Daily reminder (Vercel Cron, see vercel.json): messages every linked creator with reminders on
@@ -29,14 +29,14 @@ export async function GET(req: Request) {
   const done = new Set((logged ?? []).filter((r) => todays.get(r.user_id) === r.entry_date).map((r) => r.user_id));
 
   const api = new Api(token);
-  const keyboard = new InlineKeyboard().text("📝 Log now", "m:log").text("📈 My progress", "m:progress");
+  const keyboard = new InlineKeyboard().url("🌐 Open progresshub", `${siteOrigin()}/progress`);
   let sent = 0;
   for (const link of links ?? []) {
     if (done.has(link.user_id)) continue;
     try {
       await api.sendMessage(
         link.chat_id,
-        "⏰ You haven't logged today yet.\n\nWhat's your total on X analytics? Send it like <b>28,400</b>, or what you added, like <b>+1,200</b>.",
+        "👋 Hey, you haven't updated today's progress yet.\n\nJust reply here with your total, like <b>28,400</b>, or what you added, like <b>+1,200</b>. Or update it on the website.",
         { parse_mode: "HTML", reply_markup: keyboard },
       );
       sent++;
