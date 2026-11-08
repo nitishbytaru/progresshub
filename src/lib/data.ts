@@ -42,19 +42,40 @@ export const getToday = cache(async (): Promise<string> => {
 
 /** Signed-in user and profile. Redirects to /login if the session is gone (the proxy normally catches this). */
 export const getViewer = cache(async () => {
+  const user = await getSessionUser();
+  return { user, profile: await getProfile(user.id) };
+});
+
+/**
+ * Who is signed in, verified locally from the login token with no network call. Good for reads;
+ * actions that change data still use auth.getUser(), which also catches revoked sessions.
+ */
+const getSessionUser = cache(async () => {
+  const supabase = await createClient();
+  const { data } = await supabase.auth.getClaims();
+  if (!data?.claims.sub) redirect("/login");
+  return { id: data.claims.sub, email: data.claims.email };
+});
+
+const getProfile = cache(async (userId: string): Promise<Profile> => {
+  const supabase = await createClient();
+  const { data: profile, error } = await supabase
+    .from("profiles")
+    .select("id, handle, display_name, avatar_url, is_public")
+    .eq("id", userId)
+    .single<Profile>();
+  if (error || !profile) throw new Error(`Couldn't load your profile: ${error?.message ?? "not found"}`);
+  return profile;
+});
+
+/** The full account (linked logins, join date), fetched from Supabase. Only the Profile page needs it. */
+export const getAccount = cache(async () => {
   const supabase = await createClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
-
-  const { data: profile, error } = await supabase
-    .from("profiles")
-    .select("id, handle, display_name, avatar_url, is_public")
-    .eq("id", user.id)
-    .single<Profile>();
-  if (error || !profile) throw new Error(`Couldn't load your profile: ${error?.message ?? "not found"}`);
-  return { user, profile };
+  return user;
 });
 
 export const getEntries = cache(async (userId: string): Promise<Entry[]> => {
@@ -70,8 +91,8 @@ export const getEntries = cache(async (userId: string): Promise<Entry[]> => {
 
 /** Everything a screen needs about the signed-in creator's progress. */
 export const getProgress = cache(async () => {
-  const [{ profile }, today] = await Promise.all([getViewer(), getToday()]);
-  const entries = await getEntries(profile.id);
+  const { id } = await getSessionUser();
+  const [profile, entries, today] = await Promise.all([getProfile(id), getEntries(id), getToday()]);
   const rows = withDeltas(entries);
   const latest = rows.at(-1) ?? null;
   const pace7 = paceOver(rows, 7);

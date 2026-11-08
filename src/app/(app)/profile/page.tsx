@@ -5,7 +5,7 @@ import { ArrowUpRight, Trash2 } from "lucide-react";
 import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { Avatar } from "@/components/shell/brand";
 import { DeleteAccountDialog } from "@/components/shell/delete-account-dialog";
-import { getProgress, getViewer } from "@/lib/data";
+import { getProgress, getAccount } from "@/lib/data";
 import { fmt, fmtCompact, fmtDate, fmtPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 import { ProfileForms } from "./profile-forms";
@@ -29,8 +29,8 @@ export default function ProfilePage({ searchParams }: PageProps<"/profile">) {
 
 async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["searchParams"] }) {
   const supabase = await createClient();
-  const [{ user }, p, query, { data: telegram }, { data: whatsapp }] = await Promise.all([
-    getViewer(),
+  const [user, p, query, { data: telegram }, { data: whatsapp }] = await Promise.all([
+    getAccount(),
     getProgress(),
     searchParams,
     // Missing table (migration not run yet) just reads as "not linked".

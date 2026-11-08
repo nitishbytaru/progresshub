@@ -32,10 +32,10 @@ export async function proxy(request: NextRequest) {
     },
   });
 
-  // Do not run code between createServerClient and getUser: it refreshes the session.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  // Do not run code between createServerClient and getClaims: it refreshes the session.
+  // Verifies the login token locally, so page loads don't wait on a call to Supabase Auth.
+  const { data } = await supabase.auth.getClaims();
+  const claims = data?.claims;
 
   const path = request.nextUrl.pathname;
   const redirectTo = (to: string, keepNext = false) => {
@@ -49,9 +49,9 @@ export async function proxy(request: NextRequest) {
 
   // Creator pages, their share cards and robots.txt are public to everyone (and to X's crawler).
   if (path.startsWith("/u/") || path === "/robots.txt") return response;
-  if (!user) return isPublic(path) ? response : redirectTo("/login", true);
+  if (!claims) return isPublic(path) ? response : redirectTo("/login", true);
 
-  const onboarded = Boolean(user.user_metadata?.handle);
+  const onboarded = Boolean(claims.user_metadata?.handle);
   if (path === "/login") return redirectTo(onboarded ? "/" : "/onboarding");
   if (!onboarded && path !== "/onboarding" && !path.startsWith("/auth")) return redirectTo("/onboarding");
   if (onboarded && path === "/onboarding") return redirectTo("/");

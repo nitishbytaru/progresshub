@@ -27,5 +27,9 @@ export async function completeOnboarding(_: OnboardingState, formData: FormData)
   const { error: metaError } = await supabase.auth.updateUser({ data: { handle } });
   if (metaError) return { error: `Saved, but couldn't finish setup: ${metaError.message}. Try again.`, handle, name };
 
+  // The proxy reads the handle from the login token, and updateUser doesn't reissue that token.
+  const { error: refreshError } = await supabase.auth.refreshSession();
+  if (refreshError) return { error: `Saved, but couldn't finish setup: ${refreshError.message}. Try again.`, handle, name };
+
   redirect("/progress");
 }
