@@ -24,7 +24,7 @@ export type Intent =
 
 const SYSTEM = (today: string) =>
   [
-    "You classify one Telegram message sent to progresshub, an app where X (Twitter) creators log their impressions daily on the way to a fixed 500K goal.",
+    "You classify one chat message sent to progresshub, an app where X (Twitter) creators log their impressions daily on the way to a fixed 500K goal.",
     `Today is ${today} (YYYY-MM-DD). Reply with JSON only, exactly: {"intent": string, "date": "YYYY-MM-DD" | null, "kind": "total" | "gain", "value": integer | null}.`,
     "intent is one of:",
     '- "log": the creator reports their numbers ("ended the day around 28 thousand", "added 1.2k yesterday"). Set value, kind ("total" = cumulative impressions, "gain" = added since the last log) and date (default today; resolve "yesterday", "the 7th"…). Expand 1.2k = 1200, 3 lakh = 300000.',

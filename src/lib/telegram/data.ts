@@ -78,7 +78,7 @@ export async function firstTimeSeen(updateId: number) {
 }
 
 /** The creator's numbers, shaped like the website's (so share cards and stats match). */
-export async function loadCreator(link: Link): Promise<Creator | null> {
+export async function loadCreator(link: Pick<Link, "user_id" | "tz">): Promise<Creator | null> {
   const client = db();
   const today = todayIn(link.tz);
   const [{ data: profile }, { data: entries }] = await Promise.all([

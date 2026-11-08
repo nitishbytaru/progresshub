@@ -1,12 +1,32 @@
 import "server-only";
 import { Bot, InlineKeyboard, type Context } from "grammy";
 import { saveEntryFor } from "../entries";
-import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "../format";
-import { addDays, daysBetween, GOAL, isValidTarget, MILESTONE_STEP, milestoneCrossed, targetPlan, toUTC, type Entry } from "../progress";
-import { buildShareCard, reachedMilestones, type ShareKind } from "../share-cards";
-import { validateEntry } from "../validation";
+import { buildShareCard, type ShareKind } from "../share-cards";
 import { db, getLinkByChat, loadCreator, redeemLinkToken, siteOrigin, todayIn, unlinkChat, type Creator, type Link } from "./data";
 import { interpretMessage } from "./groq";
+import {
+  bestExcluding,
+  CANCELLED,
+  confirmReply,
+  esc,
+  etaReply,
+  HELP,
+  linkedText,
+  LOAD_FAILED,
+  LOG_PROMPT,
+  MENU_PROMPT,
+  NOTHING_TO_SHARE,
+  OFF_TOPIC,
+  PRIVATE_NOTE,
+  savedReply,
+  SHARE_LABELS,
+  shareKindFor,
+  shareLinks,
+  SHARE_PROMPT,
+  statText,
+  targetReply,
+  type StatKind,
+} from "./messages";
 import { parseLogMessage, type ParsedLog } from "./parse";
 
 /**
@@ -15,7 +35,6 @@ import { parseLogMessage, type ParsedLog } from "./parse";
  * "Post on X" and "Copy link" so every answer can be shared.
  */
 
-const esc = (s: string) => s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 const html = { parse_mode: "HTML" as const, link_preview_options: { is_disabled: true } };
 
 const MENU = () =>
@@ -29,21 +48,6 @@ const MENU = () =>
     .text("🎯 Milestones", "m:milestones")
     .text("🔗 Share on X", "m:share");
 
-const SHARE_LABELS: Partial<Record<ShareKind, string>> = {
-  progress: "📈 Progress",
-  rank: "🏆 Rank",
-  streak: "🔥 Streak",
-  gain: "⚡ Latest gain",
-  milestone: "🎯 Milestone",
-  target: "📅 Year-end target",
-};
-
-/** A 10-block text bar toward 500K. */
-const bar = (pct: number) => {
-  const full = Math.round(Math.min(pct, 100) / 10);
-  return "█".repeat(full) + "░".repeat(10 - full);
-};
-
 function connectPrompt() {
   return {
     text: "👋 This chat isn't linked yet.\n\nOpen <b>progresshub → Profile → Connect Telegram</b> and tap the button there. It brings you back here, linked.",
@@ -52,65 +56,27 @@ function connectPrompt() {
 }
 
 /** "Post on X" + "Copy link" for a card (or why it can't be shared yet), plus Menu. */
-function shareKeyboard(c: Creator, kind: ShareKind) {
+function shareKeyboard(c: Creator, kind: ShareKind, opts?: Parameters<typeof shareLinks>[2]) {
   const kb = new InlineKeyboard();
-  if (!c.handle || !c.isPublic) return { note: "\n\n<i>Make your profile public on progresshub to share this on X.</i>", kb: kb.text("☰ Menu", "m:menu") };
-  const card = buildShareCard(kind, c);
-  if (!card.available) return { note: "", kb: kb.text("☰ Menu", "m:menu") };
-  const url = `${siteOrigin()}${card.sharePath}`;
-  const intent = `https://x.com/intent/post?text=${encodeURIComponent(card.postText)}&url=${encodeURIComponent(url)}`;
+  if (!c.handle || !c.isPublic) return { note: PRIVATE_NOTE, kb: kb.text("☰ Menu", "m:menu") };
+  const links = shareLinks(c, kind, opts);
+  if (!links) return { note: "", kb: kb.text("☰ Menu", "m:menu") };
   return {
     note: "", // the link travels inside the Post on X button, not the message text
-    kb: kb.url("𝕏 Post on X", intent).copyText("📋 Copy link", url).row().text("☰ Menu", "m:menu"),
+    kb: kb.url("𝕏 Post on X", links.intent).copyText("📋 Copy link", links.url).row().text("☰ Menu", "m:menu"),
   };
 }
 
-function statText(kind: "progress" | "rank" | "streak" | "milestones", c: Creator): string {
-  if (!c.latest) return "You haven't logged anything yet. Send today's total, like <b>28,400</b>.";
-  const total = c.latest.total;
-  const pct = (total / GOAL) * 100;
-  switch (kind) {
-    case "progress":
-      return [
-        `📈 <b>${fmt(total)}</b> / 500K impressions`,
-        `<code>${bar(pct)}</code> ${fmtPct(pct)}`,
-        `7-day pace: <b>${fmtSigned(c.pace7)}/day</b>`,
-        c.eta ? `500K around <b>${fmtDate(c.eta.etaDate)}</b>` : "Log a few more days for a 500K estimate.",
-      ].join("\n");
-    case "rank":
-      return c.rank
-        ? `🏆 You're <b>#${c.rank.rank}</b> of ${fmt(c.rank.of)} ${c.rank.of === 1 ? "creator" : "creators"}\n${fmt(total)} impressions · ${fmtPct(pct)} of 500K`
-        : "🏆 You're not on the leaderboard yet. Add your X username on progresshub to join.";
-    case "streak": {
-      const logged = new Set(c.rows.map((r) => r.date));
-      const strip = Array.from({ length: 14 }, (_, i) => (logged.has(addDays(c.today, i - 13)) ? "🟩" : "⬛")).join("");
-      return `🔥 <b>${c.streak}-day</b> streak\n${strip}\n<i>last 14 days</i>`;
-    }
-    case "milestones": {
-      const passed = reachedMilestones(c.rows);
-      const next = Math.floor(total / MILESTONE_STEP) * MILESTONE_STEP + MILESTONE_STEP;
-      const recent = passed.slice(-5).reverse().map((m) => `✅ ${fmtCompact(m.target)} · ${fmtDateShort(m.date)}`);
-      return [
-        `🎯 <b>${passed.length}/20</b> milestones`,
-        ...(recent.length ? recent : ["None yet. The first is 25K."]),
-        total < GOAL ? `Next: <b>${fmtCompact(next)}</b> (${fmt(next - total)} to go)` : "🏁 500K reached!",
-      ].join("\n");
-    }
-  }
-}
-
-const shareKindFor = { progress: "progress", rank: "rank", streak: "streak", milestones: "milestone" } as const;
-
-async function sendStat(ctx: Context, link: Link, kind: keyof typeof shareKindFor) {
+async function sendStat(ctx: Context, link: Link, kind: StatKind) {
   const c = await loadCreator(link);
-  if (!c) return ctx.reply("Couldn't load your account. Try again in a moment.");
+  if (!c) return ctx.reply(LOAD_FAILED);
   const { note, kb } = c.latest ? shareKeyboard(c, shareKindFor[kind]) : { note: "", kb: MENU() };
   return ctx.reply(statText(kind, c) + note, { ...html, reply_markup: kb });
 }
 
 async function sendShareMenu(ctx: Context, link: Link) {
   const c = await loadCreator(link);
-  if (!c) return ctx.reply("Couldn't load your account. Try again in a moment.");
+  if (!c) return ctx.reply(LOAD_FAILED);
   const kb = new InlineKeyboard();
   let n = 0;
   for (const [kind, label] of Object.entries(SHARE_LABELS) as [ShareKind, string][]) {
@@ -118,12 +84,9 @@ async function sendShareMenu(ctx: Context, link: Link) {
     kb.text(label, `s:${kind}`);
     if (++n % 2 === 0) kb.row();
   }
-  if (!n) return ctx.reply("Nothing to share yet. Log a couple of days first.", { reply_markup: MENU() });
-  return ctx.reply("🔗 Which card do you want to post on X?", { reply_markup: kb.row().text("☰ Menu", "m:menu") });
+  if (!n) return ctx.reply(NOTHING_TO_SHARE, { reply_markup: MENU() });
+  return ctx.reply(SHARE_PROMPT, { reply_markup: kb.row().text("☰ Menu", "m:menu") });
 }
-
-const OFF_TOPIC =
-  "I only help with your progresshub log and stats. Send today's total like <b>28,400</b>, or ask things like <i>when will I reach 500K?</i> Or pick an option below.";
 
 /**
  * A typed message. A clean log ("28,400", "+1.2k") is read by code with no LLM call. Anything
@@ -132,7 +95,7 @@ const OFF_TOPIC =
  */
 async function handleText(ctx: Context, link: Link, text: string) {
   const c = await loadCreator(link);
-  if (!c) return ctx.reply("Couldn't load your account. Try again in a moment.");
+  if (!c) return ctx.reply(LOAD_FAILED);
 
   const direct = parseLogMessage(text, c.today);
   if (direct) return confirmLog(ctx, c, direct);
@@ -154,100 +117,52 @@ async function handleText(ctx: Context, link: Link, text: string) {
     case "share":
       return sendShareMenu(ctx, link);
     case "help":
-      return ctx.reply("Hi! Send your total any time, or ask about your pace, rank, streak or milestones.", { reply_markup: MENU() });
+      return ctx.reply(HELP, { reply_markup: MENU() });
     default:
       return ctx.reply(OFF_TOPIC, { ...html, reply_markup: MENU() });
   }
 }
 
-/** "When will I reach 500K at this pace?" */
 function replyEta(ctx: Context, c: Creator) {
-  if (!c.latest) return ctx.reply("Log your first day and I can estimate your 500K date.", { reply_markup: MENU() });
-  if (c.latest.total >= GOAL) return ctx.reply("🏁 You've already reached 500K!", { reply_markup: MENU() });
-  if (!c.eta || c.pace7 <= 0) {
-    return ctx.reply("I need a few days of gains to estimate that. Keep logging and ask again.", { reply_markup: MENU() });
-  }
-  const left = GOAL - c.latest.total;
+  const { text, share } = etaReply(c);
+  if (!share) return ctx.reply(text, { ...html, reply_markup: MENU() });
   const { note, kb } = shareKeyboard(c, "progress");
-  return ctx.reply(
-    [
-      `⏳ At your 7-day pace of <b>${fmtSigned(c.pace7)}/day</b>, you'll reach 500K around <b>${fmtDate(c.eta.etaDate)}</b>.`,
-      `That's <b>${fmt(c.eta.daysLeft)} days</b> from your last log, with ${fmt(left)} to go.`,
-      `<i>An estimate: it assumes your pace stays the same.</i>`,
-    ].join("\n") + note,
-    { ...html, reply_markup: kb },
-  );
+  return ctx.reply(text + note, { ...html, reply_markup: kb });
 }
 
-/** "How much per day to hit 500K by <date>?" */
 function replyTarget(ctx: Context, c: Creator, target: string) {
-  if (!c.latest) return ctx.reply("Log your first day, then ask again.", { reply_markup: MENU() });
-  if (!isValidTarget(target, c.latest.date)) {
-    return ctx.reply("Pick a date after your last log and within 5 years, like <i>by December 31</i>.", { ...html, reply_markup: MENU() });
-  }
-  const plan = targetPlan(c.latest.total, c.latest.date, target);
-  if (plan.remaining === 0) return ctx.reply("🏁 You've already reached 500K!", { reply_markup: MENU() });
-  const onTrack = c.pace7 >= plan.perDay;
-  const card = buildShareCard("target", c, { target });
-  const shareable = card.available && c.handle && c.isPublic;
-  const kb = new InlineKeyboard();
-  if (shareable) {
-    const url = `${siteOrigin()}${card.sharePath}`;
-    kb.url("𝕏 Post on X", `https://x.com/intent/post?text=${encodeURIComponent(card.postText)}&url=${encodeURIComponent(url)}`)
-      .copyText("📋 Copy link", url)
-      .row();
-  }
-  return ctx.reply(
-    [
-      `📅 Target: <b>${fmtDate(target)}</b>`,
-      `You need <b>${fmtSigned(plan.perDay)}/day</b>: ${fmt(plan.remaining)} to go in ${fmt(plan.days)} days.`,
-      onTrack ? `✅ Your 7-day pace (${fmtSigned(c.pace7)}/day) is enough.` : `Your 7-day pace is ${fmtSigned(c.pace7)}/day.`,
-    ].join("\n"),
-    { ...html, reply_markup: kb.text("☰ Menu", "m:menu") },
-  );
+  const { text, share } = targetReply(c, target);
+  if (!share) return ctx.reply(text, { ...html, reply_markup: MENU() });
+  // No privacy note here: a private creator just gets the plan.
+  return ctx.reply(text, { ...html, reply_markup: shareKeyboard(c, "target", { target }).kb });
 }
 
 /** Resolve a gain to a total, validate, then ask to confirm before saving. */
 async function confirmLog(ctx: Context, c: Creator, parsed: ParsedLog) {
-  const rows: Entry[] = c.rows;
-  const before = [...rows].reverse().find((r) => toUTC(r.date) < toUTC(parsed.date)) ?? null;
-  const after = rows.find((r) => toUTC(r.date) > toUTC(parsed.date)) ?? null;
-  const total = parsed.kind === "gain" ? (before?.total ?? 0) + parsed.value : parsed.value;
-  const problem = validateEntry({ date: parsed.date, total, today: c.today, before, after });
-  if (problem) return ctx.reply(`⚠️ ${esc(problem)}`, { ...html, reply_markup: MENU() });
-
-  const gain = before ? total - before.total : null;
-  const day = parsed.date === c.today ? `today (${fmtDateShort(parsed.date)})` : fmtDate(parsed.date);
-  const span = before ? daysBetween(before.date, parsed.date) : 0;
-  return ctx.reply(
-    `Save <b>${fmt(total)}</b> for ${day}?${gain != null ? `\nThat's <b>${fmtSigned(gain)}</b> since ${fmtDateShort(before!.date)}${span > 1 ? ` (${span} days)` : ""}.` : ""}`,
-    { ...html, reply_markup: new InlineKeyboard().text("✅ Save", `save:${parsed.date}:${total}`).text("✖ Cancel", "x") },
-  );
+  const reply = confirmReply(c, parsed);
+  if (!reply.ok) return ctx.reply(reply.text, { ...html, reply_markup: MENU() });
+  return ctx.reply(reply.text, {
+    ...html,
+    reply_markup: new InlineKeyboard().text("✅ Save", `save:${reply.date}:${reply.total}`).text("✖ Cancel", "x"),
+  });
 }
 
 async function handleSave(ctx: Context, link: Link, date: string, total: number) {
   const before = await loadCreator(link);
   if (!before) return ctx.answerCallbackQuery({ text: "Couldn't load your account." });
-  const bestBefore = Math.max(0, ...before.rows.filter((r) => r.date !== date).map((r) => r.total));
+  const bestBefore = bestExcluding(before, date);
 
   const result = await saveEntryFor(db(), link.user_id, date, total, todayIn(link.tz));
   await ctx.answerCallbackQuery(result.ok ? { text: "Saved ✅" } : { text: "Not saved" });
   if (!result.ok) return ctx.editMessageText(`⚠️ ${esc(result.error)}`, { ...html, reply_markup: MENU() });
 
   const c = await loadCreator(link);
-  const pct = (total / GOAL) * 100;
-  const lines = [
-    `✅ ${result.created ? "Logged" : "Updated"} <b>${fmtDate(date)}</b>: <b>${fmt(total)}</b>`,
-    `<code>${bar(pct)}</code> ${fmtPct(pct)} of 500K`,
-    c?.eta ? `500K around <b>${fmtDate(c.eta.etaDate)}</b>` : null,
-  ].filter(Boolean);
-
-  const crossed = milestoneCrossed(bestBefore, Math.max(bestBefore, total));
+  const { text, crossed } = savedReply(c, date, total, result.created, bestBefore);
   if (crossed && c) {
     const { note, kb } = shareKeyboard(c, "milestone");
-    return ctx.editMessageText(`${lines.join("\n")}\n\n🎉 <b>Milestone: ${fmtCompact(crossed)}!</b>${note}`, { ...html, reply_markup: kb });
+    return ctx.editMessageText(text + note, { ...html, reply_markup: kb });
   }
-  return ctx.editMessageText(lines.join("\n"), { ...html, reply_markup: MENU() });
+  return ctx.editMessageText(text, { ...html, reply_markup: MENU() });
 }
 
 export function createBot(token = process.env.TELEGRAM_BOT_TOKEN) {
@@ -260,17 +175,14 @@ export function createBot(token = process.env.TELEGRAM_BOT_TOKEN) {
     if (code) {
       const linked = await redeemLinkToken(code, ctx.chat.id);
       if (!linked) return ctx.reply("That connect link expired. Open progresshub → Profile → Connect Telegram to get a fresh one.");
-      return ctx.reply(
-        `🎉 Linked${linked.handle ? ` to <b>@${esc(linked.handle)}</b>` : ""}!\n\nSend your total any time, like <b>28,400</b> or <b>+1,200</b>. I'll also remind you on days you haven't logged.`,
-        { ...html, reply_markup: MENU() },
-      );
+      return ctx.reply(linkedText(linked.handle), { ...html, reply_markup: MENU() });
     }
     const link = await getLinkByChat(ctx.chat.id);
     if (!link) {
       const p = connectPrompt();
       return ctx.reply(p.text, { ...html, reply_markup: p.keyboard });
     }
-    return ctx.reply("What do you want to do?", { reply_markup: MENU() });
+    return ctx.reply(MENU_PROMPT, { reply_markup: MENU() });
   });
 
   // Everything else needs a linked chat.
@@ -286,7 +198,7 @@ export function createBot(token = process.env.TELEGRAM_BOT_TOKEN) {
     await next();
   });
 
-  bot.command("menu", (ctx) => ctx.reply("What do you want to do?", { reply_markup: MENU() }));
+  bot.command("menu", (ctx) => ctx.reply(MENU_PROMPT, { reply_markup: MENU() }));
   bot.command("log", (ctx) => ctx.reply("Send today's total from X analytics, like <b>28,400</b>. Or what you added, like <b>+1,200</b>.", html));
   bot.command("progress", (ctx) => sendStat(ctx, ctx.link!, "progress"));
   bot.command("rank", (ctx) => sendStat(ctx, ctx.link!, "rank"));
@@ -299,8 +211,8 @@ export function createBot(token = process.env.TELEGRAM_BOT_TOKEN) {
   bot.callbackQuery(/^m:(\w+)$/, async (ctx) => {
     await ctx.answerCallbackQuery();
     const what = ctx.match[1];
-    if (what === "menu") return ctx.reply("What do you want to do?", { reply_markup: MENU() });
-    if (what === "log") return ctx.reply("Send today's total, like <b>28,400</b>. Or what you added, like <b>+1,200</b>.", html);
+    if (what === "menu") return ctx.reply(MENU_PROMPT, { reply_markup: MENU() });
+    if (what === "log") return ctx.reply(LOG_PROMPT, html);
     if (what === "share") return sendShareMenu(ctx, ctx.link!);
     if (what === "progress" || what === "rank" || what === "streak" || what === "milestones") return sendStat(ctx, ctx.link!, what);
   });
@@ -319,7 +231,7 @@ export function createBot(token = process.env.TELEGRAM_BOT_TOKEN) {
 
   bot.callbackQuery("x", async (ctx) => {
     await ctx.answerCallbackQuery({ text: "Cancelled" });
-    return ctx.editMessageText("Cancelled. Send the number again whenever you're ready.", { reply_markup: MENU() });
+    return ctx.editMessageText(CANCELLED, { reply_markup: MENU() });
   });
 
   bot.on("message:text", (ctx) => handleText(ctx, ctx.link!, ctx.message.text));

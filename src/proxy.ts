@@ -17,8 +17,8 @@ export async function proxy(request: NextRequest) {
     );
   }
 
-  // Telegram's webhook and the reminder cron authenticate with their own secrets, not a session.
-  if (request.nextUrl.pathname.startsWith("/api/telegram")) return NextResponse.next({ request });
+  // Bot webhooks and reminder crons authenticate with their own secrets, not a session.
+  if (/^\/api\/(telegram|whatsapp)(\/|$)/.test(request.nextUrl.pathname)) return NextResponse.next({ request });
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
