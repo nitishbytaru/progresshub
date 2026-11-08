@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { ArrowRight, Plus } from "lucide-react";
-import { EntriesTable } from "@/components/progress/entries-table";
 import { GoalTrack } from "@/components/progress/goal-track";
 import { ShareDialog } from "@/components/progress/share-dialog";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
@@ -151,24 +150,6 @@ async function Overview() {
         <TrajectoryChart rows={p.rows} eta={p.eta} pace={p.pace7} projection={false} />
       </section>
 
-      {/* Recent logs */}
-      <section className="panel-dark rounded-2xl p-5 sm:p-8">
-        <div className="mb-3 flex items-baseline justify-between gap-4">
-          <div>
-            <h2 className="text-xl font-bold tracking-[-0.015em]">Recent logs</h2>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {p.rows.length} days logged since {fmtDate(p.rows[0].date)}
-            </p>
-          </div>
-          <Link
-            href="/progress"
-            className="inline-flex shrink-0 items-center gap-1 text-sm font-semibold text-foreground underline-offset-4 hover:underline"
-          >
-            All logs <ArrowRight className="size-4" />
-          </Link>
-        </div>
-        <EntriesTable rows={p.rows} limit={5} today={p.today} />
-      </section>
     </div>
   );
 }
