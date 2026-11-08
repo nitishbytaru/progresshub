@@ -271,7 +271,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
           </div>
         </form>
 
-        <aside className="panel-dark flex flex-col gap-6 rounded-2xl p-5 sm:p-8">
+        <aside className="panel-dark rounded-2xl p-5 sm:p-8 lg:self-start">
           <div>
             <p className="font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.04em] text-primary">
               {rows.length}
@@ -280,18 +280,6 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
               {rows.length ? `days logged since ${fmtDate(rows[0].date)}` : "days logged. Your first one starts the clock."}
             </p>
           </div>
-          <div className="h-px bg-hairline" />
-          <div>
-            <h2 className="text-base font-semibold">Where to find the number</h2>
-            <ol className="mt-3 flex list-decimal flex-col gap-2 pl-4 text-sm text-muted-foreground marker:font-mono marker:text-subtle">
-              <li>Open X and go to Analytics.</li>
-              <li>Set the range so it covers all your posts.</li>
-              <li>Copy the total impressions and paste it here.</li>
-            </ol>
-          </div>
-          <p className="mt-auto text-xs text-subtle">
-            Log at the same time each day so daily gains compare fairly. Missed a day? Pick it with Other.
-          </p>
         </aside>
       </div>
 
