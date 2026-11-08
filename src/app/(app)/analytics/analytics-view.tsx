@@ -1,9 +1,10 @@
 import { FirstLogPrompt } from "@/components/progress/page-skeleton";
 import { GainHeatmap } from "@/components/progress/gain-heatmap";
+import { TargetDateCard } from "@/components/progress/target-date-card";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import type { Progress } from "@/lib/data";
 import { fmt, fmtDate, fmtPct, fmtSigned } from "@/lib/format";
-import { daysBetween, GOAL } from "@/lib/progress";
+import { daysBetween } from "@/lib/progress";
 
 /** The Analytics screen for one creator's progress. Pure: the page loads the data. */
 export function AnalyticsView({ p }: { p: Progress }) {
@@ -19,10 +20,6 @@ export function AnalyticsView({ p }: { p: Progress }) {
       </div>
     );
   }
-  const remaining = Math.max(0, GOAL - latest.total);
-  const yearEnd = `${latest.date.slice(0, 4)}-12-31`;
-  const daysToYearEnd = Math.max(1, daysBetween(latest.date, yearEnd));
-  const neededForYearEnd = remaining / daysToYearEnd;
   const span = daysBetween(rows[0].date, p.today) + 1;
   const consistency = (rows.length / span) * 100;
   const acceleration = p.pace28 > 0 ? (p.pace7 / p.pace28 - 1) * 100 : 0;
@@ -41,10 +38,11 @@ export function AnalyticsView({ p }: { p: Progress }) {
         </p>
       </header>
 
-      {/* Forecast: the three answers in one row, the chart full width below */}
-      <section className="panel-dark rounded-2xl p-5 sm:p-8">
+      {/* Bento row 1: forecast (wide) + deadline picker */}
+      <div className="grid gap-6 lg:grid-cols-3">
+      <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
         <h2 className="text-xl font-bold tracking-[-0.015em]">When you&apos;ll reach 500K</h2>
-        <dl className="mt-5 grid divide-y divide-hairline rounded-xl border border-hairline sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+        <dl className="mt-5 grid divide-y divide-hairline rounded-xl border border-hairline sm:grid-cols-2 sm:divide-x sm:divide-y-0">
           {scenarios.map((s) => (
             <div key={s.label} className="p-4 sm:p-5">
               <dt className="text-sm text-muted-foreground">{s.label}</dt>
@@ -58,64 +56,54 @@ export function AnalyticsView({ p }: { p: Progress }) {
               </dd>
             </div>
           ))}
-          <div className="p-4 sm:p-5">
-            <dt className="text-sm text-muted-foreground">To hit 500K by {fmtDate(yearEnd)}</dt>
-            <dd className="mt-1.5">
-              <span className="font-mono text-2xl font-semibold tracking-[-0.03em]">{fmtSigned(neededForYearEnd)}</span>
-              <span className="mt-1 block font-mono text-xs text-subtle">
-                per day for {daysToYearEnd} days
-                {p.pace7 >= neededForYearEnd ? " · you're on track" : ""}
-              </span>
-            </dd>
-          </div>
         </dl>
         <div className="mt-8">
           <TrajectoryChart rows={rows} eta={p.eta} pace={p.pace7} etaSlow={p.etaSlow} paceSlow={p.pace28} />
         </div>
       </section>
+      <TargetDateCard total={latest.total} from={latest.date} today={p.today} pace={p.pace7} />
+      </div>
 
-      {/* Consistency: one strip, four numbers */}
-      <section aria-labelledby="consistency-title" className="panel-dark rounded-2xl p-5 sm:p-8">
+      {/* Bento row 2: consistency + daily gains */}
+      <div className="grid gap-6 lg:grid-cols-3">
+      <section aria-labelledby="consistency-title" className="panel-dark flex flex-col rounded-2xl p-5 sm:p-6">
         <h2 id="consistency-title" className="text-xl font-bold tracking-[-0.015em]">Consistency</h2>
-        <dl className="mt-5 grid grid-cols-2 gap-x-4 gap-y-6 lg:grid-cols-4 lg:divide-x lg:divide-hairline">
-          <div className="lg:pr-6">
-            <dt className="text-sm text-muted-foreground">Current streak</dt>
-            <dd className="mt-1 font-mono text-[2rem] leading-tight font-semibold tracking-[-0.04em]">
-              <span className="text-primary">{p.streak}</span>
-              <span className="ml-1.5 font-sans text-sm font-medium tracking-normal text-muted-foreground">
-                {p.streak === 1 ? "day" : "days"}
-              </span>
-            </dd>
-          </div>
-          <div className="lg:px-6">
-            <dt className="text-sm text-muted-foreground">Days logged</dt>
-            <dd className="mt-1 font-mono text-[2rem] leading-tight font-semibold tracking-[-0.04em]">{fmtPct(consistency, 0)}</dd>
-            <dd className="text-xs text-muted-foreground">
-              {rows.length} of {span} days
-            </dd>
-          </div>
-          <div className="lg:px-6">
-            <dt className="text-sm text-muted-foreground">Pace trend</dt>
-            <dd className="mt-1 font-mono text-[2rem] leading-tight font-semibold tracking-[-0.04em]">
-              {acceleration < 0 && <span aria-label="down">▼</span>}
-              {fmtSigned(acceleration)}%
-            </dd>
-            <dd className="text-xs text-muted-foreground">7-day vs. 28-day pace</dd>
-          </div>
-          <div className="lg:pl-6">
-            <dt className="text-sm text-muted-foreground">Gained since first log</dt>
-            <dd className="mt-1 font-mono text-[2rem] leading-tight font-semibold tracking-[-0.04em]">
-              {fmt(latest.total - rows[0].total)}
-            </dd>
-          </div>
+        <dl className="mt-3 flex flex-1 flex-col justify-between divide-y divide-hairline">
+          {[
+            {
+              label: "Current streak",
+              value: <span className="text-primary">{p.streak}</span>,
+              note: p.streak === 1 ? "day in a row" : "days in a row",
+            },
+            { label: "Days logged", value: fmtPct(consistency, 0), note: `${rows.length} of ${span} days` },
+            {
+              label: "Pace trend",
+              value: (
+                <>
+                  {acceleration < 0 && <span aria-label="down">▼ </span>}
+                  {fmtSigned(acceleration)}%
+                </>
+              ),
+              note: "7-day vs. 28-day pace",
+            },
+            { label: "Gained since first log", value: fmt(latest.total - rows[0].total), note: `since ${fmtDate(rows[0].date)}` },
+          ].map((s) => (
+            <div key={s.label} className="flex items-center justify-between gap-4 py-4 first:pt-2 last:pb-0">
+              <div className="min-w-0">
+                <dt className="text-sm text-muted-foreground">{s.label}</dt>
+                <dd className="mt-0.5 text-xs text-subtle">{s.note}</dd>
+              </div>
+              <dd className="shrink-0 font-mono text-[1.75rem] leading-none font-semibold tracking-[-0.04em]">{s.value}</dd>
+            </div>
+          ))}
         </dl>
       </section>
 
-      {/* Heatmap */}
-      <section className="panel-dark rounded-2xl p-5 sm:p-8">
+      <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
         <h2 className="mb-5 text-xl font-bold tracking-[-0.015em]">Daily gains</h2>
         <GainHeatmap rows={rows} today={p.today} />
       </section>
+      </div>
     </div>
   );
 }
