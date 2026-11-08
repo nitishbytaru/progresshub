@@ -90,7 +90,7 @@ function Tile({ card: c, origin, children }: { card: ShareCard; origin: string; 
           {c.kind === "target" && c.available && (
             <Link
               href="/analytics"
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-foreground"
+              className="-my-3 inline-flex items-center gap-1 py-3 text-xs text-muted-foreground transition-colors hover:text-foreground"
             >
               change date <ArrowRight className="size-3" />
             </Link>

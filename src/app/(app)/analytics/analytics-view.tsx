@@ -36,8 +36,8 @@ export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
       </header>
 
       {/* Bento row 1: forecast (wide) + deadline picker */}
-      <div className="grid gap-6 lg:grid-cols-3">
-      <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
+      <div className="grid gap-6 xl:grid-cols-3">
+      <section className="panel-dark rounded-2xl p-5 sm:p-6 xl:col-span-2">
         <h2 className="text-xl font-bold tracking-[-0.015em]">When you&apos;ll reach 500K</h2>
         <dl className="mt-5 grid divide-y divide-hairline rounded-xl border border-hairline sm:grid-cols-2 sm:divide-x sm:divide-y-0">
           {scenarios.map((s) => (

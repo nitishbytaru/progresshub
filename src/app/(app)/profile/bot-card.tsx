@@ -90,7 +90,7 @@ export function BotCard({ id, channel, icon: Icon, doneLabel, link, openUrl, con
               disabled={pending}
               onClick={() => run(() => remindAction(!link.remind))}
               className={cn(
-                "relative h-6 w-11 shrink-0 rounded-full border transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50",
+                "relative h-6 w-11 shrink-0 rounded-full border transition-colors before:absolute before:-inset-2.5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary disabled:opacity-50",
                 link.remind ? "border-primary bg-primary" : "border-border bg-surface-highest",
               )}
             >

@@ -40,11 +40,11 @@ export function WhatsAppVoteCard({ voted: votedBefore, votes }: Props) {
           <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary" aria-hidden>
             <MessageCircle className="size-4" />
           </span>
-          <h2 id="whatsapp-title" className="text-sm font-semibold">
+          <h2 id="whatsapp-title" className="text-sm font-semibold whitespace-nowrap">
             WhatsApp bot
           </h2>
         </div>
-        <span className="rounded-full border border-border px-2.5 py-1 font-mono text-xs text-muted-foreground">coming soon</span>
+        <span className="shrink-0 rounded-full border border-border px-2.5 py-1 font-mono text-xs whitespace-nowrap text-muted-foreground">coming soon</span>
       </div>
 
       <div
@@ -70,7 +70,7 @@ export function WhatsAppVoteCard({ voted: votedBefore, votes }: Props) {
             <Button
               onClick={vote}
               disabled={pending}
-              className="h-10 min-w-0 flex-1 gap-2 border-primary bg-primary bg-clip-border px-4 text-sm font-semibold text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed"
+              className="h-auto min-h-10 min-w-0 flex-1 gap-2 border-primary bg-primary bg-clip-border px-4 py-2 whitespace-normal text-sm font-semibold text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed"
             >
               {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <ThumbsUp className="size-4" aria-hidden />}
               Vote for WhatsApp connectivity

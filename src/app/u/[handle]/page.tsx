@@ -100,7 +100,7 @@ async function Profile({ params }: Props) {
               href={`https://x.com/${profile.handle}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="font-mono text-base font-semibold text-primary underline-offset-4 hover:underline"
+              className="-my-2 inline-block py-2 font-mono text-base font-semibold text-primary underline-offset-4 hover:underline"
             >
               @{profile.handle}
             </a>

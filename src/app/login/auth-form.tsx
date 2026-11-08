@@ -109,7 +109,7 @@ export function AuthForm() {
                 <button
                   type="button"
                   onClick={() => setMode("reset")}
-                  className="text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
+                  className="-my-3 py-3 text-xs font-medium text-muted-foreground underline-offset-4 hover:text-foreground hover:underline"
                 >
                   Forgot password?
                 </button>

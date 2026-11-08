@@ -217,9 +217,9 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                 { label: "Of 500K", value: preview ? fmtPct(preview.row.progressPct, 2) : "—" },
                 { label: "500K around", value: preview?.eta ? fmtDateShort(preview.eta.etaDate) : "—" },
               ].map((s) => (
-                <div key={s.label} className="p-3 sm:p-4">
+                <div key={s.label} className="min-w-0 p-3 sm:p-4 lg:p-3 xl:p-4">
                   <p className="text-xs text-muted-foreground">{s.label}</p>
-                  <p className="mt-1 font-mono text-base font-semibold tracking-[-0.02em] sm:text-lg">
+                  <p className="mt-1 font-mono text-base font-semibold tracking-[-0.02em] sm:text-lg lg:text-base xl:text-lg">
                     {s.key && preview ? <span className="text-primary">{s.value}</span> : s.value}
                   </p>
                 </div>

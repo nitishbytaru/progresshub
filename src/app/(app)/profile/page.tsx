@@ -73,8 +73,8 @@ async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["
 
         <dl className="grid grid-cols-3 divide-x divide-hairline border-t border-hairline">
           {stats.map((s) => (
-            <div key={s.label} className="px-5 py-3.5 sm:px-6">
-              <dd className="font-mono text-xl leading-none font-semibold tracking-[-0.03em] text-primary">{s.value}</dd>
+            <div key={s.label} className="px-3 py-3.5 sm:px-6">
+              <dd className="font-mono text-lg leading-none sm:text-xl font-semibold tracking-[-0.03em] text-primary">{s.value}</dd>
               <dt className="mt-1 text-xs text-muted-foreground">{s.label}</dt>
             </div>
           ))}

@@ -142,7 +142,7 @@ async function Overview() {
           <h2 className="text-xl font-bold tracking-[-0.015em]">Cumulative impressions</h2>
           <Link
             href="/analytics"
-            className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
+            className="-my-2 inline-flex items-center gap-1 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"
           >
             Analytics <ArrowRight className="size-4" />
           </Link>
