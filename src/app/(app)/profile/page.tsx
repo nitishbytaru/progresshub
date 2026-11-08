@@ -10,6 +10,8 @@ import { fmt, fmtCompact, fmtDate, fmtPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 import { ProfileForms } from "./profile-forms";
 import { SignInMethods, type Login } from "./sign-in-methods";
+import { TelegramCard } from "./telegram-card";
+import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Profile" };
 
@@ -25,7 +27,14 @@ export default function ProfilePage({ searchParams }: PageProps<"/profile">) {
 }
 
 async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["searchParams"] }) {
-  const [{ user }, p, query] = await Promise.all([getViewer(), getProgress(), searchParams]);
+  const supabase = await createClient();
+  const [{ user }, p, query, { data: telegram }] = await Promise.all([
+    getViewer(),
+    getProgress(),
+    searchParams,
+    // Missing table (migration not run yet) just reads as "not linked".
+    supabase.from("telegram_links").select("remind, linked_at").maybeSingle<{ remind: boolean; linked_at: string }>(),
+  ]);
   // Set by /auth/callback when connecting another Google account fails.
   const linkError = typeof query.error === "string" ? query.error : null;
   const { profile } = p;
@@ -88,6 +97,11 @@ async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["
         pendingEmail={user.new_email ?? null}
         handle={profile.handle ?? ""}
         googleOnly={googleOnly}
+      />
+
+      <TelegramCard
+        link={telegram ? { remind: telegram.remind, linkedAt: telegram.linked_at } : null}
+        botUsername={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? null}
       />
 
       <SignInMethods logins={logins} hasPassword={hasPassword} accountEmail={user.email ?? ""} linkError={linkError} />
