@@ -21,7 +21,7 @@ export function AuthForm() {
   const next = params.get("next") ?? "/";
   const linkError = params.get("error");
   const justDeleted = params.get("deleted") === "1";
-  const [mode, setMode] = useState<Mode>("signin");
+  const [mode, setMode] = useState<Mode>(params.get("mode") === "signup" ? "signup" : "signin");
   const [googlePending, setGooglePending] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
 
