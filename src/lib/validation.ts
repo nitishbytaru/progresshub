@@ -125,3 +125,6 @@ export function validateDisplayName(raw: string): { name: string; error: string 
   if (/[<>]/.test(name)) return { name, error: "Names can't include < or >." };
   return { name, error: null };
 }
+
+/** The word a creator types to confirm deleting their account. Checked by the dialog and the server action. */
+export const DELETE_CONFIRM_WORD = "delete";

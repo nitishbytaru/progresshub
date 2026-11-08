@@ -26,6 +26,7 @@ export function AuthForm() {
   const params = useSearchParams();
   const next = params.get("next") ?? "/";
   const linkError = params.get("error");
+  const justDeleted = params.get("deleted") === "1";
   const [mode, setMode] = useState<Mode>("signin");
   const [googlePending, setGooglePending] = useState(false);
   const [googleError, setGoogleError] = useState<string | null>(null);
@@ -125,6 +126,9 @@ export function AuthForm() {
 
         {state?.error && <FormNotice tone="error">{state.error}</FormNotice>}
         {state?.message && <FormNotice tone="info">{state.message}</FormNotice>}
+        {justDeleted && !state && (
+          <FormNotice tone="info">Your account and all your data were deleted.</FormNotice>
+        )}
 
         <SubmitButton pending={pending}>{pending ? COPY[mode].pending : COPY[mode].submit}</SubmitButton>
       </form>

@@ -1,12 +1,14 @@
-import { LogOut } from "lucide-react";
+import { LogOut, Trash2 } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
-import { getViewer } from "@/lib/data";
+import { getEntries, getViewer } from "@/lib/data";
 import { Avatar } from "./brand";
+import { DeleteAccountDialog } from "./delete-account-dialog";
 
-/** Signed-in creator with a sign-out control. `sidebar` for desktop, `avatar` for the mobile top bar. */
+/** Signed-in creator with sign-out and delete-account controls. `sidebar` for desktop, `avatar` for the mobile top bar. */
 export async function UserMenu({ variant }: { variant: "sidebar" | "avatar" }) {
   const { profile, user } = await getViewer();
   const name = profile.display_name || profile.handle || user.email || "You";
+  const logCount = (await getEntries(profile.id)).length;
 
   if (variant === "avatar") {
     return (
@@ -22,6 +24,21 @@ export async function UserMenu({ variant }: { variant: "sidebar" | "avatar" }) {
               <LogOut className="size-4" /> Sign out
             </button>
           </form>
+          <DeleteAccountDialog
+            handle={profile.handle}
+            logCount={logCount}
+            trigger={
+              <button
+                type="button"
+                className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+              />
+            }
+            triggerLabel={
+              <>
+                <Trash2 className="size-4" /> Delete account
+              </>
+            }
+          />
         </div>
       </details>
     );
@@ -34,6 +51,19 @@ export async function UserMenu({ variant }: { variant: "sidebar" | "avatar" }) {
         <p className="truncate text-sm font-semibold">{name}</p>
         {profile.handle && <p className="truncate font-mono text-xs text-subtle">@{profile.handle}</p>}
       </div>
+      <DeleteAccountDialog
+        handle={profile.handle}
+        logCount={logCount}
+        trigger={
+          <button
+            type="button"
+            aria-label="Delete account"
+            title="Delete account"
+            className="inline-flex size-8 items-center justify-center rounded-lg text-subtle transition-colors hover:bg-hover hover:text-foreground"
+          />
+        }
+        triggerLabel={<Trash2 className="size-4" />}
+      />
       <form action={signOut}>
         <button
           aria-label="Sign out"
