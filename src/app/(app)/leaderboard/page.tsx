@@ -1,22 +1,18 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { TrendingUp, Trophy } from "lucide-react";
 import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { getLeaderboard, getViewer } from "@/lib/data";
-import { fmt, fmtSigned } from "@/lib/format";
+import { fmt } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
+import { cn } from "@/lib/utils";
 import { LeaderboardTable, type Creator } from "./leaderboard-table";
 
 export const metadata: Metadata = { title: "Leaderboard" };
 
-function median(values: number[]) {
-  const s = [...values].sort((a, b) => a - b);
-  const m = Math.floor(s.length / 2);
-  return s.length % 2 ? s[m] : (s[m - 1] + s[m]) / 2;
-}
-
 export default function LeaderboardPage() {
   return (
-    <Suspense fallback={<PageSkeleton blocks={["h-[180px]", "h-[100px]", "h-[480px]"]} />}>
+    <Suspense fallback={<PageSkeleton blocks={["h-[72px]", "h-[480px]"]} />}>
       <Leaderboard />
     </Suspense>
   );
@@ -33,37 +29,55 @@ async function Leaderboard() {
     avatarUrl: r.avatar_url,
     isYou: r.user_id === profile.id,
   }));
+  const of = Math.max(creators.length, 1);
   const stats = [
-    { label: "Creators racing", value: fmt(creators.length) },
-    { label: "Median 7-day pace", value: creators.length ? `${fmtSigned(median(creators.map((c) => c.pace7)))}/day` : "—" },
-    { label: "Past 250K", value: fmt(creators.filter((c) => c.total >= 250_000).length) },
-    { label: "Reached 500K", value: fmt(creators.filter((c) => c.total >= GOAL).length) },
+    { label: "past 250K", count: creators.filter((c) => c.total >= 250_000).length, icon: TrendingUp, key: false },
+    { label: "at 500K", count: creators.filter((c) => c.total >= GOAL).length, icon: Trophy, key: true },
   ];
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
-      <header className="flex flex-col gap-6">
-        <div>
-          <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2.5rem]">
-            Creators on their way to 500K
-          </h1>
-          <p className="mt-1 max-w-[60ch] text-sm text-muted-foreground">
-            Everyone chases the same number, so the board compares like with like. Totals are self-reported daily.
-          </p>
+      <header className="flex flex-wrap items-center justify-between gap-x-6 gap-y-4">
+        <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2.5rem]">
+          Race to <span className="text-primary">500K</span>
+        </h1>
+        <div className="panel-dark flex items-center gap-4 rounded-2xl px-5 py-3.5">
+          <span className="font-mono text-[2.75rem] leading-none font-semibold tracking-[-0.04em] text-primary tabular-nums">
+            {fmt(creators.length)}
+          </span>
+          <span className="border-l border-hairline pl-4 text-sm leading-tight font-semibold text-foreground">
+            {creators.length === 1 ? "creator" : "creators"}
+            <br />
+            racing
+          </span>
         </div>
-        <dl className="grid grid-cols-2 gap-px overflow-hidden rounded-2xl border border-hairline bg-hairline lg:grid-cols-4">
-          {stats.map((s) => (
-            <div key={s.label} className="bg-surface-low p-4 sm:p-5">
-              <dt className="text-xs text-muted-foreground sm:text-sm">{s.label}</dt>
-              <dd className={`mt-1 font-mono text-xl font-semibold tracking-[-0.03em] sm:text-2xl`}>
-                {s.value}
-              </dd>
-            </div>
-          ))}
-        </dl>
       </header>
 
-      <LeaderboardTable creators={creators} />
+      <LeaderboardTable
+        creators={creators}
+        extras={
+          // Add-on stats: small chips, so the table stays the focus.
+          <ul aria-label="Board stats" className="flex flex-wrap items-center gap-2">
+            {stats.map(({ label, count, icon: Icon, key }) => (
+              <li key={label} className="flex h-9 items-center gap-2 rounded-lg border border-hairline px-3">
+                <Icon className={cn("size-3.5", key ? "text-primary" : "text-muted-foreground")} aria-hidden />
+                <span className={cn("font-mono text-sm font-semibold", key && "text-primary")}>{fmt(count)}</span>
+                <span className="text-xs text-muted-foreground">{label}</span>
+                <span
+                  className="block h-1 w-10 overflow-hidden rounded-full bg-surface-highest"
+                  role="img"
+                  aria-label={`${fmt(count)} of ${fmt(creators.length)} creators`}
+                >
+                  <div
+                    className={cn("h-full rounded-full", key ? "bg-primary" : "bg-foreground/60")}
+                    style={{ width: `${count ? Math.max((count / of) * 100, 6) : 0}%` }}
+                  />
+                </span>
+              </li>
+            ))}
+          </ul>
+        }
+      />
     </div>
   );
 }

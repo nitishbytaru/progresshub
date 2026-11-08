@@ -24,7 +24,8 @@ const SORTS = {
 } as const;
 type SortKey = keyof typeof SORTS;
 
-export function LeaderboardTable({ creators }: { creators: Creator[] }) {
+/** `extras`: small add-on stats shown under the controls, beside your rank. */
+export function LeaderboardTable({ creators, extras }: { creators: Creator[]; extras?: React.ReactNode }) {
   const [sort, setSort] = useState<SortKey>("total");
   const [query, setQuery] = useState("");
 
@@ -71,11 +72,18 @@ export function LeaderboardTable({ creators }: { creators: Creator[] }) {
         </label>
       </div>
 
-      {you && (
-        <p className="text-sm text-muted-foreground">
-          You&apos;re <span className="font-mono font-semibold text-primary">#{you.rank}</span> of{" "}
-          {ranked.length} by {SORTS[sort].phrase}.
-        </p>
+      {(you || extras) && (
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
+          {you ? (
+            <p className="text-sm text-muted-foreground">
+              You&apos;re <span className="font-mono font-semibold text-primary">#{you.rank}</span> of{" "}
+              {ranked.length} by {SORTS[sort].phrase}.
+            </p>
+          ) : (
+            <span />
+          )}
+          {extras}
+        </div>
       )}
 
       <div className="panel-dark overflow-hidden rounded-2xl">
