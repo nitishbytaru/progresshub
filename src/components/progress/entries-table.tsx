@@ -1,7 +1,6 @@
-import Link from "next/link";
-import { Pencil } from "lucide-react";
+import { EditEntryDialog } from "@/components/progress/edit-entry-dialog";
 import { fmt, fmtDate, fmtSigned, fmtSignedPct, fmtPct, fmtWeekday } from "@/lib/format";
-import type { DayRow } from "@/lib/progress";
+import type { DayRow, Entry } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
 function Change({ value, className }: { value: number | null; className?: string }) {
@@ -16,9 +15,19 @@ function Change({ value, className }: { value: number | null; className?: string
 }
 
 /** Newest-first log on a white panel. Mobile gets a stacked list; sm+ gets the full table. */
-export function EntriesTable({ rows, limit = 7 }: { rows: DayRow[]; limit?: number }) {
+type Props = {
+  rows: DayRow[];
+  limit?: number;
+  /** The viewer's today, for the edit dialog's date rules. */
+  today: string;
+  onSaved?: (entry: Entry) => void;
+};
+
+export function EntriesTable({ rows, limit = 7, today, onSaved }: Props) {
   const recent = [...rows].reverse().slice(0, limit);
   const latestDate = rows[rows.length - 1]?.date;
+  const entries = rows.map(({ date, total }) => ({ date, total }));
+  const edit = (date: string) => <EditEntryDialog date={date} entries={entries} today={today} onSaved={onSaved} />;
 
   return (
     <>
@@ -42,6 +51,7 @@ export function EntriesTable({ rows, limit = 7 }: { rows: DayRow[]; limit?: numb
                 <span className="text-xs text-muted-foreground">{fmtSignedPct(r.growthPct, 2)}</span>
               )}
             </div>
+            <div className="-mr-1 shrink-0">{edit(r.date)}</div>
           </li>
         ))}
       </ul>
@@ -85,13 +95,7 @@ export function EntriesTable({ rows, limit = 7 }: { rows: DayRow[]; limit?: numb
                   </td>
                   <td className="px-2 py-3.5 text-right">{fmtPct(r.progressPct)}</td>
                   <td className="px-2 py-3.5 text-right">
-                    <Link
-                      href={`/progress?date=${r.date}`}
-                      className="inline-flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hairline hover:text-foreground"
-                      aria-label={`Edit log for ${fmtDate(r.date)}`}
-                    >
-                      <Pencil className="size-4" />
-                    </Link>
+                    {edit(r.date)}
                   </td>
                 </tr>
               );

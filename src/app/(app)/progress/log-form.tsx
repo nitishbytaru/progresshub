@@ -292,8 +292,17 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
       {rows.length > 0 && (
       <section className="panel-dark rounded-2xl p-5 sm:p-8">
         <h2 className="text-xl font-bold tracking-[-0.015em]">History</h2>
-        <p className="mt-0.5 mb-3 text-sm text-muted-foreground">Every log, newest first. Pick a day above to correct it.</p>
-        <EntriesTable rows={rows} limit={rows.length} />
+        <p className="mt-0.5 mb-3 text-sm text-muted-foreground">Every log, newest first. Use the pencil to correct a day.</p>
+        <EntriesTable
+          rows={rows}
+          limit={rows.length}
+          today={today}
+          onSaved={(saved) => {
+            setJustSaved(saved);
+            // Keep the form above in step if it's showing the day that was just edited.
+            if (saved.date === date) setText(String(saved.total));
+          }}
+        />
       </section>
       )}
     </div>

@@ -6,7 +6,7 @@ import { LogForm } from "./log-form";
 
 export const metadata: Metadata = { title: "Daily progress" };
 
-/** Reads `?date=` (set by the Edit links) and the viewer's logs at request time. */
+/** Reads an optional `?date=` deep link and the viewer's logs at request time. */
 async function LogFormForDate({ searchParams }: { searchParams: PageProps<"/progress">["searchParams"] }) {
   const [{ date }, { entries, today }] = await Promise.all([searchParams, getProgress()]);
   const initialDate = typeof date === "string" && /^\d{4}-\d{2}-\d{2}$/.test(date) ? date : undefined;

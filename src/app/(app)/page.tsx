@@ -167,7 +167,7 @@ async function Overview() {
             All logs <ArrowRight className="size-4" />
           </Link>
         </div>
-        <EntriesTable rows={p.rows} limit={5} />
+        <EntriesTable rows={p.rows} limit={5} today={p.today} />
       </section>
     </div>
   );
