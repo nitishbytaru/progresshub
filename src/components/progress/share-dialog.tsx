@@ -48,8 +48,47 @@ function defaultText({ handle, total, delta, streak, rank }: Omit<Props, "shareU
     .join("\n");
 }
 
+type XShareProps = {
+  /** Element that opens the dialog (rendered by the trigger) and its contents. */
+  trigger: React.ReactElement;
+  triggerLabel: React.ReactNode;
+  title: string;
+  description: string;
+  defaultText: string;
+  shareUrl: string;
+  imagePath: string;
+  imageAlt: string;
+};
+
+/** Share the creator's progress overview on X. */
 export function ShareDialog({ shareUrl, imagePath, ...stats }: Props) {
-  const [text, setText] = useState(() => defaultText(stats));
+  return (
+    <XShareDialog
+      trigger={
+        <Button
+          variant="outline"
+          className="h-11 gap-2 border-border bg-transparent px-4 text-sm font-semibold text-foreground hover:bg-hover"
+        />
+      }
+      triggerLabel={
+        <>
+          <Share2 className="size-4" />
+          Share on X
+        </>
+      }
+      title="Share your progress"
+      description="Your link shows this card when you post it on X."
+      defaultText={defaultText(stats)}
+      shareUrl={shareUrl}
+      imagePath={imagePath}
+      imageAlt={`Preview card for @${stats.handle}`}
+    />
+  );
+}
+
+/** Preview card + editable post text + Post on X / copy link. Used by every share button. */
+export function XShareDialog({ trigger, triggerLabel, title, description, defaultText, shareUrl, imagePath, imageAlt }: XShareProps) {
+  const [text, setText] = useState(defaultText);
   const [copied, setCopied] = useState<"link" | "text" | null>(null);
   const textId = useId();
   const length = text.length + 1 + X_LINK_LENGTH; // text + newline + link
@@ -73,24 +112,12 @@ export function ShareDialog({ shareUrl, imagePath, ...stats }: Props) {
 
   return (
     <Dialog>
-      <DialogTrigger
-        render={
-          <Button
-            variant="outline"
-            className="h-11 gap-2 border-border bg-transparent px-4 text-sm font-semibold text-foreground hover:bg-hover"
-          />
-        }
-      >
-        <Share2 className="size-4" />
-        Share on X
-      </DialogTrigger>
+      <DialogTrigger render={trigger}>{triggerLabel}</DialogTrigger>
 
       <DialogContent className="panel-dark max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto rounded-2xl p-0 ring-0 sm:max-w-[920px] [&>[data-slot=dialog-close]]:top-4 [&>[data-slot=dialog-close]]:right-4">
         <div className="border-b border-hairline px-5 py-4 pr-14 sm:px-6">
-          <DialogTitle className="text-lg font-bold tracking-[-0.015em] text-foreground">Share your progress</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">
-            Your link shows this card when you post it on X.
-          </DialogDescription>
+          <DialogTitle className="text-lg font-bold tracking-[-0.015em] text-foreground">{title}</DialogTitle>
+          <DialogDescription className="text-sm text-muted-foreground">{description}</DialogDescription>
         </div>
 
         <div className="grid gap-6 p-5 sm:p-6 md:grid-cols-[1.2fr_1fr]">
@@ -99,7 +126,7 @@ export function ShareDialog({ shareUrl, imagePath, ...stats }: Props) {
             {/* eslint-disable-next-line @next/next/no-img-element -- generated OG image, shown as-is */}
             <img
               src={imagePath}
-              alt={`Preview card for @${stats.handle}`}
+              alt={imageAlt}
               width={1200}
               height={630}
               className="aspect-[1200/630] w-full rounded-xl border border-border bg-background object-cover"

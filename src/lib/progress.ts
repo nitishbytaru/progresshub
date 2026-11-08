@@ -92,3 +92,20 @@ export function streak(rows: DayRow[], today: string): number {
   }
   return count;
 }
+
+/** Furthest deadline a creator can pick or share (years). */
+export const MAX_TARGET_YEARS = 5;
+
+/** A deadline is a real calendar day after `from` and at most MAX_TARGET_YEARS ahead. */
+export function isValidTarget(target: string, from: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(target) || Number.isNaN(toUTC(target)) || isoDate(toUTC(target)) !== target) return false;
+  const days = daysBetween(from, target);
+  return days >= 1 && days <= MAX_TARGET_YEARS * 366;
+}
+
+/** What it takes to reach 500K by `target`, counting from the latest log on `from`. */
+export function targetPlan(total: number, from: string, target: string) {
+  const remaining = Math.max(0, GOAL - total);
+  const days = Math.max(1, daysBetween(from, target));
+  return { remaining, days, perDay: remaining / days };
+}

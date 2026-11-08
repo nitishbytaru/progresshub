@@ -7,16 +7,35 @@ import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { Avatar, Brand } from "@/components/shell/brand";
 import { fmt, fmtDate, fmtPct, fmtSigned } from "@/lib/format";
-import { GOAL, milestones } from "@/lib/progress";
-import { cardPath, cardVersion, getPublicProgress } from "@/lib/public";
+import { GOAL, isValidTarget, milestones, targetPlan } from "@/lib/progress";
+import { cardPath, cardVersion, getPublicProgress, targetCardPath } from "@/lib/public";
 
 type Props = { params: Promise<{ handle: string }> };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { handle } = await params;
+export async function generateMetadata({ params, searchParams }: PageProps<"/u/[handle]">): Promise<Metadata> {
+  const [{ handle }, query] = await Promise.all([params, searchParams]);
   const data = await getPublicProgress(handle);
   if (!data) return { title: "Creator not found" };
   const h = data.profile.handle;
+
+  // ?target=YYYY-MM-DD: a shared 500K deadline gets its own title and card.
+  const target = typeof query.target === "string" ? query.target : null;
+  if (target && data.latest && isValidTarget(target, data.latest.date)) {
+    const plan = targetPlan(data.latest.total, data.latest.date, target);
+    const title = `@${h}'s 500K target: ${fmtDate(target)}`;
+    const description =
+      plan.remaining === 0
+        ? `@${h} has reached 500K impressions on X.`
+        : `${fmtSigned(plan.perDay)}/day to reach 500K impressions on X by ${fmtDate(target)}. ${fmt(plan.remaining)} to go in ${plan.days} days.`;
+    const image = { url: targetCardPath(h, target, data.latest), width: 1200, height: 630, alt: title };
+    return {
+      title,
+      description,
+      openGraph: { title, description, type: "profile", siteName: "progresshub", images: [image] },
+      twitter: { card: "summary_large_image", title, description, images: [image] },
+    };
+  }
+
   const total = data.latest?.total ?? 0;
   const rank = data.rank ? `#${data.rank.rank} of ${data.rank.of} · ` : "";
   const description = `${rank}${fmt(total)} / 500,000 impressions on X (${fmtPct((total / GOAL) * 100)}). Follow @${h}'s road to 500K.`;

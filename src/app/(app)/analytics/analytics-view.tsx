@@ -7,7 +7,7 @@ import { fmt, fmtDate, fmtPct, fmtSigned } from "@/lib/format";
 import { daysBetween } from "@/lib/progress";
 
 /** The Analytics screen for one creator's progress. Pure: the page loads the data. */
-export function AnalyticsView({ p }: { p: Progress }) {
+export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
   const { latest, rows } = p;
   if (!latest || rows.length < 2) {
     return (
@@ -61,7 +61,9 @@ export function AnalyticsView({ p }: { p: Progress }) {
           <TrajectoryChart rows={rows} eta={p.eta} pace={p.pace7} etaSlow={p.etaSlow} paceSlow={p.pace28} />
         </div>
       </section>
-      <TargetDateCard total={latest.total} from={latest.date} today={p.today} pace={p.pace7} />
+      <TargetDateCard total={latest.total} from={latest.date} today={p.today}
+        share={p.profile.handle ? { handle: p.profile.handle, origin } : undefined}
+      />
       </div>
 
       {/* Bento row 2: consistency + daily gains */}

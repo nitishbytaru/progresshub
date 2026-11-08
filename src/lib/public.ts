@@ -83,3 +83,7 @@ export function cardVersion(d: {
 
 export const cardPath = (handle: string, version: string) => `/u/${handle}/card?v=${encodeURIComponent(version)}`;
 
+
+/** Share image for a 500K deadline; `v` changes with the latest log so X never shows stale numbers. */
+export const targetCardPath = (handle: string, target: string, latest: { date: string; total: number }) =>
+  `/u/${handle}/target-card?d=${target}&v=${encodeURIComponent(`${latest.date}-${latest.total}`)}`;
