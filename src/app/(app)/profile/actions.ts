@@ -8,7 +8,10 @@ import { validateEmail, validateHandle } from "@/lib/validation";
 
 export type ProfileState = { error?: string; message?: string; value?: string } | null;
 
-/** Starts an email change. Supabase only switches it after the creator clicks the link sent to the new address. */
+/**
+ * Starts an email change. Supabase emails a confirmation link (to the new address, and to the current
+ * one too while "Secure email change" is on) and only switches the email once it's confirmed.
+ */
 export async function updateEmail(_: ProfileState, formData: FormData): Promise<ProfileState> {
   const email = String(formData.get("email") ?? "").trim().toLowerCase();
   const problem = validateEmail(email);
@@ -30,7 +33,11 @@ export async function updateEmail(_: ProfileState, formData: FormData): Promise<
     if (/rate|seconds/i.test(error.message)) return { error: "Too many tries. Wait a minute, then try again.", value: email };
     return { error: "Couldn't change your email. Try again in a moment.", value: email };
   }
-  return { message: `Check ${email} and click the link to confirm. Your email changes after that.`, value: email };
+  revalidatePath("/profile"); // shows the "waiting to confirm" hint
+  return {
+    message: `We sent a confirmation link to ${email}. If one also arrives at your current email, click both. Your email changes after that.`,
+    value: email,
+  };
 }
 
 /** Changes the X handle: profile row (public page, leaderboard) and auth metadata (used by the proxy). */

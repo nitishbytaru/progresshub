@@ -1,7 +1,7 @@
 "use client";
 
 import { useActionState, useId, useState } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { AtSign, Check, Loader2, Mail, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { updateEmail, updateHandle, type ProfileState } from "./actions";
@@ -13,14 +13,20 @@ export function ProfileForms({ email, pendingEmail, handle }: Props) {
   return (
     <section aria-label="Account details" className="panel-dark flex flex-col divide-y divide-hairline rounded-2xl">
       <Field
+        icon={Mail}
         label="Email"
         name="email"
         type="email"
         initial={email}
         action={updateEmail}
-        hint={pendingEmail ? `Waiting for you to confirm ${pendingEmail}.` : "We'll send a link to the new address to confirm it."}
+        hint={
+          pendingEmail
+            ? `Waiting for you to confirm ${pendingEmail}. Check your inbox.`
+            : "Changing it sends a confirmation link. It only changes once you click it."
+        }
       />
       <Field
+        icon={AtSign}
         label="Username"
         name="handle"
         prefix="@"
@@ -33,6 +39,7 @@ export function ProfileForms({ email, pendingEmail, handle }: Props) {
 }
 
 function Field({
+  icon: Icon,
   label,
   name,
   type = "text",
@@ -41,6 +48,7 @@ function Field({
   action,
   hint,
 }: {
+  icon: LucideIcon;
   label: string;
   name: string;
   type?: string;
@@ -57,7 +65,10 @@ function Field({
 
   return (
     <form action={formAction} className="p-5 sm:p-6">
-      <label htmlFor={id} className="text-sm font-semibold text-foreground">
+      <label htmlFor={id} className="flex items-center gap-2.5 text-sm font-semibold text-foreground">
+        <span className="inline-flex size-7 items-center justify-center rounded-lg bg-primary-soft text-primary" aria-hidden>
+          <Icon className="size-4" />
+        </span>
         {label}
       </label>
       <div className="mt-2.5 flex flex-col gap-2 sm:flex-row">

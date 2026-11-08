@@ -60,6 +60,9 @@
   --color-primary-hover: var(--primary-hover);
   --color-primary-pressed: var(--primary-pressed);
   --color-primary-soft: var(--primary-soft);
+  --color-danger: var(--danger);
+  --color-danger-hover: var(--danger-hover);
+  --color-danger-soft: var(--danger-soft);
 
   --radius-sm: calc(var(--radius) * 0.5);
   --radius-md: calc(var(--radius) * 0.75);
@@ -118,6 +121,11 @@
   --accent: #0b0b0c;
   --accent-foreground: #ffffff;
   --destructive: #ffffff; /* no red: errors are white with an explicit message */
+
+  /* The one red in the app, approved by the user for irreversible actions only (Delete account). */
+  --danger: #dc2626;
+  --danger-hover: #ef4444;
+  --danger-soft: #dc26261f;
 
   --chart-1: #c8f432;
   --chart-2: #ffffff99;

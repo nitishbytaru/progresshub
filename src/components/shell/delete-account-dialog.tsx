@@ -46,7 +46,7 @@ export function DeleteAccountDialog({ trigger, triggerLabel, handle, logCount }:
             <ul className="flex flex-col divide-y divide-hairline rounded-xl border border-hairline">
               {erased.map((item) => (
                 <li key={item} className="flex items-center gap-3 px-4 py-3 text-sm text-foreground">
-                  <Trash2 className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+                  <Trash2 className="size-4 shrink-0 text-danger-hover" aria-hidden />
                   {item}
                 </li>
               ))}
@@ -84,7 +84,7 @@ export function DeleteAccountDialog({ trigger, triggerLabel, handle, logCount }:
             <Button
               type="submit"
               disabled={!ready || pending}
-              className="h-11 gap-2 bg-foreground px-5 text-sm font-semibold text-background hover:bg-foreground/90 disabled:opacity-40"
+              className="h-11 gap-2 bg-danger px-5 text-sm font-semibold text-white hover:bg-danger-hover disabled:opacity-40"
             >
               {pending ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
               {pending ? "Deleting…" : "Delete account"}
