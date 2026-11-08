@@ -13,7 +13,10 @@ type Props = {
   votes: number;
 };
 
-const outline = "h-10 border-border bg-transparent text-foreground hover:bg-hover dark:border-border dark:bg-transparent dark:hover:bg-hover";
+/** Hidden for now. Set to true to bring the button back. */
+const SHOW_BUY_ME_A_COFFEE = false as boolean;
+
+const outline ="h-10 border-border bg-transparent text-foreground hover:bg-hover dark:border-border dark:bg-transparent dark:hover:bg-hover";
 
 /** Stands in for the WhatsApp bot's connect card until the bot opens to the public. */
 export function WhatsAppVoteCard({ voted: votedBefore, votes }: Props) {
@@ -87,10 +90,12 @@ export function WhatsAppVoteCard({ voted: votedBefore, votes }: Props) {
           </Dialog>
         </div>
 
-        <Button type="button" variant="outline" className={`${outline} w-full gap-2 px-4 text-sm font-semibold sm:w-auto`}>
-          <Coffee className="size-4" aria-hidden />
-          Buy me a coffee
-        </Button>
+        {SHOW_BUY_ME_A_COFFEE && (
+          <Button type="button" variant="outline" className={`${outline} w-full gap-2 px-4 text-sm font-semibold sm:w-auto`}>
+            <Coffee className="size-4" aria-hidden />
+            Buy me a coffee
+          </Button>
+        )}
       </div>
 
       {problem && (
