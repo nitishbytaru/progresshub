@@ -2,12 +2,13 @@
 
 import { useId, useMemo, useState, useTransition } from "react";
 import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { EntriesTable } from "@/components/progress/entries-table";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
-import { addDays, forecast, GOAL, paceOver, toUTC, withDeltas, type Entry } from "@/lib/progress";
+import { addDays, forecast, GOAL, MILESTONE_STEP, milestoneCrossed, paceOver, toUTC, withDeltas, type Entry } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 import { LIMITS, parseImpressions, validateEntry } from "@/lib/validation";
 import { saveEntry } from "./actions";
@@ -27,6 +28,7 @@ type Props = { initialEntries: Entry[]; today: string; initialDate?: string };
 export function LogForm({ initialEntries, today, initialDate }: Props) {
   // The last saved log is applied locally so the page updates instantly; fresh props replace it after revalidation.
   const [justSaved, setJustSaved] = useState<Entry | null>(null);
+  const router = useRouter();
   const entries = useMemo(
     () => (justSaved ? [...initialEntries.filter((e) => e.date !== justSaved.date), justSaved] : initialEntries),
     [initialEntries, justSaved],
@@ -80,8 +82,19 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
         toast.error(result.error);
         return;
       }
+      // Highest total before vs after this save: crossing a 25K mark is a milestone.
+      const bestBefore = Math.max(0, ...entries.filter((e) => e.date !== date).map((e) => e.total));
+      const crossed = milestoneCrossed(bestBefore, Math.max(bestBefore, value));
       setJustSaved({ date, total: value });
-      toast.success(`${result.created ? "Logged" : "Updated"} ${fmtDate(date)}: ${fmt(value)}`);
+      if (crossed) {
+        toast.success(`Milestone: ${fmtCompact(crossed)} impressions!`, {
+          description: `${crossed >= GOAL ? "You reached 500K." : `Next stop: ${fmtCompact(crossed + MILESTONE_STEP)}.`} Share it on X.`,
+          action: { label: "Share", onClick: () => router.push("/share") },
+          duration: 8000,
+        });
+      } else {
+        toast.success(`${result.created ? "Logged" : "Updated"} ${fmtDate(date)}: ${fmt(value)}`);
+      }
     });
   };
 

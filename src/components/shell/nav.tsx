@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChartSpline, CirclePlus, LayoutGrid, Trophy, type LucideIcon } from "lucide-react";
+import { ChartSpline, CirclePlus, LayoutGrid, Share2, Trophy, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type NavItem = { href: string; label: string; short: string; icon: LucideIcon };
@@ -12,6 +12,7 @@ export const NAV: NavItem[] = [
   { href: "/progress", label: "Daily progress", short: "Log", icon: CirclePlus },
   { href: "/analytics", label: "Analytics", short: "Analytics", icon: ChartSpline },
   { href: "/leaderboard", label: "Leaderboard", short: "Leaderboard", icon: Trophy },
+  { href: "/share", label: "Share on X", short: "Share", icon: Share2 },
 ];
 
 function useActive() {
@@ -54,7 +55,7 @@ export function BottomNav() {
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-surface-lowest/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-md grid-cols-5">
         {NAV.map(({ href, short, icon: Icon }) => {
           const active = isActive(href);
           return (

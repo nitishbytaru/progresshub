@@ -1,7 +1,15 @@
 /** Core progress math. Pure functions only, so it works the same once data comes from Supabase. */
 
 export const GOAL = 500_000;
-export const MILESTONES = [100_000, 250_000, 500_000] as const;
+/** A milestone every 25K: 25K, 50K, 75K … 500K. */
+export const MILESTONE_STEP = 25_000;
+export const MILESTONES: readonly number[] = Array.from({ length: 500_000 / MILESTONE_STEP }, (_, i) => (i + 1) * MILESTONE_STEP);
+
+/** The highest milestone passed when a total goes from `before` to `after`, or null if none was crossed. */
+export function milestoneCrossed(before: number, after: number): number | null {
+  const hit = Math.floor(Math.min(after, GOAL) / MILESTONE_STEP) * MILESTONE_STEP;
+  return hit > 0 && hit > before ? hit : null;
+}
 
 /** One manual log: the creator's cumulative X impressions at the end of `date` (YYYY-MM-DD). */
 export type Entry = { date: string; total: number };

@@ -7,8 +7,10 @@ import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { Avatar, Brand } from "@/components/shell/brand";
 import { fmt, fmtDate, fmtPct, fmtSigned } from "@/lib/format";
-import { GOAL, isValidTarget, milestones, targetPlan } from "@/lib/progress";
-import { cardPath, cardVersion, getPublicProgress, targetCardPath } from "@/lib/public";
+import { GOAL, milestones } from "@/lib/progress";
+import { cardPath, cardVersion, getPublicProgress } from "@/lib/public";
+import { getPublicShareData } from "@/lib/share-data";
+import { buildShareCard, isShareKind } from "@/lib/share-cards";
 
 type Props = { params: Promise<{ handle: string }> };
 
@@ -18,22 +20,22 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/u/[
   if (!data) return { title: "Creator not found" };
   const h = data.profile.handle;
 
-  // ?target=YYYY-MM-DD: a shared 500K deadline gets its own title and card.
-  const target = typeof query.target === "string" ? query.target : null;
-  if (target && data.latest && isValidTarget(target, data.latest.date)) {
-    const plan = targetPlan(data.latest.total, data.latest.date, target);
-    const title = `@${h}'s 500K target: ${fmtDate(target)}`;
-    const description =
-      plan.remaining === 0
-        ? `@${h} has reached 500K impressions on X.`
-        : `${fmtSigned(plan.perDay)}/day to reach 500K impressions on X by ${fmtDate(target)}. ${fmt(plan.remaining)} to go in ${plan.days} days.`;
-    const image = { url: targetCardPath(h, target, data.latest), width: 1200, height: 630, alt: title };
-    return {
-      title,
-      description,
-      openGraph: { title, description, type: "profile", siteName: "progresshub", images: [image] },
-      twitter: { card: "summary_large_image", title, description, images: [image] },
-    };
+  // ?share=<kind> (or a bare ?target=<date>, from older target links): that card's title and image.
+  const target = typeof query.target === "string" ? query.target : undefined;
+  const kind = isShareKind(query.share) ? query.share : target ? "target" : null;
+  if (kind && kind !== "progress") {
+    const shareData = await getPublicShareData(h);
+    const milestone = typeof query.m === "string" ? Number(query.m) || undefined : undefined;
+    const card = shareData && buildShareCard(kind, shareData, { target, milestone });
+    if (card?.available) {
+      const image = { url: card.imagePath, width: 1200, height: 630, alt: card.title };
+      return {
+        title: card.title,
+        description: card.description,
+        openGraph: { title: card.title, description: card.description, type: "profile", siteName: "progresshub", images: [image] },
+        twitter: { card: "summary_large_image", title: card.title, description: card.description, images: [image] },
+      };
+    }
   }
 
   const total = data.latest?.total ?? 0;
