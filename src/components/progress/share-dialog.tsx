@@ -182,7 +182,13 @@ export function XShareDialog({ trigger, triggerLabel, title, description, defaul
                 {copied === "text" ? <Check className="size-4 text-primary" /> : <Copy className="size-4" />}
                 {copied === "text" ? "Copied" : "Copy text with link"}
               </Button>
-              <p className="text-xs text-subtle">X turns your @handle into a link and shows the card above under the post.</p>
+              {/^https?:\/\/(localhost|127\.|0\.0\.0\.0|192\.168\.)/.test(shareUrl) ? (
+                <p role="note" className="rounded-lg border border-hairline p-2.5 text-xs text-foreground">
+                  This link points to your own computer, so X can&apos;t show the card. Share from the live site instead.
+                </p>
+              ) : (
+                <p className="text-xs text-subtle">X turns your @handle into a link and shows the card above under the post.</p>
+              )}
             </div>
           </div>
         </div>

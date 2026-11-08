@@ -64,8 +64,16 @@ export const getPublicProgress = cache(async (handle: string) => {
   };
 });
 
-/** Absolute origin of the current request, e.g. https://progresshub24.vercel.app */
+/**
+ * Public site origin for share links, e.g. https://progresshub24.vercel.app.
+ * Prefers the configured / production URL (like metadataBase in app/layout.tsx), so links shared
+ * from a preview deploy still point at the live site X can crawl; falls back to the request's host.
+ */
 export async function getOrigin() {
+  const configured =
+    process.env.NEXT_PUBLIC_SITE_URL ??
+    (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : null);
+  if (configured) return configured.replace(/\/$/, "");
   const h = await headers();
   const host = h.get("x-forwarded-host") ?? h.get("host") ?? "localhost:3000";
   const proto = h.get("x-forwarded-proto") ?? (host.startsWith("localhost") ? "http" : "https");
