@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { EntriesTable } from "@/components/progress/entries-table";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { fmt, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
+import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
 import { addDays, forecast, GOAL, paceOver, toUTC, withDeltas, type Entry } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 import { LIMITS, parseImpressions, validateEntry } from "@/lib/validation";
@@ -213,15 +213,6 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
               ))}
             </div>
 
-            {preview && (
-              <div className="mt-5 h-2 overflow-hidden rounded-full bg-surface-highest" aria-hidden>
-                <div
-                  className="h-full rounded-full bg-primary ring-1 ring-foreground/15 transition-[width] duration-500 ease-out"
-                  style={{ width: `${Math.min((preview.row.total / GOAL) * 100, 100)}%` }}
-                />
-              </div>
-            )}
-
             <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
               {text !== (existing ? String(existing.total) : "") && (
                 <Button
@@ -242,6 +233,46 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                 {saving ? "Saving…" : existing ? "Update log" : "Save log"}
               </Button>
             </div>
+
+            {preview && (() => {
+              const now = preview.row.total;
+              const gain = preview.row.delta ?? now;
+              const prevPct = Math.min(((now - gain) / GOAL) * 100, 100);
+              const nowPct = Math.min((now / GOAL) * 100, 100);
+              return (
+                <div className="mt-6 border-t border-hairline pt-5">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <p className="text-xs text-muted-foreground">To 500K</p>
+                    <p className="font-mono text-xs text-foreground">
+                      {fmt(now)} <span className="text-subtle">/ 500K</span>
+                    </p>
+                  </div>
+                  <div
+                    className="relative mt-2 h-2 overflow-hidden rounded-full bg-surface-highest"
+                    role="img"
+                    aria-label={`${fmt(now)} of 500,000. This day adds ${fmt(gain)}; ${fmt(Math.max(0, GOAL - now))} to go.`}
+                  >
+                    <span className="absolute inset-y-0 left-0 bg-foreground/35" style={{ width: `${prevPct}%` }} />
+                    <span
+                      className="absolute inset-y-0 rounded-r-full bg-primary transition-[left,width] duration-500 ease-out"
+                      style={{ left: `${prevPct}%`, width: `${Math.max(nowPct - prevPct, 0.8)}%` }}
+                    />
+                  </div>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 font-mono text-[11px] text-subtle">
+                    {preview.row.delta != null && (
+                      <span className="flex items-center gap-1.5">
+                        <span className="size-2 rounded-[2px] bg-foreground/35" aria-hidden /> before
+                      </span>
+                    )}
+                    <span className="flex items-center gap-1.5 text-foreground">
+                      <span className="size-2 rounded-[2px] bg-primary" aria-hidden />
+                      {preview.row.delta != null ? `${fmtSigned(gain)} this day` : "first log"}
+                    </span>
+                    <span className="ml-auto">{fmtCompact(Math.max(0, GOAL - now))} to go</span>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       </form>
