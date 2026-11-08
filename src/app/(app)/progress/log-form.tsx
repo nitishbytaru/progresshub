@@ -103,185 +103,172 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_340px] lg:gap-8">
-        <form onSubmit={save} noValidate className="panel-dark rounded-2xl p-5 sm:p-8">
-          <h2 className="text-xl font-bold tracking-[-0.015em]">
-            {existing ? `Update ${fmtDate(date)}` : "Log your impressions"}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Copy the total from X analytics. We work out the daily gain.
-          </p>
+      <form onSubmit={save} noValidate className="panel-dark rounded-2xl p-5 sm:p-8">
+        <h2 className="text-xl font-bold tracking-[-0.015em]">
+          {existing ? `Update ${fmtDate(date)}` : "Log your impressions"}
+        </h2>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Copy the total from X analytics. We work out the daily gain.
+        </p>
 
-          <fieldset className="mt-7">
-            <legend className="text-sm font-semibold">Day</legend>
-            <div className="mt-2.5 grid grid-cols-3 gap-2">
-              {dateChoices.map(({ d, label, sub }) => (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => pickDate(d)}
-                  aria-pressed={date === d}
-                  className={cn(
-                    "flex h-14 flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors",
-                    date === d
-                      ? "border-primary bg-primary-soft text-foreground"
-                      : "border-hairline hover:bg-hover",
-                  )}
-                >
-                  {label}
-                  <span className={cn("font-mono text-[11px] font-normal", date === d ? "text-primary" : "text-muted-foreground")}>
-                    {sub}
-                  </span>
-                </button>
-              ))}
-              <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
-                <PopoverTrigger
-                  render={
-                    <button
-                      type="button"
-                      aria-pressed={isCustom}
-                      className={cn(
-                        "flex h-14 w-full flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors",
-                        isCustom ? "border-primary bg-primary-soft text-foreground" : "border-hairline hover:bg-hover",
-                      )}
-                    />
-                  }
-                >
-                  <span className="flex items-center gap-1.5">
-                    <CalendarDays className="size-4" /> Other
-                  </span>
-                  <span className={cn("font-mono text-[11px] font-normal", isCustom ? "text-primary" : "text-muted-foreground")}>
-                    {isCustom ? fmtDateShort(date) : "pick a day"}
-                  </span>
-                </PopoverTrigger>
-                <PopoverContent align="end" sideOffset={8} className="w-auto p-2">
-                  <Calendar
-                    mode="single"
-                    weekStartsOn={1}
-                    selected={toLocalDate(date)}
-                    defaultMonth={toLocalDate(date)}
-                    disabled={[{ after: toLocalDate(today) }, { before: toLocalDate(minDate) }]}
-                    startMonth={toLocalDate(minDate)}
-                    endMonth={toLocalDate(today)}
-                    modifiers={{ logged: entries.map((e) => toLocalDate(e.date)) }}
-                    modifiersClassNames={{ logged: "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-current [&>button]:after:opacity-60" }}
-                    onSelect={(d) => {
-                      if (!d) return;
-                      pickDate(fromLocalDate(d));
-                      setCalendarOpen(false);
-                    }}
-                  />
-                  <p className="flex items-center gap-1.5 px-2 pt-1 pb-1 text-[11px] text-subtle">
-                    <span className="size-1 rounded-full bg-muted-foreground" /> already logged
-                  </p>
-                </PopoverContent>
-              </Popover>
-            </div>
-          </fieldset>
-
-          <div className="mt-6">
-            <label htmlFor={inputId} className="text-sm font-semibold">
-              Total impressions
-            </label>
-            <div
-              className={cn(
-                "mt-2.5 flex h-16 items-center gap-3 rounded-xl border bg-surface-high px-4 transition-colors focus-within:border-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary",
-                showError ? "border-foreground" : "border-hairline",
-              )}
-            >
-              <input
-                id={inputId}
-                inputMode="numeric"
-                autoComplete="off"
-                placeholder={before ? `more than ${fmt(before.total)}` : "e.g. 157,400"}
-                maxLength={24}
-                value={/^\d+$/.test(text) ? fmt(Number(text)) : text}
-                onChange={(e) => {
-                  setServerError(null);
-                  const typed = e.target.value;
-                  const digits = typed.replace(/[\s,]/g, "");
-                  // Clean digits are stored bare (and shown formatted); anything else is kept so its error can explain it.
-                  setText(/^\d*$/.test(digits) ? digits.slice(0, LIMITS.maxDigits + 1) : typed);
-                }}
-                onBlur={() => setTouched(true)}
-                aria-invalid={Boolean(showError)}
-                aria-describedby={`${inputId}-msg`}
-                className="w-full min-w-0 bg-transparent font-mono text-2xl font-semibold tracking-[-0.03em] text-foreground caret-primary outline-none placeholder:text-base placeholder:font-normal placeholder:tracking-normal placeholder:text-muted-foreground"
-              />
-              {existing && (
-                <span className="shrink-0 rounded-full border border-hairline px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
-                  Logged
-                </span>
-              )}
-            </div>
-            <p id={`${inputId}-msg`} className={cn("mt-2 min-h-5 text-sm", showError ? "font-medium" : "text-muted-foreground")}>
-              {showError
-                ? showError
-                : after
-                  ? `Must be between ${fmt(before?.total ?? 1)} (${before ? fmtDateShort(before.date) : "minimum"}) and ${fmt(after.total)} (${fmtDateShort(after.date)}).`
-                  : before
-                    ? `Previous log: ${fmt(before.total)} on ${fmtDateShort(before.date)}.`
-                    : "This is your first log."}
-            </p>
-          </div>
-
-          <div className="mt-4 grid grid-cols-3 divide-x divide-hairline rounded-xl border border-hairline">
-            {[
-              { label: "Daily gain", value: preview?.row.delta != null ? fmtSigned(preview.row.delta) : "—", key: true },
-              { label: "Of 500K", value: preview ? fmtPct(preview.row.progressPct, 2) : "—" },
-              { label: "500K around", value: preview?.eta ? fmtDateShort(preview.eta.etaDate) : "—" },
-            ].map((s) => (
-              <div key={s.label} className="p-3 sm:p-4">
-                <p className="text-xs text-muted-foreground">{s.label}</p>
-                <p className="mt-1 font-mono text-base font-semibold tracking-[-0.02em] sm:text-lg">
-                  {s.key && preview ? <span className="text-primary">{s.value}</span> : s.value}
-                </p>
-              </div>
-            ))}
-          </div>
-
-          {preview && (
-            <div className="mt-5 h-2 overflow-hidden rounded-full bg-surface-highest" aria-hidden>
-              <div
-                className="h-full rounded-full bg-primary ring-1 ring-foreground/15 transition-[width] duration-500 ease-out"
-                style={{ width: `${Math.min((preview.row.total / GOAL) * 100, 100)}%` }}
-              />
-            </div>
-          )}
-
-          <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
-            {text !== (existing ? String(existing.total) : "") && (
-              <Button
+        <fieldset className="mt-7">
+          <legend className="text-sm font-semibold">Day</legend>
+          <div className="mt-2.5 grid grid-cols-3 gap-2">
+            {dateChoices.map(({ d, label, sub }) => (
+              <button
+                key={d}
                 type="button"
-                variant="ghost"
-                onClick={() => pickDate(date)}
-                className="h-12 px-5 text-sm font-semibold text-foreground hover:bg-hover"
+                onClick={() => pickDate(d)}
+                aria-pressed={date === d}
+                className={cn(
+                  "flex h-14 flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors",
+                  date === d
+                    ? "border-primary bg-primary-soft text-foreground"
+                    : "border-hairline hover:bg-hover",
+                )}
               >
-                Reset
-              </Button>
-            )}
-            <Button
-              type="submit"
-              disabled={saving}
-              className="h-12 gap-2 bg-primary px-6 text-sm font-semibold text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed"
-            >
-              {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" strokeWidth={2.5} />}
-              {saving ? "Saving…" : existing ? "Update log" : "Save log"}
-            </Button>
+                {label}
+                <span className={cn("font-mono text-[11px] font-normal", date === d ? "text-primary" : "text-muted-foreground")}>
+                  {sub}
+                </span>
+              </button>
+            ))}
+            <Popover open={calendarOpen} onOpenChange={setCalendarOpen}>
+              <PopoverTrigger
+                render={
+                  <button
+                    type="button"
+                    aria-pressed={isCustom}
+                    className={cn(
+                      "flex h-14 w-full flex-col items-center justify-center rounded-lg border text-sm font-semibold transition-colors",
+                      isCustom ? "border-primary bg-primary-soft text-foreground" : "border-hairline hover:bg-hover",
+                    )}
+                  />
+                }
+              >
+                <span className="flex items-center gap-1.5">
+                  <CalendarDays className="size-4" /> Other
+                </span>
+                <span className={cn("font-mono text-[11px] font-normal", isCustom ? "text-primary" : "text-muted-foreground")}>
+                  {isCustom ? fmtDateShort(date) : "pick a day"}
+                </span>
+              </PopoverTrigger>
+              <PopoverContent align="end" sideOffset={8} className="w-auto p-2">
+                <Calendar
+                  mode="single"
+                  weekStartsOn={1}
+                  selected={toLocalDate(date)}
+                  defaultMonth={toLocalDate(date)}
+                  disabled={[{ after: toLocalDate(today) }, { before: toLocalDate(minDate) }]}
+                  startMonth={toLocalDate(minDate)}
+                  endMonth={toLocalDate(today)}
+                  modifiers={{ logged: entries.map((e) => toLocalDate(e.date)) }}
+                  modifiersClassNames={{ logged: "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-current [&>button]:after:opacity-60" }}
+                  onSelect={(d) => {
+                    if (!d) return;
+                    pickDate(fromLocalDate(d));
+                    setCalendarOpen(false);
+                  }}
+                />
+                <p className="flex items-center gap-1.5 px-2 pt-1 pb-1 text-[11px] text-subtle">
+                  <span className="size-1 rounded-full bg-muted-foreground" /> already logged
+                </p>
+              </PopoverContent>
+            </Popover>
           </div>
-        </form>
+        </fieldset>
 
-        <aside className="panel-dark rounded-2xl p-5 sm:p-8 lg:self-start">
-          <div>
-            <p className="font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.04em] text-primary">
-              {rows.length}
-            </p>
-            <p className="mt-2 text-sm text-muted-foreground">
-              {rows.length ? `days logged since ${fmtDate(rows[0].date)}` : "days logged. Your first one starts the clock."}
-            </p>
+        <div className="mt-6">
+          <label htmlFor={inputId} className="text-sm font-semibold">
+            Total impressions
+          </label>
+          <div
+            className={cn(
+              "mt-2.5 flex h-16 items-center gap-3 rounded-xl border bg-surface-high px-4 transition-colors focus-within:border-foreground focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-primary",
+              showError ? "border-foreground" : "border-hairline",
+            )}
+          >
+            <input
+              id={inputId}
+              inputMode="numeric"
+              autoComplete="off"
+              placeholder={before ? `more than ${fmt(before.total)}` : "e.g. 157,400"}
+              maxLength={24}
+              value={/^\d+$/.test(text) ? fmt(Number(text)) : text}
+              onChange={(e) => {
+                setServerError(null);
+                const typed = e.target.value;
+                const digits = typed.replace(/[\s,]/g, "");
+                // Clean digits are stored bare (and shown formatted); anything else is kept so its error can explain it.
+                setText(/^\d*$/.test(digits) ? digits.slice(0, LIMITS.maxDigits + 1) : typed);
+              }}
+              onBlur={() => setTouched(true)}
+              aria-invalid={Boolean(showError)}
+              aria-describedby={`${inputId}-msg`}
+              className="w-full min-w-0 bg-transparent font-mono text-2xl font-semibold tracking-[-0.03em] text-foreground caret-primary outline-none placeholder:text-base placeholder:font-normal placeholder:tracking-normal placeholder:text-muted-foreground"
+            />
+            {existing && (
+              <span className="shrink-0 rounded-full border border-hairline px-2.5 py-1 text-[11px] font-medium text-muted-foreground">
+                Logged
+              </span>
+            )}
           </div>
-        </aside>
-      </div>
+          <p id={`${inputId}-msg`} className={cn("mt-2 min-h-5 text-sm", showError ? "font-medium" : "text-muted-foreground")}>
+            {showError
+              ? showError
+              : after
+                ? `Must be between ${fmt(before?.total ?? 1)} (${before ? fmtDateShort(before.date) : "minimum"}) and ${fmt(after.total)} (${fmtDateShort(after.date)}).`
+                : before
+                  ? `Previous log: ${fmt(before.total)} on ${fmtDateShort(before.date)}.`
+                  : "This is your first log."}
+          </p>
+        </div>
+
+        <div className="mt-4 grid grid-cols-3 divide-x divide-hairline rounded-xl border border-hairline">
+          {[
+            { label: "Daily gain", value: preview?.row.delta != null ? fmtSigned(preview.row.delta) : "—", key: true },
+            { label: "Of 500K", value: preview ? fmtPct(preview.row.progressPct, 2) : "—" },
+            { label: "500K around", value: preview?.eta ? fmtDateShort(preview.eta.etaDate) : "—" },
+          ].map((s) => (
+            <div key={s.label} className="p-3 sm:p-4">
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+              <p className="mt-1 font-mono text-base font-semibold tracking-[-0.02em] sm:text-lg">
+                {s.key && preview ? <span className="text-primary">{s.value}</span> : s.value}
+              </p>
+            </div>
+          ))}
+        </div>
+
+        {preview && (
+          <div className="mt-5 h-2 overflow-hidden rounded-full bg-surface-highest" aria-hidden>
+            <div
+              className="h-full rounded-full bg-primary ring-1 ring-foreground/15 transition-[width] duration-500 ease-out"
+              style={{ width: `${Math.min((preview.row.total / GOAL) * 100, 100)}%` }}
+            />
+          </div>
+        )}
+
+        <div className="mt-7 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+          {text !== (existing ? String(existing.total) : "") && (
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => pickDate(date)}
+              className="h-12 px-5 text-sm font-semibold text-foreground hover:bg-hover"
+            >
+              Reset
+            </Button>
+          )}
+          <Button
+            type="submit"
+            disabled={saving}
+            className="h-12 gap-2 bg-primary px-6 text-sm font-semibold text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed"
+          >
+            {saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" strokeWidth={2.5} />}
+            {saving ? "Saving…" : existing ? "Update log" : "Save log"}
+          </Button>
+        </div>
+      </form>
 
       {rows.length > 0 && (
       <section className="panel-dark rounded-2xl p-5 sm:p-8">
