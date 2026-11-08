@@ -1,10 +1,10 @@
+import { ConsistencyCard } from "@/components/progress/consistency-card";
 import { FirstLogPrompt } from "@/components/progress/page-skeleton";
 import { GainHeatmap } from "@/components/progress/gain-heatmap";
 import { TargetDateCard } from "@/components/progress/target-date-card";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import type { Progress } from "@/lib/data";
-import { fmt, fmtDate, fmtPct, fmtSigned } from "@/lib/format";
-import { daysBetween } from "@/lib/progress";
+import { fmtDate, fmtSigned } from "@/lib/format";
 
 /** The Analytics screen for one creator's progress. Pure: the page loads the data. */
 export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
@@ -20,9 +20,6 @@ export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
       </div>
     );
   }
-  const span = daysBetween(rows[0].date, p.today) + 1;
-  const consistency = (rows.length / span) * 100;
-  const acceleration = p.pace28 > 0 ? (p.pace7 / p.pace28 - 1) * 100 : 0;
 
   const scenarios = [
     { label: "At your 7-day pace", pace: p.pace7, eta: p.eta, primary: true },
@@ -68,38 +65,7 @@ export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
 
       {/* Bento row 2: consistency + daily gains */}
       <div className="grid gap-6 lg:grid-cols-3">
-      <section aria-labelledby="consistency-title" className="panel-dark flex flex-col rounded-2xl p-5 sm:p-6">
-        <h2 id="consistency-title" className="text-xl font-bold tracking-[-0.015em]">Consistency</h2>
-        <dl className="mt-3 flex flex-1 flex-col justify-between divide-y divide-hairline">
-          {[
-            {
-              label: "Current streak",
-              value: <span className="text-primary">{p.streak}</span>,
-              note: p.streak === 1 ? "day in a row" : "days in a row",
-            },
-            { label: "Days logged", value: fmtPct(consistency, 0), note: `${rows.length} of ${span} days` },
-            {
-              label: "Pace trend",
-              value: (
-                <>
-                  {acceleration < 0 && <span aria-label="down">▼ </span>}
-                  {fmtSigned(acceleration)}%
-                </>
-              ),
-              note: "7-day vs. 28-day pace",
-            },
-            { label: "Gained since first log", value: fmt(latest.total - rows[0].total), note: `since ${fmtDate(rows[0].date)}` },
-          ].map((s) => (
-            <div key={s.label} className="flex items-center justify-between gap-4 py-4 first:pt-2 last:pb-0">
-              <div className="min-w-0">
-                <dt className="text-sm text-muted-foreground">{s.label}</dt>
-                <dd className="mt-0.5 text-xs text-subtle">{s.note}</dd>
-              </div>
-              <dd className="shrink-0 font-mono text-[1.75rem] leading-none font-semibold tracking-[-0.04em]">{s.value}</dd>
-            </div>
-          ))}
-        </dl>
-      </section>
+      <ConsistencyCard rows={rows} today={p.today} streak={p.streak} pace7={p.pace7} pace28={p.pace28} />
 
       <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
         <h2 className="mb-5 text-xl font-bold tracking-[-0.015em]">Daily gains</h2>
