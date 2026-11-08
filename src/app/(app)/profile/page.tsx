@@ -11,7 +11,8 @@ import { GOAL } from "@/lib/progress";
 import { ProfileForms } from "./profile-forms";
 import { SignInMethods, type Login } from "./sign-in-methods";
 import { TelegramCard } from "./telegram-card";
-import { WhatsAppCard } from "./whatsapp-card";
+import { WhatsAppVoteCard } from "./whatsapp-vote-card";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 export const metadata: Metadata = { title: "Profile" };
@@ -27,15 +28,26 @@ export default function ProfilePage({ searchParams }: PageProps<"/profile">) {
   );
 }
 
+/** Everyone's votes. Needs the service role because each creator can only read their own row. */
+async function countWhatsAppVotes() {
+  try {
+    const { count } = await createAdminClient().from("whatsapp_votes").select("user_id", { count: "exact", head: true });
+    return count ?? 0;
+  } catch {
+    return 0; // the rest of the page still loads
+  }
+}
+
 async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["searchParams"] }) {
   const supabase = await createClient();
-  const [user, p, query, { data: telegram }, { data: whatsapp }] = await Promise.all([
+  const [user, p, query, { data: telegram }, { data: whatsappVote }, whatsappVotes] = await Promise.all([
     getAccount(),
     getProgress(),
     searchParams,
     // Missing table (migration not run yet) just reads as "not linked".
     supabase.from("telegram_links").select("remind, linked_at").maybeSingle<{ remind: boolean; linked_at: string }>(),
-    supabase.from("whatsapp_links").select("remind, linked_at").maybeSingle<{ remind: boolean; linked_at: string }>(),
+    supabase.from("whatsapp_votes").select("user_id").maybeSingle(),
+    countWhatsAppVotes(),
   ]);
   // Set by /auth/callback when connecting another Google account fails.
   const linkError = typeof query.error === "string" ? query.error : null;
@@ -106,10 +118,7 @@ async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["
         botUsername={process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME ?? null}
       />
 
-      <WhatsAppCard
-        link={whatsapp ? { remind: whatsapp.remind, linkedAt: whatsapp.linked_at } : null}
-        number={process.env.NEXT_PUBLIC_WHATSAPP_NUMBER ?? null}
-      />
+      <WhatsAppVoteCard voted={Boolean(whatsappVote)} votes={whatsappVotes} />
 
       <SignInMethods logins={logins} hasPassword={hasPassword} accountEmail={user.email ?? ""} linkError={linkError} />
 
