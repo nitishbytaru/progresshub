@@ -81,5 +81,6 @@ export function BottomNav() {
 export function MobileTitle() {
   const isActive = useActive();
   const current = NAV.find((n) => isActive(n.href));
-  return <span className="text-xs text-subtle">{current?.label ?? ""}</span>;
+  const pathname = usePathname();
+  return <span className="text-xs text-subtle">{current?.label ?? (pathname.startsWith("/profile") ? "Profile" : "")}</span>;
 }
