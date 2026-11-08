@@ -2,7 +2,8 @@ import { Suspense } from "react";
 import { Brand, BrandMark } from "@/components/shell/brand";
 import { BottomNav, MobileTitle, SidebarNav } from "@/components/shell/nav";
 import { UserMenu } from "@/components/shell/user-menu";
-import { getProgress, getToday, isTelegramConnected } from "@/lib/data";
+import { Tour } from "@/components/tour/tour";
+import { getProgress, getToday, isTelegramConnected, shouldAutoStartTour } from "@/lib/data";
 import { fmt, fmtDate, fmtPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 
@@ -38,6 +39,10 @@ async function SidebarBottomNav() {
 
 async function PhoneNav() {
   return <BottomNav connectBadge={!(await isTelegramConnected())} />;
+}
+
+async function TourGate() {
+  return <Tour autoStartFor={await shouldAutoStartTour()} />;
 }
 
 const Placeholder = ({ className }: { className: string }) => (
@@ -97,6 +102,10 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
 
       <Suspense fallback={<BottomNav />}>
         <PhoneNav />
+      </Suspense>
+
+      <Suspense fallback={null}>
+        <TourGate />
       </Suspense>
     </div>
   );

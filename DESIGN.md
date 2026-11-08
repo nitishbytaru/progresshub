@@ -166,6 +166,7 @@ Never use lime for large backgrounds, body text, decorative illustration, border
 ### States without extra hues
 - Positive change: lime text or lime badge with ▲.
 - Negative change: white (on black) or black (on white) text with ▼ and reduced opacity. **No red.**
+- Tutorial highlight (user-approved exception): hot magenta `#FF2E93` (`--tour-highlight`, `bg-tour`/`border-tour`) marks what the first-run tutorial is explaining. Use it only in `src/components/tour/`.
 - Disabled: 30% opacity of the base color.
 - Hover on lime: `#d4f75c`; pressed: `#b3dc22`. Hover on black surfaces: a momentary `#ffffff0d` wash (feedback only, never a resting fill).
 

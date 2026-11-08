@@ -54,7 +54,7 @@ const getSessionUser = cache(async () => {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (!data?.claims.sub) redirect("/login");
-  return { id: data.claims.sub, email: data.claims.email };
+  return { id: data.claims.sub, email: data.claims.email, tutorialDone: data.claims.user_metadata?.tutorial_done === true };
 });
 
 const getProfile = cache(async (userId: string): Promise<Profile> => {
@@ -76,6 +76,12 @@ export const getAccount = cache(async () => {
   } = await supabase.auth.getUser();
   if (!user) redirect("/login");
   return user;
+});
+
+/** The account the tutorial should play for: only one that hasn't seen it and has nothing logged yet. */
+export const shouldAutoStartTour = cache(async (): Promise<string | null> => {
+  const [{ id, tutorialDone }, { entries }] = await Promise.all([getSessionUser(), getProgress()]);
+  return !tutorialDone && entries.length === 0 ? id : null;
 });
 
 /** Whether the creator has linked the Telegram bot. On a failed read, says yes so no false alert shows. */

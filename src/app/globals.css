@@ -63,6 +63,7 @@
   --color-danger: var(--danger);
   --color-danger-hover: var(--danger-hover);
   --color-danger-soft: var(--danger-soft);
+  --color-tour: var(--tour-highlight);
 
   --radius-sm: calc(var(--radius) * 0.5);
   --radius-md: calc(var(--radius) * 0.75);
@@ -126,6 +127,9 @@
   --danger: #dc2626;
   --danger-hover: #ef4444;
   --danger-soft: #dc26261f;
+
+  /* User-approved contrast highlight, for the tutorial only (src/components/tour). */
+  --tour-highlight: #ff2e93;
 
   --chart-1: #c8f432;
   --chart-2: #ffffff99;

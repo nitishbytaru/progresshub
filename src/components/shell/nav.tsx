@@ -49,6 +49,7 @@ export function SidebarNav({ section, connectBadge = false }: SidebarProps) {
           <Link
             key={href}
             href={href}
+            data-tour={href}
             aria-current={active ? "page" : undefined}
             className={cn(
               "group relative flex h-10 items-center gap-3 rounded-lg px-3 text-sm transition-colors",
@@ -82,6 +83,7 @@ export function BottomNav({ connectBadge = false }: { connectBadge?: boolean }) 
             <li key={href}>
               <Link
                 href={href}
+                data-tour={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
                   "flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",

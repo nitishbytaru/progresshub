@@ -5,6 +5,7 @@ import { ArrowUpRight, Trash2 } from "lucide-react";
 import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { Avatar } from "@/components/shell/brand";
 import { DeleteAccountDialog } from "@/components/shell/delete-account-dialog";
+import { ReplayTourButton } from "@/components/tour/replay-tour-button";
 import { getProgress, getAccount } from "@/lib/data";
 import { fmt, fmtCompact, fmtDate, fmtPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
@@ -112,6 +113,11 @@ async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["
             </>
           }
         />
+      </section>
+
+      <section aria-label="Tutorial" className="panel-dark flex items-center justify-between gap-4 rounded-2xl p-5 sm:p-6">
+        <h2 className="text-sm font-semibold">Tutorial</h2>
+        <ReplayTourButton />
       </section>
     </>
   );
