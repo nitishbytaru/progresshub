@@ -28,8 +28,10 @@ export async function GET(request: NextRequest) {
     error = "This sign-in link is missing its code.";
   }
 
+  // A failed "Connect Google" from Profile returns there (the creator is still signed in), not to /login.
+  const errorPage = next === "/profile" ? "/profile" : "/login";
   const res = error
-    ? NextResponse.redirect(`${origin}/login?error=${encodeURIComponent(error)}`)
+    ? NextResponse.redirect(`${origin}${errorPage}?error=${encodeURIComponent(error)}`)
     : NextResponse.redirect(`${origin}${type === "recovery" ? "/auth/update-password" : next}`);
   res.cookies.delete("auth_next");
   return res;

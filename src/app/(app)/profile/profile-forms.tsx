@@ -6,10 +6,10 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { updateEmail, updateHandle, type ProfileState } from "./actions";
 
-type Props = { email: string; pendingEmail: string | null; handle: string };
+type Props = { email: string; pendingEmail: string | null; handle: string; googleOnly: boolean };
 
 /** Email and X username, each saved on its own. */
-export function ProfileForms({ email, pendingEmail, handle }: Props) {
+export function ProfileForms({ email, pendingEmail, handle, googleOnly }: Props) {
   return (
     <section aria-label="Account details" className="panel-dark flex flex-col divide-y divide-hairline rounded-2xl">
       <Field
@@ -22,7 +22,9 @@ export function ProfileForms({ email, pendingEmail, handle }: Props) {
         hint={
           pendingEmail
             ? `Waiting for you to confirm ${pendingEmail}. Check your inbox.`
-            : "Changing it sends a confirmation link. It only changes once you click it."
+            : googleOnly
+              ? "You'll keep signing in with Google. This only changes your account email, after you confirm the link."
+              : "Changing it sends a confirmation link. It only changes once you click it."
         }
       />
       <Field

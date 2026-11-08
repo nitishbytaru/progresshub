@@ -9,26 +9,36 @@ import { getProgress, getViewer } from "@/lib/data";
 import { fmt, fmtCompact, fmtDate, fmtPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 import { ProfileForms } from "./profile-forms";
+import { SignInMethods, type Login } from "./sign-in-methods";
 
 export const metadata: Metadata = { title: "Profile" };
 
-export default function ProfilePage() {
+export default function ProfilePage({ searchParams }: PageProps<"/profile">) {
   return (
     <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 lg:gap-8">
       <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Profile</h1>
       <Suspense fallback={<PageSkeleton blocks={["h-[200px]", "h-[300px]", "h-[88px]"]} />}>
-        <Profile />
+        <Profile searchParams={searchParams} />
       </Suspense>
     </div>
   );
 }
 
-async function Profile() {
-  const [{ user }, p] = await Promise.all([getViewer(), getProgress()]);
+async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["searchParams"] }) {
+  const [{ user }, p, query] = await Promise.all([getViewer(), getProgress(), searchParams]);
+  // Set by /auth/callback when connecting another Google account fails.
+  const linkError = typeof query.error === "string" ? query.error : null;
   const { profile } = p;
   const name = profile.display_name || profile.handle || user.email || "You";
   const total = p.latest?.total ?? 0;
   const pct = Math.min((total / GOAL) * 100, 100);
+  const logins: Login[] = (user.identities ?? []).map((i) => ({
+    id: i.identity_id,
+    provider: i.provider,
+    email: typeof i.identity_data?.email === "string" ? i.identity_data.email : null,
+  }));
+  const hasPassword = logins.some((l) => l.provider === "email") || user.user_metadata?.has_password === true;
+  const googleOnly = !hasPassword && logins.length > 0 && logins.every((l) => l.provider === "google");
   const stats = [
     { label: "logs", value: fmt(p.rows.length) },
     { label: "streak", value: `${p.streak}d` },
@@ -73,7 +83,14 @@ async function Profile() {
         </div>
       </section>
 
-      <ProfileForms email={user.email ?? ""} pendingEmail={user.new_email ?? null} handle={profile.handle ?? ""} />
+      <ProfileForms
+        email={user.email ?? ""}
+        pendingEmail={user.new_email ?? null}
+        handle={profile.handle ?? ""}
+        googleOnly={googleOnly}
+      />
+
+      <SignInMethods logins={logins} hasPassword={hasPassword} accountEmail={user.email ?? ""} linkError={linkError} />
 
       <section
         aria-label="Delete account"
