@@ -114,13 +114,13 @@ export function XShareDialog({ trigger, triggerLabel, title, description, defaul
     <Dialog>
       <DialogTrigger render={trigger}>{triggerLabel}</DialogTrigger>
 
-      <DialogContent className="panel-dark max-h-[calc(100dvh-2rem)] gap-0 overflow-y-auto rounded-2xl p-0 ring-0 sm:max-w-[920px] [&>[data-slot=dialog-close]]:top-4 [&>[data-slot=dialog-close]]:right-4">
+      <DialogContent className="panel-dark max-h-[calc(100dvh-2rem)] grid-cols-[minmax(0,1fr)] gap-0 overflow-x-hidden overflow-y-auto rounded-2xl p-0 ring-0 sm:max-w-[920px] [&>[data-slot=dialog-close]]:top-4 [&>[data-slot=dialog-close]]:right-4">
         <div className="border-b border-hairline px-5 py-4 pr-14 sm:px-6">
           <DialogTitle className="text-lg font-bold tracking-[-0.015em] text-foreground">{title}</DialogTitle>
-          <DialogDescription className="text-sm text-muted-foreground">{description}</DialogDescription>
+          <DialogDescription className="hidden sm:block text-sm text-muted-foreground">{description}</DialogDescription>
         </div>
 
-        <div className="grid gap-6 p-5 sm:p-6 md:grid-cols-[1.2fr_1fr]">
+        <div className="grid grid-cols-[minmax(0,1fr)] gap-5 p-4 sm:gap-6 sm:p-6 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
           {/* The real preview image X will unfurl */}
           <div className="flex flex-col gap-3">
             {/* eslint-disable-next-line @next/next/no-img-element -- generated OG image, shown as-is */}
@@ -158,7 +158,7 @@ export function XShareDialog({ trigger, triggerLabel, title, description, defaul
               onChange={(e) => setText(e.target.value)}
               rows={6}
               aria-describedby={`${textId}-count`}
-              className="min-h-36 w-full resize-y rounded-lg border border-border bg-background p-3 text-sm leading-relaxed text-foreground outline-none focus-visible:border-primary"
+              className="min-h-36 w-full resize-y rounded-lg border border-border bg-background p-3 text-base leading-relaxed sm:text-sm text-foreground outline-none focus-visible:border-primary"
             />
             <p id={`${textId}-count`} className={cn("font-mono text-xs", over ? "font-semibold text-foreground" : "text-subtle")}>
               {length} / {X_LIMIT} with link

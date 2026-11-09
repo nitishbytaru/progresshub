@@ -127,7 +127,7 @@ async function Profile({ params }: Props) {
           {/* Row 1: the total and the road to 500K (wide) + rank and latest day */}
           <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
-              <p className="font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.04em] sm:text-[3.25rem]">
+              <p className="hidden font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.04em] sm:block sm:text-[3.25rem]">
                 {fmt(latest.total)}
                 <span className="ml-3 font-sans text-base font-medium tracking-normal text-muted-foreground">/ 500K</span>
               </p>

@@ -28,7 +28,8 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
         defaultValue={state?.name ?? defaultName}
       />
       <p className="text-xs text-subtle">
-        Your handle, name and progress appear on the public leaderboard.
+        <span className="sm:hidden">Shown on the public leaderboard.</span>
+        <span className="hidden sm:inline">Your handle, name and progress appear on the public leaderboard.</span>
       </p>
       {state?.error && <FormNotice tone="error">{state.error}</FormNotice>}
       <SubmitButton pending={pending}>{pending ? "Saving…" : "Start tracking"}</SubmitButton>

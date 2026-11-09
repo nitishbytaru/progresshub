@@ -198,7 +198,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                   : after
                     ? `Must be between ${fmt(before?.total ?? 1)} (${before ? fmtDateShort(before.date) : "minimum"}) and ${fmt(after.total)} (${fmtDateShort(after.date)}).`
                     : before
-                      ? `Previous log: ${fmt(before.total)} on ${fmtDateShort(before.date)}.`
+                      ? `Last: ${fmt(before.total)} · ${fmtDateShort(before.date)}`
                       : "This is your first log."}
               </p>
             </div>
@@ -245,7 +245,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
               const prevPct = Math.min(((now - gain) / GOAL) * 100, 100);
               const nowPct = Math.min((now / GOAL) * 100, 100);
               return (
-                <div className="mt-6 border-t border-hairline pt-5">
+                <div className="hidden sm:block mt-6 border-t border-hairline pt-5">
                   <div className="flex items-baseline justify-between gap-3">
                     <p className="text-xs text-muted-foreground">To 500K</p>
                     <p className="font-mono text-xs text-foreground">

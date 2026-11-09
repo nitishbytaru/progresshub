@@ -13,11 +13,14 @@ export function PageSkeleton({ blocks }: { blocks: string[] }) {
 }
 
 /** Shown wherever there's nothing to chart yet. */
-export function FirstLogPrompt({ title, body }: { title: string; body: string }) {
+export function FirstLogPrompt({ title, body, short }: { title: string; body: string; short: string }) {
   return (
     <section className="panel-dark flex flex-col items-start gap-4 rounded-2xl p-6 sm:p-10">
       <h2 className="text-xl font-bold tracking-[-0.015em]">{title}</h2>
-      <p className="max-w-[52ch] text-sm text-muted-foreground">{body}</p>
+      <p className="max-w-[52ch] text-sm text-muted-foreground">
+        <span className="sm:hidden">{short}</span>
+        <span className="hidden sm:inline">{body}</span>
+      </p>
       <Link
         href="/progress"
         className="inline-flex h-11 items-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed"

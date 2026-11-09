@@ -31,6 +31,7 @@ async function Overview() {
         <FirstLogPrompt
           title="Your road to 500K starts with one number"
           body="Open X analytics, copy your total impressions, and log it. From the second day on you'll see your daily gain, your pace, and when you'll reach 500K."
+          short="Copy your total from X analytics and log it."
         />
       </div>
     );

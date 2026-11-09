@@ -141,7 +141,14 @@ export function SignInMethods({ logins, hasPassword, accountEmail, linkError }: 
           className="h-10 w-full gap-2 border-border bg-transparent text-sm font-semibold text-foreground hover:bg-hover sm:w-auto sm:self-start"
         >
           {busy === "connect" ? <Loader2 className="size-4 animate-spin" /> : <Plus className="size-4" />}
-          {google.length ? "Connect another Google account" : "Connect Google"}
+          {google.length ? (
+            <>
+              <span className="sm:hidden">Add Google account</span>
+              <span className="hidden sm:inline">Connect another Google account</span>
+            </>
+          ) : (
+            "Connect Google"
+          )}
         </Button>
         {problem && (
           <p role="alert" className="text-sm font-medium text-foreground">
@@ -184,7 +191,7 @@ function PasswordForm({ onDone }: { onDone: () => void }) {
           placeholder="New password"
           aria-invalid={Boolean(state?.error)}
           aria-describedby={`${id}-msg`}
-          className="h-11 min-w-0 flex-1 rounded-xl border border-hairline bg-surface-high px-4 text-sm text-foreground caret-primary outline-none focus:border-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
+          className="h-11 min-w-0 flex-1 rounded-xl border border-hairline bg-surface-high px-4 text-base text-foreground caret-primary sm:text-sm outline-none focus:border-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
         />
         <div className="flex gap-2">
           <Button

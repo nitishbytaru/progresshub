@@ -76,7 +76,7 @@ export function LeaderboardTable({ creators, today }: { creators: Creator[]; tod
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search @handle or name"
-            className="w-full bg-transparent text-sm outline-none placeholder:text-subtle"
+            className="w-full bg-transparent text-base outline-none placeholder:text-subtle sm:text-sm"
           />
         </label>
       </div>

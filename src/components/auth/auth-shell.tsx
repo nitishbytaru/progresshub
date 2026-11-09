@@ -10,7 +10,7 @@ export function AuthShell({ title, subtitle, children }: { title: string; subtit
           <span className="text-[17px] font-bold tracking-[-0.02em]">progresshub</span>
         </div>
         <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em]">{title}</h1>
-        {subtitle && <p className="mt-2 text-sm text-muted-foreground">{subtitle}</p>}
+        {subtitle && <p className="mt-2 hidden text-sm text-muted-foreground sm:block">{subtitle}</p>}
         <div className="mt-8">{children}</div>
       </div>
     </main>
@@ -30,7 +30,7 @@ export function Field({
       </span>
       <input
         {...props}
-        className="h-12 rounded-xl border border-border bg-background px-4 text-[15px] text-foreground transition-colors outline-none placeholder:text-subtle focus-visible:border-primary focus-visible:outline-none"
+        className="h-12 rounded-xl border border-border bg-background px-4 text-base text-foreground sm:text-[15px] transition-colors outline-none placeholder:text-subtle focus-visible:border-primary focus-visible:outline-none"
       />
     </label>
   );

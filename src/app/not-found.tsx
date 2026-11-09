@@ -10,7 +10,7 @@ export default function NotFound() {
     <StatusScreen
       code="404"
       title="This page went off the track"
-      message="The link may be old or mistyped. Your progress is safe. Head back and keep logging."
+      message="That link is old or mistyped. Your progress is safe."
       actions={
         <>
           <Link href="/" className={statusAction.primary}>

@@ -29,6 +29,16 @@ const secondary =
 const heading = "text-4xl leading-[1.05] font-bold tracking-[-0.03em] text-balance sm:text-5xl lg:text-6xl";
 const lede = "mt-5 max-w-[46ch] text-lg leading-relaxed text-muted-foreground";
 
+/** Phones get the short line; larger screens keep the full sentence. */
+function Lede({ short, children }: { short: string; children: React.ReactNode }) {
+  return (
+    <p className={lede}>
+      <span className="sm:hidden">{short}</span>
+      <span className="hidden sm:inline">{children}</span>
+    </p>
+  );
+}
+
 const STATS = [
   { label: "Total", node: <CountUp to={146444} className="text-foreground" /> },
   { label: "7-day pace", node: <CountUp to={5028} prefix="+" className="text-foreground" /> },
@@ -74,7 +84,7 @@ export default function WelcomePage() {
               One finish line. <span className="text-primary">500K.</span>
             </h1>
             <Reveal delay={0.12}>
-              <p className={lede}>Log your X impressions once a day. See your pace, your estimated date, and every creator racing to the same number.</p>
+              <Lede short="Log daily. See your pace and rank.">Log your X impressions once a day. See your pace, your estimated date, and every creator racing to the same number.</Lede>
             </Reveal>
             <Reveal delay={0.24} className="mt-8 flex flex-wrap gap-3">
               <Link href={SIGN_UP} className={primary}>
@@ -96,7 +106,7 @@ export default function WelcomePage() {
             <div className="grid gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] lg:items-end">
               <Reveal>
                 <h2 className={heading}>Know exactly where you stand.</h2>
-                <p className={lede}>Overview turns your logs into a total, a pace and an estimated date for 500K. It&apos;s an estimate, and it updates with every log.</p>
+                <Lede short="Your total, pace and estimated 500K date.">Overview turns your logs into a total, a pace and an estimated date for 500K. It&apos;s an estimate, and it updates with every log.</Lede>
               </Reveal>
               <Reveal delay={0.1}>
                 <dl className="divide-y divide-hairline rounded-2xl border border-border">
@@ -118,7 +128,7 @@ export default function WelcomePage() {
             <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-14">
               <Reveal>
                 <h2 className={heading}>One number a day.</h2>
-                <p className={lede}>Copy your total from X analytics and log it. It takes ten seconds, and it never touches your X account.</p>
+                <Lede short="Copy it from X analytics. Ten seconds.">Copy your total from X analytics and log it. It takes ten seconds, and it never touches your X account.</Lede>
                 <div className="mt-8 max-w-sm">
                   <TypedLog />
                 </div>
@@ -134,7 +144,7 @@ export default function WelcomePage() {
             <Stop value="375K" />
             <Reveal className="max-w-3xl">
               <h2 className={heading}>Same goal. Same board.</h2>
-              <p className={lede}>Everyone races to the same 500K, so the numbers finally compare like with like.</p>
+              <Lede short="One goal, so every number compares.">Everyone races to the same 500K, so the numbers finally compare like with like.</Lede>
             </Reveal>
             <div className="mt-10">
               <WipeIn>
@@ -153,7 +163,7 @@ export default function WelcomePage() {
                 <h2 id="telegram-heading" className={heading}>
                   Cross it from Telegram.
                 </h2>
-                <p className={lede}>Connect the progresshub bot and your daily log becomes a text message. Miss a day and it nudges you.</p>
+                <Lede short="Log by text. Get nudged on missed days.">Connect the progresshub bot and your daily log becomes a text message. Miss a day and it nudges you.</Lede>
               </Reveal>
               <ul className="mt-8 divide-y divide-hairline border-y border-hairline">
                 {BOT.map(({ icon: Icon, label, tags, meaning }, i) => (

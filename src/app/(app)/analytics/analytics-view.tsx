@@ -15,6 +15,7 @@ export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
         <FirstLogPrompt
           title={latest ? "One more day and the forecast unlocks" : "Nothing to analyse yet"}
           body="Projections need at least two days of logs to measure your pace. Log today, then come back tomorrow."
+          short="Needs 2 days of logs. Back tomorrow."
         />
       </div>
     );

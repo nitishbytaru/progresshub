@@ -15,12 +15,12 @@ const SEEN_KEY = "progresshub-tutorial-done";
 const EASE = [0.16, 1, 0.3, 1] as const;
 
 const STEPS = [
-  { href: "/progress", title: "Log daily", tags: ["once a day"], meaning: "On Daily progress, type your total from X analytics and save it, once a day.", Demo: LogDemo },
-  { href: "/", title: "See progress", tags: ["sample"], meaning: "Overview shows your total, your progress to 500K and an estimated date.", Demo: OverviewDemo },
-  { href: "/analytics", title: "Spot trends", tags: [], meaning: "Analytics charts your impressions over time.", Demo: AnalyticsDemo },
-  { href: "/leaderboard", title: "Climb ranks", tags: [], meaning: "Leaderboard ranks every creator racing to 500K.", Demo: LeaderboardDemo },
-  { href: "/share", title: "Post on X", tags: [], meaning: "On Share on X, pick a card and post it to X.", Demo: ShareDemo },
-  { href: "/connect", title: "Use Telegram", tags: [], meaning: "On Connect, link the Telegram bot to get reminders and log by message.", Demo: ConnectDemo },
+  { href: "/progress", title: "Log daily", tags: ["once a day"], meaning: "Save your X analytics total once a day.", Demo: LogDemo },
+  { href: "/", title: "See progress", tags: ["sample"], meaning: "Your total, progress and estimated 500K date.", Demo: OverviewDemo },
+  { href: "/analytics", title: "Spot trends", tags: [], meaning: "Your impressions over time.", Demo: AnalyticsDemo },
+  { href: "/leaderboard", title: "Climb ranks", tags: [], meaning: "Every creator racing to 500K.", Demo: LeaderboardDemo },
+  { href: "/share", title: "Post on X", tags: [], meaning: "Pick a card and post it to X.", Demo: ShareDemo },
+  { href: "/connect", title: "Use Telegram", tags: [], meaning: "Link Telegram for reminders and logging.", Demo: ConnectDemo },
 ];
 
 type Mode = "first" | "replay";
