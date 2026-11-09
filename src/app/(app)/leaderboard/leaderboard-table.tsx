@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Search } from "lucide-react";
 import { Avatar } from "@/components/shell/brand";
 import { fmt, fmtCompact, fmtPct, fmtSigned } from "@/lib/format";
@@ -27,14 +28,13 @@ function ago(date: string, today: string) {
 }
 
 const SORTS = {
-  total: { label: "Closest to 500K", phrase: "total impressions", by: (c: Creator) => c.total },
-  pace: { label: "Fastest pace", phrase: "7-day pace", by: (c: Creator) => c.pace7 },
-  streak: { label: "Longest streak", phrase: "logging streak", by: (c: Creator) => c.streak },
+  total: { label: "Closest to 500K", by: (c: Creator) => c.total },
+  pace: { label: "Fastest pace", by: (c: Creator) => c.pace7 },
+  streak: { label: "Longest streak", by: (c: Creator) => c.streak },
 } as const;
 type SortKey = keyof typeof SORTS;
 
-/** `extras`: small add-on stats shown under the controls, beside your rank. */
-export function LeaderboardTable({ creators, today, extras }: { creators: Creator[]; today: string; extras?: React.ReactNode }) {
+export function LeaderboardTable({ creators, today }: { creators: Creator[]; today: string }) {
   const [sort, setSort] = useState<SortKey>("total");
   const [query, setQuery] = useState("");
 
@@ -47,7 +47,6 @@ export function LeaderboardTable({ creators, today, extras }: { creators: Creato
   );
   const q = query.trim().toLowerCase().replace(/^@/, "");
   const shown = q ? ranked.filter((c) => c.handle.includes(q) || c.name.toLowerCase().includes(q)) : ranked;
-  const you = ranked.find((c) => c.isYou);
 
   return (
     <div className="flex flex-col gap-4">
@@ -81,20 +80,6 @@ export function LeaderboardTable({ creators, today, extras }: { creators: Creato
         </label>
       </div>
 
-      {(you || extras) && (
-        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2">
-          {you ? (
-            <p className="text-sm text-muted-foreground">
-              You&apos;re <span className="font-mono font-semibold text-primary">#{you.rank}</span> of{" "}
-              {ranked.length} by {SORTS[sort].phrase}.
-            </p>
-          ) : (
-            <span />
-          )}
-          {extras}
-        </div>
-      )}
-
       <div className="panel-dark overflow-hidden rounded-2xl">
         {ranked.length === 0 ? (
           <div className="px-6 py-16 text-center">
@@ -126,11 +111,10 @@ export function LeaderboardTable({ creators, today, extras }: { creators: Creato
                   aria-current={c.isYou ? "true" : undefined}
                   className="border-b border-hairline last:border-b-0"
                 >
-                  {/* The whole row opens the creator's X profile (the X app on phones that have it). */}
-                  <a
-                    href={`https://x.com/${c.handle}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  {/* The whole row opens the creator's public progresshub page. */}
+                  <Link
+                    href={`/u/${c.handle}`}
+                    prefetch={false}
                     className={cn(
                       "grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5 px-4 py-3.5 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary md:grid-cols-[56px_minmax(0,1.3fr)_minmax(0,2fr)_104px_96px_72px] md:gap-x-6 md:px-6",
                       c.isYou ? "bg-primary-soft hover:bg-primary-soft/70" : "hover:bg-hover",
@@ -197,8 +181,8 @@ export function LeaderboardTable({ creators, today, extras }: { creators: Creato
                     <span>{fmtSigned(c.pace7)}/day</span>
                     <span>{c.streak}-day streak</span>
                   </span>
-                  <span className="sr-only">(opens @{c.handle} on X)</span>
-                  </a>
+                  <span className="sr-only">(view @{c.handle}&apos;s profile)</span>
+                  </Link>
                 </li>
               );
             })}

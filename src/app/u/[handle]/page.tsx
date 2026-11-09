@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
+import { ArrowUpRight } from "lucide-react";
 import { ConsistencyCard } from "@/components/progress/consistency-card";
 import { GainHeatmap } from "@/components/progress/gain-heatmap";
 import { GoalTrack } from "@/components/progress/goal-track";
@@ -106,6 +107,15 @@ async function Profile({ params }: Props) {
             </a>
           </div>
         </div>
+        <a
+          href={`https://x.com/${profile.handle}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label={`View @${profile.handle} on X (opens in a new tab)`}
+          className="inline-flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-8 text-lg font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto"
+        >
+          View X profile <ArrowUpRight className="size-5" aria-hidden />
+        </a>
       </section>
 
       {!latest ? (
