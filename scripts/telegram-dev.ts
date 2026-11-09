@@ -1,20 +1,30 @@
 /**
  * Run the Telegram bot locally with long polling (no public URL or webhook needed):
- *   npx tsx --env-file=.env.local --conditions=react-server scripts/telegram-dev.ts
+ *   npm run bot:dev
  * `--conditions=react-server` lets the server-only modules load outside Next.
- * Polling and a webhook can't run at the same time: this removes the webhook first.
- * Use a separate test bot token if the live site's webhook must stay up.
+ *
+ * Polling needs the bot's webhook removed, so this only ever runs on a separate test bot
+ * (TELEGRAM_DEV_BOT_TOKEN in .env.local, made with @BotFather). Using the live token here
+ * would silently take the production bot offline.
  */
 import { createBot } from "../src/lib/telegram/bot";
 
 async function main() {
-  const bot = createBot();
+  const devToken = process.env.TELEGRAM_DEV_BOT_TOKEN;
+  if (!devToken) {
+    throw new Error("Set TELEGRAM_DEV_BOT_TOKEN in .env.local to a separate test bot's token (create one with @BotFather).");
+  }
+  if (devToken === process.env.TELEGRAM_BOT_TOKEN) {
+    throw new Error("TELEGRAM_DEV_BOT_TOKEN is the live bot's token. Polling would remove the production webhook, so use a separate test bot.");
+  }
+
+  const bot = createBot(devToken);
   await bot.api.deleteWebhook();
-  console.log("progresshub bot polling… (Ctrl+C to stop)");
+  console.log("progresshub test bot polling… (Ctrl+C to stop)");
   await bot.start({ onStart: (me) => console.log(`@${me.username} is live`) });
 }
 
 main().catch((e) => {
-  console.error(e);
+  console.error(e instanceof Error ? e.message : e);
   process.exit(1);
 });

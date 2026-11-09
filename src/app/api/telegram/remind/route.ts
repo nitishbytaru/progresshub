@@ -1,9 +1,26 @@
 import { Api, InlineKeyboard } from "grammy";
 import { db, siteOrigin, todayIn } from "@/lib/telegram/data";
 
+/** Puts the production webhook back if something removed or changed it. */
+async function ensureWebhook(api: Api) {
+  const secret = process.env.TELEGRAM_WEBHOOK_SECRET;
+  if (process.env.VERCEL_ENV !== "production" || !secret) return;
+  const url = `${siteOrigin()}/api/telegram`;
+  try {
+    const info = await api.getWebhookInfo();
+    if (info.url === url) return;
+    await api.setWebhook(url, { secret_token: secret });
+    console.warn(`Telegram webhook was "${info.url}"; restored to ${url}`);
+  } catch (e) {
+    // Never let this stop the day's reminders.
+    console.error("Telegram webhook check failed", e);
+  }
+}
+
 /**
  * Daily reminder (Vercel Cron, see vercel.json): messages every linked creator with reminders on
- * who hasn't logged their own "today" yet. Also prunes old Telegram update ids.
+ * who hasn't logged their own "today" yet. Also prunes old Telegram update ids and restores the
+ * bot's webhook if it has gone missing.
  */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -12,6 +29,8 @@ export async function GET(req: Request) {
   }
   const token = process.env.TELEGRAM_BOT_TOKEN;
   if (!token) return new Response("TELEGRAM_BOT_TOKEN is not set", { status: 500 });
+
+  await ensureWebhook(new Api(token));
 
   const client = db();
   const { data: links, error } = await client.from("telegram_links").select("user_id, chat_id, tz").eq("remind", true);
