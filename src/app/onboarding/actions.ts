@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { finishScoreClaim, hasPendingScore } from "@/lib/pending-score";
 import { createClient } from "@/lib/supabase/server";
 import { validateDisplayName, validateHandle } from "@/lib/validation";
 
@@ -31,5 +32,5 @@ export async function completeOnboarding(_: OnboardingState, formData: FormData)
   const { error: refreshError } = await supabase.auth.refreshSession();
   if (refreshError) return { error: `Saved, but couldn't finish setup: ${refreshError.message}. Try again.`, handle, name };
 
-  redirect("/progress");
+  redirect((await hasPendingScore()) ? await finishScoreClaim() : "/progress");
 }

@@ -4,6 +4,7 @@ import { ArrowRight, BellRing, PenLine, Trophy } from "lucide-react";
 import { BrandMark } from "@/components/shell/brand";
 import { CountUp, HeroScreen, MotionRoot, Reveal, ScreenFrame, TypedLog, WipeIn } from "@/components/landing/motion-bits";
 import { RaceTrack, Stop } from "@/components/landing/race-track";
+import { ScoreCheck, ScoreCheckButton } from "@/components/landing/score-check";
 import { FinishMark, PhoneChat } from "@/components/landing/telegram-finale";
 
 const SHARE_TITLE = "progresshub: race other X creators to 500K impressions";
@@ -64,6 +65,7 @@ export default function WelcomePage() {
         </nav>
       </header>
 
+      <ScoreCheck />
       <main className="overflow-x-clip">
         <RaceTrack>
           {/* Hero: the line starts at 0 */}
@@ -78,6 +80,7 @@ export default function WelcomePage() {
               <Link href={SIGN_UP} className={primary}>
                 Start your race <ArrowRight className="size-4" aria-hidden />
               </Link>
+              <ScoreCheckButton className={secondary}>Check your rank</ScoreCheckButton>
               <Link href={LOG_IN} className={secondary}>
                 Log in
               </Link>

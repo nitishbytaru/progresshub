@@ -2,6 +2,7 @@
 
 import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { CLAIM_PATH, finishScoreClaim } from "@/lib/pending-score";
 import { createClient } from "@/lib/supabase/server";
 import { DELETE_CONFIRM_WORD, validateEmail, validateNewPassword } from "@/lib/validation";
 
@@ -52,7 +53,8 @@ export async function signIn(_: AuthState, formData: FormData): Promise<AuthStat
   const supabase = await createClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
   if (error) return { error: friendly(error.message), email };
-  redirect(safeNext(formData.get("next")));
+  const next = safeNext(formData.get("next"));
+  redirect(next === CLAIM_PATH ? await finishScoreClaim() : next);
 }
 
 export async function signUp(_: AuthState, formData: FormData): Promise<AuthState> {

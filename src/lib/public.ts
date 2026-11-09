@@ -39,6 +39,18 @@ export const getRank = cache(async (userId: string) => {
   return { rank: (ahead ?? 0) + 1, of: of ?? 1 };
 });
 
+/** Where a total not yet on the board would rank, counting that visitor in the size of the board. */
+export async function getRankForTotal(total: number) {
+  await connection();
+  const db = anon();
+  const [ahead, board] = await Promise.all([
+    db.from("leaderboard").select("user_id", { count: "exact", head: true }).gt("total", total),
+    db.from("leaderboard").select("user_id", { count: "exact", head: true }),
+  ]);
+  if (ahead.error || board.error) return null;
+  return { rank: (ahead.count ?? 0) + 1, of: (board.count ?? 0) + 1 };
+}
+
 /** Public progress for a creator page or share image. */
 export const getPublicProgress = cache(async (handle: string) => {
   const profile = await getPublicProfile(handle);

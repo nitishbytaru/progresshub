@@ -9,7 +9,27 @@ import { ShareGrid } from "./share-grid";
 
 export const metadata: Metadata = { title: "Share on X" };
 
-export default function SharePage() {
+type ShareSearchParams = Promise<{ score?: string }>;
+
+async function ScoreNotice({ searchParams }: { searchParams: ShareSearchParams }) {
+  const { score } = await searchParams;
+  if (score === "saved") {
+    return <p role="status" className="rounded-xl border border-border p-3 text-sm">Your impressions are in today&apos;s log.</p>;
+  }
+  if (score === "skipped") {
+    return (
+      <p role="status" className="rounded-xl border border-border p-3 text-sm">
+        We couldn&apos;t add that number. It may not fit your earlier logs.{" "}
+        <Link href="/progress" className="font-semibold underline-offset-4 hover:underline">
+          Open Progress
+        </Link>
+      </p>
+    );
+  }
+  return null;
+}
+
+export default function SharePage({ searchParams }: { searchParams: ShareSearchParams }) {
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
       <header>
@@ -18,6 +38,9 @@ export default function SharePage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">Pick a card. Every post links back to your progresshub page.</p>
       </header>
+      <Suspense fallback={null}>
+        <ScoreNotice searchParams={searchParams} />
+      </Suspense>
       <Suspense fallback={<PageSkeleton blocks={["h-[300px]", "h-[300px]"]} />}>
         <Cards />
       </Suspense>
