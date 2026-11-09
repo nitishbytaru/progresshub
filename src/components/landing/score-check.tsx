@@ -367,6 +367,7 @@ export function ScoreCheck() {
             {step === "enter" && (
               <Step key="enter" instant={reduced}>
                 <form onSubmit={submit} noValidate className="flex flex-col gap-5">
+                  <BrandMark className="size-8" />
                   <DialogTitle className={HEADING}>
                     Enter your current verified home timeline impressions to check your rank
                   </DialogTitle>

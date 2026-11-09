@@ -1,5 +1,6 @@
 "use client";
 
+import { BrandMark } from "@/components/shell/brand";
 import { motion, type Variants } from "motion/react";
 import { Check } from "lucide-react";
 
@@ -51,7 +52,9 @@ export function PhoneChat() {
   return (
     <div className="mx-auto w-full max-w-[350px] rounded-[2rem] border border-border bg-background p-2">
       <div className="flex items-center justify-between rounded-t-[1.6rem] border-b border-hairline px-4 py-3">
-        <span className="text-sm font-semibold">progresshub bot</span>
+        <span className="flex items-center gap-2 text-sm font-semibold">
+          <BrandMark className="size-6" /> progresshub bot
+        </span>
         <span className="font-mono text-xs text-subtle">example chat</span>
       </div>
       <motion.div

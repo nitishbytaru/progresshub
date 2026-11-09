@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Bot, LogOut, Share2, UserRound } from "lucide-react";
+import { Bot, LogOut, UserRound } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
 import { getViewer, isTelegramConnected } from "@/lib/data";
 import { Avatar } from "./brand";
@@ -29,12 +29,6 @@ export async function UserMenu({ variant }: { variant: "sidebar" | "avatar" }) {
               className="flex h-11 w-full items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
             >
               <UserRound className="size-4" /> Profile
-            </Link>
-            <Link
-              href="/share"
-              className="flex h-11 w-full items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
-            >
-              <Share2 className="size-4" /> Share on X
             </Link>
             <Link
               href="/connect"

@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState, useSyncExternalStore, type ReactNode } from "react";
 import Image from "next/image";
 import { animate, motion, MotionConfig, useInView, useMotionValue, useScroll, useSpring, useTransform } from "motion/react";
+import { BrandMark } from "@/components/shell/brand";
 import { cn } from "@/lib/utils";
 
 const EASE = [0.16, 1, 0.3, 1] as const;
@@ -47,7 +48,8 @@ export function ScreenFrame({ name, alt, priority, cropClass }: ShotProps) {
         <span className="size-2 rounded-full bg-surface-highest" />
         <span className="size-2 rounded-full bg-surface-highest" />
         <span className="size-2 rounded-full bg-surface-highest" />
-        <span className="ml-3 font-mono text-xs text-subtle">progresshub</span>
+        <BrandMark className="ml-3 size-4" />
+        <span className="ml-0.5 font-mono text-xs text-subtle">progresshub</span>
       </div>
       <Image src={`/landing/${name}-mobile.png`} alt={alt} width={780} height={1688} priority={priority} sizes="100vw" className="block h-auto w-full md:hidden" />
       <div className={cn("hidden overflow-hidden md:block", cropClass)}>

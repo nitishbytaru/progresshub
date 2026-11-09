@@ -202,7 +202,9 @@ export default function WelcomePage() {
       </main>
 
       <footer className="border-t border-hairline px-5 py-6">
-        <p className="text-center font-mono text-xs text-subtle">progresshub</p>
+        <p className="flex items-center justify-center gap-2 font-mono text-xs text-subtle">
+          <BrandMark className="size-5" /> progresshub
+        </p>
       </footer>
     </MotionRoot>
   );

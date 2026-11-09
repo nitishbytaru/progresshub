@@ -70,10 +70,10 @@ export function SidebarNav({ section, connectBadge = false }: SidebarProps) {
   );
 }
 
-// Most used first after home: Ranks, then Analytics. Log is once a day; Share and Connect live in the account menu.
-const PHONE_TABS = ["/", "/leaderboard", "/analytics", "/progress"];
+// Share is the main action, so it sits in the middle. Connect lives in the account menu.
+const PHONE_TABS = ["/", "/leaderboard", "/share", "/analytics", "/progress"];
 
-/** Phone tabs: four, so each has room. */
+/** Phone tabs: four quiet ones around one lime Share button. */
 export function BottomNav() {
   const isActive = useActive();
   return (
@@ -81,9 +81,26 @@ export function BottomNav() {
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-surface-lowest/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-4">
+      <ul className="mx-auto grid max-w-md grid-cols-5">
         {PHONE_TABS.map((tab) => NAV.find((n) => n.href === tab)!).map(({ href, short, icon: Icon }) => {
           const active = isActive(href);
+          if (href === "/share") {
+            return (
+              <li key={href}>
+                <Link
+                  href={href}
+                  data-tour={href}
+                  aria-current={active ? "page" : undefined}
+                  className="relative flex h-14 flex-col items-center justify-end pb-1.5 text-[11px] font-semibold text-primary"
+                >
+                  <span className="absolute -top-4 flex size-12 items-center justify-center rounded-full border-4 border-background bg-primary text-primary-foreground transition-colors active:bg-primary-pressed">
+                    <Icon className="size-5" strokeWidth={2.25} />
+                  </span>
+                  {short}
+                </Link>
+              </li>
+            );
+          }
           return (
             <li key={href}>
               <Link

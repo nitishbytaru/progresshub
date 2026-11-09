@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { useReduced } from "@/components/landing/motion-bits";
 import { Button } from "@/components/ui/button";
+import { BrandMark } from "@/components/shell/brand";
 import { cn } from "@/lib/utils";
 import { finishTutorial } from "./tour-actions";
 import { AnalyticsDemo, ConnectDemo, LeaderboardDemo, LogDemo, OverviewDemo, ShareDemo } from "./tour-demos";
@@ -190,6 +191,7 @@ export function Tour({ autoStartFor }: { autoStartFor: string | null }) {
       >
         <div className="flex items-center justify-between gap-3">
           <span className="flex items-center gap-1.5" role="img" aria-label={`Step ${step + 1} of ${STEPS.length}`}>
+            <BrandMark className="mr-1.5 size-5" />
             {STEPS.map((s, i) => (
               <span key={s.href} className={cn("h-1.5 rounded-full transition-all", i === step ? "w-5 bg-tour" : i < step ? "w-1.5 bg-foreground" : "w-1.5 bg-surface-highest")} />
             ))}
