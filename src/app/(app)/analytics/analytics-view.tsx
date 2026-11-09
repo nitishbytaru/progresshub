@@ -1,4 +1,3 @@
-import { ConsistencyCard } from "@/components/progress/consistency-card";
 import { FirstLogPrompt } from "@/components/progress/page-skeleton";
 import { GainHeatmap } from "@/components/progress/gain-heatmap";
 import { TargetDateCard } from "@/components/progress/target-date-card";
@@ -63,15 +62,10 @@ export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
       />
       </div>
 
-      {/* Bento row 2: consistency + daily gains */}
-      <div className="grid gap-6 lg:grid-cols-3">
-      <ConsistencyCard rows={rows} today={p.today} streak={p.streak} pace7={p.pace7} pace28={p.pace28} />
-
-      <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
+      <section className="panel-dark rounded-2xl p-5 sm:p-6">
         <h2 className="mb-5 text-xl font-bold tracking-[-0.015em]">Daily gains</h2>
         <GainHeatmap rows={rows} today={p.today} />
       </section>
-      </div>
     </div>
   );
 }

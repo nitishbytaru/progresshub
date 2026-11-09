@@ -6,14 +6,12 @@ import { ShareDialog } from "@/components/progress/share-dialog";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { getProgress } from "@/lib/data";
 import { cardPath, cardVersion, getOrigin, getRank } from "@/lib/public";
-import { fmt, fmtDate, fmtPct, fmtSigned, fmtSignedPct } from "@/lib/format";
-import { GOAL } from "@/lib/progress";
+import { fmtDate } from "@/lib/format";
 import { FirstLogPrompt, PageSkeleton } from "@/components/progress/page-skeleton";
-import { cn } from "@/lib/utils";
 
 export default function OverviewPage() {
   return (
-    <Suspense fallback={<PageSkeleton blocks={["h-[72px]", "h-[132px]", "h-[200px]", "h-[420px]"]} />}>
+    <Suspense fallback={<PageSkeleton blocks={["h-[72px]", "h-[200px]", "h-[420px]"]} />}>
       <Overview />
     </Suspense>
   );
@@ -38,20 +36,7 @@ async function Overview() {
     );
   }
 
-  const remaining = Math.max(0, GOAL - latest.total);
   const loggedToday = latest.date === p.today;
-
-  const stats = [
-    { label: "Total impressions", value: fmt(latest.total), note: `as of ${fmtDate(latest.date)}` },
-    { label: "Of the 500K goal", value: fmtPct(latest.progressPct, 2), note: `${fmt(remaining)} to go` },
-    {
-      label: "Latest daily gain",
-      value: latest.delta === null ? "—" : fmtSigned(latest.delta),
-      note: latest.growthPct === null ? "first log" : `${fmtSignedPct(latest.growthPct, 2)} vs. previous day`,
-      key: true,
-    },
-    { label: "7-day pace", value: fmtSigned(p.pace7), note: "impressions per day" },
-  ];
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
@@ -85,35 +70,6 @@ async function Overview() {
             {loggedToday ? "Update today's log" : "Log today's impressions"}
           </Link>
         </div>
-      </section>
-
-      {/* KPI strip: one white panel, not four cards */}
-      <section aria-label="Key numbers" className="panel-dark grid grid-cols-2 rounded-2xl lg:grid-cols-4">
-        {stats.map((s, i) => (
-          <div
-            key={s.label}
-            className={cn(
-              "flex flex-col gap-1 p-4 sm:p-6",
-              i % 2 === 1 && "border-l border-hairline",
-              i >= 2 && "border-t border-hairline lg:border-t-0",
-              i === 2 && "lg:border-l",
-            )}
-          >
-            <span className="text-xs font-medium text-muted-foreground sm:text-sm">{s.label}</span>
-            <span
-              className={cn(
-                "font-mono text-[1.375rem] leading-tight font-semibold tracking-[-0.04em] sm:text-[2rem]",
-              )}
-            >
-              {s.key ? (
-                <span className="text-primary">{s.value}</span>
-              ) : (
-                s.value
-              )}
-            </span>
-            <span className="text-xs text-muted-foreground">{s.note}</span>
-          </div>
-        ))}
       </section>
 
       {/* Road to 500K */}

@@ -43,7 +43,7 @@ export default function ProgressPage({ searchParams }: PageProps<"/progress">) {
           <DaysLogged />
         </Suspense>
       </header>
-      <Suspense fallback={<PageSkeleton blocks={["h-[520px]", "h-64"]} />}>
+      <Suspense fallback={<PageSkeleton blocks={["h-[520px]"]} />}>
         <LogFormForDate searchParams={searchParams} />
       </Suspense>
     </div>

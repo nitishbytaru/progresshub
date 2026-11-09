@@ -1,10 +1,9 @@
 "use client";
 
 import { useId, useMemo, useState, useTransition } from "react";
-import { Check, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Check, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { EntriesTable } from "@/components/progress/entries-table";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
 import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
@@ -20,8 +19,6 @@ const toLocalDate = (d: string) => {
 };
 const fromLocalDate = (d: Date) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-
-const PAGE_SIZE = 10;
 
 type Props = { initialEntries: Entry[]; today: string; initialDate?: string };
 
@@ -98,11 +95,6 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
     });
   };
 
-  const rows = useMemo(() => withDeltas(entries), [entries]);
-  const pageCount = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
-  const [pageState, setPage] = useState(0);
-  const page = Math.min(pageState, pageCount - 1);
-  const first = page * PAGE_SIZE;
   // Format and range problems show as you type; "enter a number" waits until you've tried.
   const showError = serverError ?? (value === null && !parsed.error ? (touched ? error : null) : error);
 
@@ -290,53 +282,6 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
         </div>
       </form>
 
-      {rows.length > 0 && (
-      <section className="panel-dark rounded-2xl p-5 sm:p-8">
-        <h2 className="text-xl font-bold tracking-[-0.015em]">History</h2>
-        <p className="mt-0.5 mb-3 text-sm text-muted-foreground">Every log, newest first. Use the pencil to correct a day.</p>
-        <EntriesTable
-          rows={rows}
-          limit={PAGE_SIZE}
-          offset={first}
-          today={today}
-          onSaved={(saved) => {
-            setJustSaved(saved);
-            // Keep the form above in step if it's showing the day that was just edited.
-            if (saved.date === date) setText(String(saved.total));
-          }}
-        />
-        {pageCount > 1 && (
-          <nav aria-label="History pages" className="mt-4 flex items-center justify-between gap-3 border-t border-hairline pt-4">
-            <p className="font-mono text-xs text-muted-foreground" aria-live="polite">
-              {first + 1}–{Math.min(first + PAGE_SIZE, rows.length)} of {rows.length}
-            </p>
-            <div className="flex items-center gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setPage(page - 1)}
-                disabled={page === 0}
-                className="h-10 gap-1 border-hairline bg-transparent px-3 text-sm font-semibold text-foreground hover:bg-hover"
-              >
-                <ChevronLeft className="size-4" /> Newer
-              </Button>
-              <span className="min-w-14 text-center font-mono text-xs text-muted-foreground">
-                {page + 1} / {pageCount}
-              </span>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setPage(page + 1)}
-                disabled={page >= pageCount - 1}
-                className="h-10 gap-1 border-hairline bg-transparent px-3 text-sm font-semibold text-foreground hover:bg-hover"
-              >
-                Older <ChevronRight className="size-4" />
-              </Button>
-            </div>
-          </nav>
-        )}
-      </section>
-      )}
     </div>
   );
 }
