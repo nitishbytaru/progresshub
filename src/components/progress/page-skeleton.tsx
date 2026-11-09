@@ -4,7 +4,7 @@ import { Plus } from "lucide-react";
 /** Quiet loading frame: panel outlines in the final layout's shape, no shimmer. */
 export function PageSkeleton({ blocks }: { blocks: string[] }) {
   return (
-    <div className="flex flex-col gap-6 lg:gap-8" aria-busy="true" aria-label="Loading">
+    <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8" aria-busy="true" aria-label="Loading">
       {blocks.map((h, i) => (
         <div key={i} className={`animate-pulse rounded-2xl border border-hairline ${h}`} />
       ))}

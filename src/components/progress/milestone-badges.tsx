@@ -12,7 +12,7 @@ export function MilestoneBadges({ rows }: { rows: DayRow[] }) {
   const best = rows.reduce<DayRow | null>((b, r) => (r.delta != null && (!b || r.delta > (b.delta ?? 0)) ? r : b), null);
 
   return (
-    <section aria-labelledby="milestones-title" className="panel-dark flex flex-col rounded-2xl p-5 sm:p-6">
+    <section aria-labelledby="milestones-title" className="panel-dark flex flex-col rounded-2xl p-4 sm:p-6">
       <div className="flex items-baseline justify-between gap-3">
         <h2 id="milestones-title" className="text-xl font-bold tracking-[-0.015em]">
           Milestones

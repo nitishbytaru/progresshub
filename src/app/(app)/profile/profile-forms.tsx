@@ -110,7 +110,7 @@ function Field({
       <p
         id={`${id}-msg`}
         role={state?.error ? "alert" : "status"}
-        className={cn("mt-2 min-h-5 text-sm", state?.error ? "font-medium text-foreground" : state?.message ? "text-primary" : "text-muted-foreground")}
+        className={cn("mt-2 min-h-5 text-sm", !state?.error && !state?.message && "hidden sm:block", state?.error ? "font-medium text-foreground" : state?.message ? "text-primary" : "text-muted-foreground")}
       >
         {state?.error ?? state?.message ?? hint}
       </p>

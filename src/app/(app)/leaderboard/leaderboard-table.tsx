@@ -28,9 +28,9 @@ function ago(date: string, today: string) {
 }
 
 const SORTS = {
-  total: { label: "Closest to 500K", by: (c: Creator) => c.total },
-  pace: { label: "Fastest pace", by: (c: Creator) => c.pace7 },
-  streak: { label: "Longest streak", by: (c: Creator) => c.streak },
+  total: { label: "Closest to 500K", short: "Total", by: (c: Creator) => c.total },
+  pace: { label: "Fastest pace", short: "Pace", by: (c: Creator) => c.pace7 },
+  streak: { label: "Longest streak", short: "Streak", by: (c: Creator) => c.streak },
 } as const;
 type SortKey = keyof typeof SORTS;
 
@@ -63,7 +63,8 @@ export function LeaderboardTable({ creators, today }: { creators: Creator[]; tod
                 sort === k ? "bg-primary font-semibold text-primary-foreground" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              {SORTS[k].label}
+              <span className="sm:hidden">{SORTS[k].short}</span>
+              <span className="hidden sm:inline">{SORTS[k].label}</span>
             </button>
           ))}
         </div>
@@ -116,7 +117,7 @@ export function LeaderboardTable({ creators, today }: { creators: Creator[]; tod
                     href={`/u/${c.handle}`}
                     prefetch={false}
                     className={cn(
-                      "grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3 gap-y-2.5 px-4 py-3.5 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary md:grid-cols-[56px_minmax(0,1.3fr)_minmax(0,2fr)_104px_96px_72px] md:gap-x-6 md:px-6",
+                      "grid grid-cols-[40px_minmax(0,1fr)] items-center gap-x-3 gap-y-2 px-4 py-3 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary md:grid-cols-[56px_minmax(0,1.3fr)_minmax(0,2fr)_104px_96px_72px] md:gap-x-6 md:px-6",
                       c.isYou ? "bg-primary-soft hover:bg-primary-soft/70" : "hover:bg-hover",
                     )}
                   >
@@ -137,7 +138,7 @@ export function LeaderboardTable({ creators, today }: { creators: Creator[]; tod
                           <span className="rounded-full bg-foreground px-1.5 py-px text-[10px] font-semibold text-background">You</span>
                         )}
                       </span>
-                      <span className="block truncate font-mono text-xs text-muted-foreground">@{c.handle}</span>
+                      <span className="hidden truncate font-mono text-xs text-muted-foreground sm:block">@{c.handle}</span>
                     </span>
                   </span>
                   {/* Impressions, % of 500K and what's left, in one cell */}
@@ -146,7 +147,7 @@ export function LeaderboardTable({ creators, today }: { creators: Creator[]; tod
                       <span className="font-mono text-sm font-semibold md:text-base">{fmt(c.total)}</span>
                       <span className="shrink-0 font-mono text-xs text-muted-foreground">
                         <span className={cn(c.isYou && "text-primary")}>{fmtPct(pct)}</span>
-                        <span className="text-subtle"> · {c.total >= GOAL ? "done" : `${fmtCompact(GOAL - c.total)} left`}</span>
+                        <span className="hidden text-subtle sm:inline"> · {c.total >= GOAL ? "done" : `${fmtCompact(GOAL - c.total)} left`}</span>
                       </span>
                     </span>
                     <span
@@ -179,7 +180,7 @@ export function LeaderboardTable({ creators, today }: { creators: Creator[]; tod
                       </span>
                     )}
                     <span>{fmtSigned(c.pace7)}/day</span>
-                    <span>{c.streak}-day streak</span>
+                    <span>{c.streak}d</span>
                   </span>
                   <span className="sr-only">(view @{c.handle}&apos;s profile)</span>
                   </Link>

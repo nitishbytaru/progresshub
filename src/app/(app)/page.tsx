@@ -26,8 +26,8 @@ async function Overview() {
 
   if (!latest) {
     return (
-      <div className="flex flex-col gap-6 lg:gap-8">
-        <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Welcome, {firstName}</h1>
+      <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8">
+        <h1 className="sr-only sm:not-sr-only text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Welcome, {firstName}</h1>
         <FirstLogPrompt
           title="Your road to 500K starts with one number"
           body="Open X analytics, copy your total impressions, and log it. From the second day on you'll see your daily gain, your pace, and when you'll reach 500K."
@@ -39,7 +39,7 @@ async function Overview() {
   const loggedToday = latest.date === p.today;
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
+    <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8">
       <section className="flex items-center justify-between gap-3 sm:items-end sm:gap-5">
         <div>
           <h1 className="sr-only text-[2rem] leading-tight font-bold tracking-[-0.025em] sm:not-sr-only">
@@ -88,7 +88,7 @@ async function Overview() {
       </section>
 
       {/* Road to 500K */}
-      <section className="panel-dark rounded-2xl p-5 sm:p-8">
+      <section className="panel-dark rounded-2xl p-4 sm:p-8">
         <div className="flex items-baseline justify-between gap-3 sm:flex-col sm:items-start lg:flex-row lg:justify-between">
           <h2 className="text-xl font-bold tracking-[-0.015em]">
             Road to <span className="sm:hidden">500K</span>
@@ -117,9 +117,12 @@ async function Overview() {
       </section>
 
       {/* Trajectory */}
-      <section className="panel-dark rounded-2xl p-5 sm:p-8">
+      <section className="panel-dark rounded-2xl p-4 sm:p-8">
         <div className="mb-5 flex items-baseline justify-between gap-4 sm:mb-8">
-          <h2 className="text-xl font-bold tracking-[-0.015em]">Cumulative impressions</h2>
+          <h2 className="text-xl font-bold tracking-[-0.015em]">
+            <span className="sm:hidden">Impressions</span>
+            <span className="hidden sm:inline">Cumulative impressions</span>
+          </h2>
           <Link
             href="/analytics"
             className="-my-2 inline-flex items-center gap-1 py-2 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground"

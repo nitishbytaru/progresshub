@@ -16,8 +16,8 @@ export const metadata: Metadata = { title: "Profile" };
 
 export default function ProfilePage({ searchParams }: PageProps<"/profile">) {
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 lg:gap-8">
-      <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Profile</h1>
+    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 sm:gap-6 lg:gap-8">
+      <h1 className="sr-only sm:not-sr-only text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Profile</h1>
       <Suspense fallback={<PageSkeleton blocks={["h-[200px]", "h-[300px]", "h-[88px]"]} />}>
         <Profile searchParams={searchParams} />
       </Suspense>
@@ -115,7 +115,7 @@ async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["
         />
       </section>
 
-      <section aria-label="Tutorial" className="panel-dark flex items-center justify-between gap-4 rounded-2xl p-5 sm:p-6">
+      <section aria-label="Tutorial" className="panel-dark flex items-center justify-between gap-4 rounded-2xl p-4 sm:p-6">
         <h2 className="text-sm font-semibold">Tutorial</h2>
         <ReplayTourButton />
       </section>

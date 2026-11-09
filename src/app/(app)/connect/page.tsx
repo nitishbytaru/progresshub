@@ -10,10 +10,10 @@ export const metadata: Metadata = { title: "Connect" };
 
 export default function ConnectPage() {
   return (
-    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-6 lg:gap-8">
-      <header>
-        <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Connect</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Log from your chat app and get nudged on missed days.</p>
+    <div className="mx-auto flex w-full max-w-[640px] flex-col gap-4 sm:gap-6 lg:gap-8">
+      <header className="max-sm:absolute">
+        <h1 className="sr-only sm:not-sr-only text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Connect</h1>
+        <p className="mt-1 hidden text-sm text-muted-foreground sm:block">Log from your chat app and get nudged on missed days.</p>
       </header>
       <Suspense fallback={<PageSkeleton blocks={["h-[290px]", "h-[250px]"]} />}>
         <Bots />

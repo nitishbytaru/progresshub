@@ -101,15 +101,15 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
   const dayLabel = date === today ? `today, ${fmtDateShort(date)}` : fmtDate(date);
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
+    <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8">
       <form
         onSubmit={save}
         noValidate
         aria-label={existing ? `Update ${fmtDate(date)}` : "Log your impressions"}
-        className="panel-dark rounded-2xl p-5 sm:p-8"
+        className="panel-dark rounded-2xl p-4 sm:p-8"
       >
-        <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-10">
-          <div role="group" aria-labelledby={`${inputId}-day`} className="lg:order-last lg:border-l lg:border-hairline lg:pl-10">
+        <div className="grid gap-6 sm:gap-8 lg:grid-cols-[minmax(0,1fr)_auto] lg:gap-10">
+          <div role="group" aria-labelledby={`${inputId}-day`} className="order-last lg:border-l lg:border-hairline lg:pl-10">
             <div className="flex min-h-7 items-center justify-between gap-3">
               <p id={`${inputId}-day`} className="text-sm font-semibold">Day</p>
               {date !== today && (

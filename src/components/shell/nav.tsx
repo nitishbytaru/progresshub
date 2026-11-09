@@ -70,7 +70,10 @@ export function SidebarNav({ section, connectBadge = false }: SidebarProps) {
   );
 }
 
-/** Phone tabs. Connect lives in the account menu instead, so the five main tabs have room. */
+// Most used first after home: Ranks, then Analytics. Log is once a day; Share and Connect live in the account menu.
+const PHONE_TABS = ["/", "/leaderboard", "/analytics", "/progress"];
+
+/** Phone tabs: four, so each has room. */
 export function BottomNav() {
   const isActive = useActive();
   return (
@@ -78,8 +81,8 @@ export function BottomNav() {
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-surface-lowest/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-5">
-        {NAV.filter(({ href }) => href !== "/connect").map(({ href, short, icon: Icon }) => {
+      <ul className="mx-auto grid max-w-md grid-cols-4">
+        {PHONE_TABS.map((tab) => NAV.find((n) => n.href === tab)!).map(({ href, short, icon: Icon }) => {
           const active = isActive(href);
           return (
             <li key={href}>
@@ -88,7 +91,7 @@ export function BottomNav() {
                 data-tour={href}
                 aria-current={active ? "page" : undefined}
                 className={cn(
-                  "flex h-16 flex-col items-center justify-center gap-1 text-[11px] font-medium transition-colors",
+                  "flex h-14 flex-col items-center justify-center gap-0.5 text-[11px] font-medium transition-colors",
                   active ? "text-primary" : "text-subtle hover:text-foreground",
                 )}
               >

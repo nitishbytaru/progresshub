@@ -26,7 +26,7 @@ export function ConsistencyCard({ rows, today, streak, pace7, pace28 }: Props) {
   const nowPct = Math.min(100, (latest.total / GOAL) * 100);
 
   return (
-    <section aria-labelledby="consistency-title" className="panel-dark flex flex-col rounded-2xl p-5 sm:p-6">
+    <section aria-labelledby="consistency-title" className="panel-dark flex flex-col rounded-2xl p-4 sm:p-6">
       <h2 id="consistency-title" className="text-xl font-bold tracking-[-0.015em]">
         Consistency
       </h2>

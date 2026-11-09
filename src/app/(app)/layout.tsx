@@ -92,7 +92,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         </div>
       </header>
 
-      <main className="mx-auto w-full max-w-[1200px] px-4 pt-6 pb-28 sm:px-6 lg:px-8 lg:pt-8 lg:pb-16">
+      <main className="mx-auto w-full max-w-[1200px] px-4 pt-4 pb-24 sm:px-6 sm:pt-6 lg:px-8 lg:pt-8 lg:pb-16">
         {children}
       </main>
 

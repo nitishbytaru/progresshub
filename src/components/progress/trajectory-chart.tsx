@@ -165,13 +165,13 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
         </svg>
 
         {/* Y axis labels */}
-        {/* Phones keep every other label so the numbers never crowd the line. */}
+        {/* Phones keep one label so the numbers never crowd the line. */}
         {ticks.map((t, i) => (
           <span
             key={t}
             className={cn(
               "pointer-events-none absolute right-0 -translate-y-[calc(100%+4px)] font-mono text-[11px] text-subtle",
-              i % 2 === 0 && "hidden sm:block",
+              i !== 1 && "hidden sm:block",
             )}
             style={{ top: `${pctY(goalInView && t === yMax ? GOAL : t)}%` }}
           >
@@ -226,7 +226,7 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
         {!startLabelCrowded && <span className="absolute left-0 text-subtle">{fmtDateShort(first.date)}</span>}
         {projection ? (
           <span
-            className="absolute -translate-x-1/2 font-semibold text-primary"
+            className="absolute hidden -translate-x-1/2 font-semibold text-primary sm:block"
             style={{ left: `clamp(1.5rem, ${pctX(last.date)}%, calc(100% - 1.5rem))` }}
           >
             Latest

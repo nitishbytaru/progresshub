@@ -19,8 +19,8 @@ async function DaysLogged() {
   const { rows } = await getProgress();
   if (!rows.length) return null;
   return (
-    <div className="panel-dark flex items-center gap-4 rounded-2xl px-5 py-3.5">
-      <span className="font-mono text-[2.75rem] leading-none font-semibold tracking-[-0.04em] text-primary tabular-nums">
+    <div className="panel-dark flex items-center gap-3 rounded-2xl px-4 py-2 sm:gap-4 sm:px-5 sm:py-3.5">
+      <span className="font-mono text-2xl sm:text-[2.75rem] leading-none font-semibold tracking-[-0.04em] text-primary tabular-nums">
         {rows.length}
       </span>
       <span className="flex flex-col border-l border-hairline pl-4 leading-tight">
@@ -33,11 +33,11 @@ async function DaysLogged() {
 
 export default function ProgressPage({ searchParams }: PageProps<"/progress">) {
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
-      <header className="flex flex-wrap items-end justify-between gap-x-6 gap-y-3">
+    <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8">
+      <header className="flex flex-wrap items-end justify-between gap-x-6 sm:gap-y-3">
         <div>
-          <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Daily progress</h1>
-          <p className="mt-1 text-sm text-muted-foreground">One number a day. It takes ten seconds.</p>
+          <h1 className="sr-only sm:not-sr-only text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">Daily progress</h1>
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">One number a day. It takes ten seconds.</p>
         </div>
         <Suspense fallback={null}>
           <DaysLogged />

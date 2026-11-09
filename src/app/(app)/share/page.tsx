@@ -31,12 +31,12 @@ async function ScoreNotice({ searchParams }: { searchParams: ShareSearchParams }
 
 export default function SharePage({ searchParams }: { searchParams: ShareSearchParams }) {
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
-      <header>
-        <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">
+    <div className="flex flex-col gap-4 sm:gap-6 lg:gap-8">
+      <header className="max-sm:absolute">
+        <h1 className="sr-only sm:not-sr-only text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">
           Share on <span className="text-primary">X</span>
         </h1>
-        <p className="mt-1 text-sm text-muted-foreground">Pick a card. Every post links back to your progresshub page.</p>
+        <p className="mt-1 hidden text-sm text-muted-foreground sm:block">Pick a card. Every post links back to your progresshub page.</p>
       </header>
       <Suspense fallback={null}>
         <ScoreNotice searchParams={searchParams} />

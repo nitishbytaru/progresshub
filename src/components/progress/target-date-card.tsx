@@ -46,7 +46,7 @@ export function TargetDateCard({ total, from, today, share }: Props) {
           .join("\n");
 
   return (
-    <section aria-labelledby="target-title" className="panel-dark flex flex-col rounded-2xl p-5 sm:p-6">
+    <section aria-labelledby="target-title" className="panel-dark flex flex-col rounded-2xl p-4 sm:p-6">
       <div className="flex items-start justify-between gap-3">
         <h2 id="target-title" className="text-xl font-bold tracking-[-0.015em]">
           Pick your deadline
@@ -72,7 +72,7 @@ export function TargetDateCard({ total, from, today, share }: Props) {
           />
         )}
       </div>
-      <p className="mt-1 text-sm text-muted-foreground">Choose a day to see what it takes.</p>
+      <p className="mt-1 hidden text-sm text-muted-foreground sm:block">Choose a day to see what it takes.</p>
 
       <Calendar
         mode="single"
