@@ -33,7 +33,7 @@ function niceCeil(v: number) {
  * projection at the current pace (white, dashed). The window zooms to the creator's real
  * history plus a short look-ahead; it only stretches to 500K once 500K is close.
  */
-export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection = true, height = "h-64 sm:h-80" }: Props) {
+export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection = true, height = "h-48 sm:h-80" }: Props) {
   const first = rows[0];
   const last = rows[rows.length - 1];
   const history = Math.max(1, daysBetween(first.date, last.date));
@@ -165,10 +165,14 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
         </svg>
 
         {/* Y axis labels */}
-        {ticks.map((t) => (
+        {/* Phones keep every other label so the numbers never crowd the line. */}
+        {ticks.map((t, i) => (
           <span
             key={t}
-            className="pointer-events-none absolute right-0 -translate-y-[calc(100%+4px)] font-mono text-[11px] text-subtle"
+            className={cn(
+              "pointer-events-none absolute right-0 -translate-y-[calc(100%+4px)] font-mono text-[11px] text-subtle",
+              i % 2 === 0 && "hidden sm:block",
+            )}
             style={{ top: `${pctY(goalInView && t === yMax ? GOAL : t)}%` }}
           >
             {goalInView && t === yMax ? "500K" : fmtCompact(t)}
@@ -181,7 +185,7 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
             <span
               key={r.date}
               title={`${fmtDate(r.date)}: ${fmt(r.total)}${r.delta !== null ? ` (${fmtSigned(r.delta)})` : ""}`}
-              className="absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
+              className={cn("absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary", rows.length > 14 && "hidden sm:block")}
               style={{ left: `${pctX(r.date)}%`, top: `${pctY(r.total)}%` }}
             />
           ))}
@@ -243,25 +247,25 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
         )}
       </div>
 
-      <figcaption className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-muted-foreground">
+      <figcaption className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs text-muted-foreground sm:mt-5 sm:gap-x-5">
         <span className="flex items-center gap-2">
-          <span className="h-0.5 w-4 rounded bg-primary" /> Total impressions
+          <span className="h-0.5 w-4 rounded bg-primary" /> Total<span className="-ml-1 hidden sm:inline">impressions</span>
         </span>
         <span className="flex items-center gap-2">
-          <span className="h-2.5 w-2 rounded-sm bg-primary/30" /> Gained that day
+          <span className="h-2.5 w-2 rounded-sm bg-primary/30" /> <span className="sm:hidden">Daily</span><span className="hidden sm:inline">Gained that day</span>
         </span>
         {projection && pace > 0 && (
           <span className="flex items-center gap-2">
-            <span className="w-4 border-t-2 border-dashed border-white/60" /> Projected at 7-day pace
+            <span className="w-4 border-t-2 border-dashed border-white/60" /> <span className="sm:hidden">7-day pace</span><span className="hidden sm:inline">Projected at 7-day pace</span>
           </span>
         )}
         {slowEnd && (
-          <span className="flex items-center gap-2">
+          <span className="hidden items-center gap-2 sm:flex">
             <span className="w-4 border-t-2 border-dotted border-white/30" /> 28-day pace
           </span>
         )}
         {projection && !goalInView && eta && (
-          <span className="sm:ml-auto">
+          <span className="hidden sm:ml-auto sm:inline">
             500K around <span className="font-mono font-semibold text-foreground">{fmtDate(eta.etaDate)}</span>
           </span>
         )}

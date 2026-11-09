@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useEffect, useRef, type ReactNode } from "react";
 import { Bot, ChartSpline, CirclePlus, LayoutGrid, Share2, Trophy, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -69,15 +70,16 @@ export function SidebarNav({ section, connectBadge = false }: SidebarProps) {
   );
 }
 
-export function BottomNav({ connectBadge = false }: { connectBadge?: boolean }) {
+/** Phone tabs. Connect lives in the account menu instead, so the five main tabs have room. */
+export function BottomNav() {
   const isActive = useActive();
   return (
     <nav
       aria-label="Main"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-hairline bg-surface-lowest/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden"
     >
-      <ul className="mx-auto grid max-w-md grid-cols-6">
-        {NAV.map(({ href, short, icon: Icon, badge }) => {
+      <ul className="mx-auto grid max-w-md grid-cols-5">
+        {NAV.filter(({ href }) => href !== "/connect").map(({ href, short, icon: Icon }) => {
           const active = isActive(href);
           return (
             <li key={href}>
@@ -90,10 +92,7 @@ export function BottomNav({ connectBadge = false }: { connectBadge?: boolean }) 
                   active ? "text-primary" : "text-subtle hover:text-foreground",
                 )}
               >
-                <span className="relative">
-                  <Icon className="size-5" strokeWidth={active ? 2 : 1.75} />
-                  {badge && connectBadge && <ConnectBadge className="-top-0.5 -right-1" />}
-                </span>
+                <Icon className="size-5" strokeWidth={active ? 2 : 1.75} />
                 {short}
               </Link>
             </li>
@@ -101,6 +100,20 @@ export function BottomNav({ connectBadge = false }: { connectBadge?: boolean }) 
         })}
       </ul>
     </nav>
+  );
+}
+
+/** A `<details>` menu that closes itself once one of its links has changed the page. */
+export function ClosingDetails({ className, children }: { className?: string; children: ReactNode }) {
+  const ref = useRef<HTMLDetailsElement>(null);
+  const pathname = usePathname();
+  useEffect(() => {
+    ref.current?.removeAttribute("open");
+  }, [pathname]);
+  return (
+    <details ref={ref} className={className}>
+      {children}
+    </details>
   );
 }
 

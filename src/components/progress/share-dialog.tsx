@@ -67,13 +67,13 @@ export function ShareDialog({ shareUrl, imagePath, ...stats }: Props) {
       trigger={
         <Button
           variant="outline"
-          className="h-11 gap-2 border-border bg-transparent px-4 text-sm font-semibold text-foreground hover:bg-hover"
+          className="size-11 gap-2 border-border bg-transparent px-0 text-sm font-semibold text-foreground hover:bg-hover sm:h-11 sm:w-auto sm:px-4"
         />
       }
       triggerLabel={
         <>
           <Share2 className="size-4" />
-          Share on X
+          <span className="sr-only sm:not-sr-only">Share on X</span>
         </>
       }
       title="Share your progress"

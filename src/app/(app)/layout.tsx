@@ -37,10 +37,6 @@ async function SidebarBottomNav() {
   return <SidebarNav section="bottom" connectBadge={!(await isTelegramConnected())} />;
 }
 
-async function PhoneNav() {
-  return <BottomNav connectBadge={!(await isTelegramConnected())} />;
-}
-
 async function TourGate() {
   return <Tour autoStartFor={await shouldAutoStartTour()} />;
 }
@@ -100,9 +96,7 @@ export default function AppLayout({ children }: LayoutProps<"/">) {
         {children}
       </main>
 
-      <Suspense fallback={<BottomNav />}>
-        <PhoneNav />
-      </Suspense>
+      <BottomNav />
 
       <Suspense fallback={null}>
         <TourGate />

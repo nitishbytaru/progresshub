@@ -1,6 +1,6 @@
 import { Check, Flag } from "lucide-react";
 import { fmtCompact, fmtDateShort } from "@/lib/format";
-import { GOAL, type MilestoneStatus } from "@/lib/progress";
+import { GOAL, MILESTONE_STEP, type MilestoneStatus } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
 /**
@@ -14,7 +14,9 @@ export function GoalTrack({ total, milestones }: { total: number; milestones: Mi
   // Pins closer than 50K to the 500K pin would overlap it, so skip them.
   const pins = milestones.filter((m) => m.target === GOAL || (m === next && m.target <= GOAL - 50_000));
   return (
-    <div className="pt-10 pb-12">
+    <>
+      <NextMilestone total={total} milestones={milestones} />
+    <div className="hidden pt-10 pb-12 sm:block">
       <div className="relative">
         <div
           className="absolute -top-9 z-10 flex -translate-x-1/2 flex-col items-center"
@@ -84,6 +86,45 @@ export function GoalTrack({ total, milestones }: { total: number; milestones: Mi
             </div>
           );
         })}
+      </div>
+    </div>
+    </>
+  );
+}
+
+/**
+ * The phone version of the runway: only the stretch to the next milestone, so progress is
+ * visible on a narrow screen. Reaching a milestone resets the scale to the one after it.
+ */
+function NextMilestone({ total, milestones }: { total: number; milestones: MilestoneStatus[] }) {
+  const next = milestones.find((m) => !m.reachedOn) ?? null;
+  const end = next?.target ?? GOAL;
+  const start = end - MILESTONE_STEP;
+  const pct = next ? Math.min(Math.max(((total - start) / MILESTONE_STEP) * 100, 0), 100) : 100;
+  const reachedCount = milestones.filter((m) => m.reachedOn).length;
+  return (
+    <div className="pt-4 sm:hidden">
+      <div className="flex items-baseline justify-between gap-3">
+        <span className="font-mono text-3xl font-semibold tracking-[-0.03em] tabular-nums">{fmtCompact(total)}</span>
+        <span className="font-mono text-xs text-muted-foreground">{next ? `${fmtCompact(end - total)} left` : "500K reached"}</span>
+      </div>
+      <div
+        className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-surface-highest"
+        role="img"
+        aria-label={next ? `${fmtCompact(total)} on the way to the next milestone, ${fmtCompact(end)}` : "500K reached"}
+      >
+        <div className="animate-track-fill h-full rounded-full bg-primary" style={{ width: `${pct}%` }} />
+      </div>
+      <div className="mt-2 flex items-center justify-between gap-3 font-mono text-xs text-muted-foreground">
+        <span>{fmtCompact(start)}</span>
+        <span className="flex items-center gap-1">
+          <Check className="size-3" strokeWidth={3} aria-hidden />
+          {reachedCount}/{milestones.length}
+        </span>
+        <span className="flex items-center gap-1 font-semibold text-primary">
+          <Flag className="size-3" aria-hidden />
+          {fmtCompact(end)}
+        </span>
       </div>
     </div>
   );

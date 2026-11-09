@@ -1,8 +1,9 @@
 import Link from "next/link";
-import { LogOut, UserRound } from "lucide-react";
+import { Bot, LogOut, UserRound } from "lucide-react";
 import { signOut } from "@/app/auth/actions";
-import { getViewer } from "@/lib/data";
+import { getViewer, isTelegramConnected } from "@/lib/data";
 import { Avatar } from "./brand";
+import { ClosingDetails } from "./nav";
 
 /** Signed-in creator: links to the profile page and signs out. `sidebar` for desktop, `avatar` for the mobile top bar. */
 export async function UserMenu({ variant }: { variant: "sidebar" | "avatar" }) {
@@ -10,10 +11,14 @@ export async function UserMenu({ variant }: { variant: "sidebar" | "avatar" }) {
   const name = profile.display_name || profile.handle || user.email || "You";
 
   if (variant === "avatar") {
+    const connected = await isTelegramConnected();
     return (
-      <details className="relative">
-        <summary className="list-none rounded-full [&::-webkit-details-marker]:hidden" aria-label="Account menu">
-          <Avatar name={name} src={profile.avatar_url} />
+      <ClosingDetails className="relative">
+        <summary className="list-none rounded-full [&::-webkit-details-marker]:hidden" aria-label={connected ? "Account menu" : "Account menu, Telegram not connected"}>
+          <span className="relative block">
+            <Avatar name={name} src={profile.avatar_url} />
+            {!connected && <span aria-hidden className="absolute -top-0.5 -right-0.5 size-2.5 rounded-full border-2 border-background bg-primary" />}
+          </span>
         </summary>
         <div className="absolute top-full right-0 z-50 mt-2 w-56 rounded-xl border border-border bg-background p-2 shadow-[0_16px_40px_#000000cc]">
           <p className="truncate px-2 pt-1 text-sm font-semibold">{name}</p>
@@ -21,18 +26,26 @@ export async function UserMenu({ variant }: { variant: "sidebar" | "avatar" }) {
           <div className="mt-2 border-t border-hairline pt-2">
             <Link
               href="/profile"
-              className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+              className="flex h-11 w-full items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
             >
               <UserRound className="size-4" /> Profile
             </Link>
+            <Link
+              href="/connect"
+              className="flex h-11 w-full items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+            >
+              <Bot className="size-4" />
+              <span className="flex-1">Connect</span>
+              {!connected && <span className="size-2 rounded-full bg-primary"><span className="sr-only">Telegram not connected</span></span>}
+            </Link>
             <form action={signOut}>
-              <button className="flex h-9 w-full items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
+              <button className="flex h-11 w-full items-center gap-2 rounded-lg px-2 text-sm text-muted-foreground transition-colors hover:bg-hover hover:text-foreground">
                 <LogOut className="size-4" /> Sign out
               </button>
             </form>
           </div>
         </div>
-      </details>
+      </ClosingDetails>
     );
   }
 

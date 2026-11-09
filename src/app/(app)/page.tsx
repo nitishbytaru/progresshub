@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Suspense } from "react";
-import { ArrowRight, Plus } from "lucide-react";
+import { ArrowRight, Check, Circle, Plus } from "lucide-react";
 import { GoalTrack } from "@/components/progress/goal-track";
 import { ShareDialog } from "@/components/progress/share-dialog";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
@@ -40,18 +40,31 @@ async function Overview() {
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
-      <section className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
+      <section className="flex items-center justify-between gap-3 sm:items-end sm:gap-5">
         <div>
-          <h1 className="text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">
+          <h1 className="sr-only text-[2rem] leading-tight font-bold tracking-[-0.025em] sm:not-sr-only">
             Welcome back, {firstName}
           </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
+          <p
+            className="flex items-center gap-2.5 font-mono text-xs text-muted-foreground sm:hidden"
+            aria-label={`${loggedToday ? "Today is logged" : "Today isn't logged yet"}, ${p.streak}-day streak`}
+          >
+            <span className={loggedToday ? "flex items-center gap-1 text-primary" : "flex items-center gap-1"}>
+              {loggedToday ? <Check className="size-3.5" strokeWidth={3} aria-hidden /> : <Circle className="size-3" aria-hidden />}
+              Today
+            </span>
+            <span aria-hidden className="h-3 w-px bg-hairline" />
+            <span>
+              <span className="font-semibold text-foreground">{p.streak}d</span> streak
+            </span>
+          </p>
+          <p className="mt-1 hidden text-sm text-muted-foreground sm:block">
             <span className="font-mono">@{profile.handle}</span> ·{" "}
             {loggedToday ? "Today is logged" : "Today isn't logged yet"} ·{" "}
             <span className="font-mono">{p.streak}</span>-day streak
           </p>
         </div>
-        <div className="flex flex-col-reverse gap-2 sm:flex-row">
+        <div className="flex shrink-0 gap-2">
           <ShareDialog
             handle={profile.handle ?? ""}
             total={latest.total}
@@ -64,19 +77,30 @@ async function Overview() {
           />
           <Link
             href="/progress"
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground shadow-[0_6px_20px_-6px_#c8f43266] transition-colors hover:bg-primary-hover active:bg-primary-pressed"
+            aria-label={loggedToday ? "Update today's log" : "Log today's impressions"}
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 sm:px-5 text-sm font-semibold text-primary-foreground shadow-[0_6px_20px_-6px_#c8f43266] transition-colors hover:bg-primary-hover active:bg-primary-pressed"
           >
             <Plus className="size-4" strokeWidth={2.5} />
-            {loggedToday ? "Update today's log" : "Log today's impressions"}
+            <span className="sm:hidden">{loggedToday ? "Update" : "Log"}</span>
+            <span className="hidden sm:inline">{loggedToday ? "Update today's log" : "Log today's impressions"}</span>
           </Link>
         </div>
       </section>
 
       {/* Road to 500K */}
       <section className="panel-dark rounded-2xl p-5 sm:p-8">
-        <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-          <h2 className="text-xl font-bold tracking-[-0.015em]">Road to 500,000</h2>
-          <p className="text-sm text-muted-foreground lg:text-right">
+        <div className="flex items-baseline justify-between gap-3 sm:flex-col sm:items-start lg:flex-row lg:justify-between">
+          <h2 className="text-xl font-bold tracking-[-0.015em]">
+            Road to <span className="sm:hidden">500K</span>
+            <span className="hidden sm:inline">500,000</span>
+          </h2>
+          <p
+            className="font-mono text-xs whitespace-nowrap text-muted-foreground sm:hidden"
+            aria-label={p.eta ? `At your 7-day pace you reach 500K around ${fmtDate(p.eta.etaDate)}` : "Log a few more days to see when you'll reach 500K"}
+          >
+            {p.eta ? <span className="font-semibold text-primary">{fmtDate(p.eta.etaDate)}</span> : "needs more logs"}
+          </p>
+          <p className="hidden text-sm text-muted-foreground sm:block lg:text-right">
             {p.eta ? (
               <>
                 At your 7-day pace you reach 500K in{" "}
@@ -94,7 +118,7 @@ async function Overview() {
 
       {/* Trajectory */}
       <section className="panel-dark rounded-2xl p-5 sm:p-8">
-        <div className="mb-8 flex items-baseline justify-between gap-4">
+        <div className="mb-5 flex items-baseline justify-between gap-4 sm:mb-8">
           <h2 className="text-xl font-bold tracking-[-0.015em]">Cumulative impressions</h2>
           <Link
             href="/analytics"
