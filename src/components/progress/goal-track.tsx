@@ -1,5 +1,5 @@
 import { Check, Flag } from "lucide-react";
-import { fmtCompact, fmtDateShort } from "@/lib/format";
+import { fmtCompact, fmtDateShort, fmtPct } from "@/lib/format";
 import { GOAL, MILESTONE_STEP, type MilestoneStatus } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
@@ -101,12 +101,13 @@ function NextMilestone({ total, milestones }: { total: number; milestones: Miles
   const end = next?.target ?? GOAL;
   const start = end - MILESTONE_STEP;
   const pct = next ? Math.min(Math.max(((total - start) / MILESTONE_STEP) * 100, 0), 100) : 100;
-  const reachedCount = milestones.filter((m) => m.reachedOn).length;
   return (
     <div className="pt-4 sm:hidden">
       <div className="flex items-baseline justify-between gap-3">
         <span className="font-mono text-3xl font-semibold tracking-[-0.03em] tabular-nums">{fmtCompact(total)}</span>
-        <span className="font-mono text-xs text-muted-foreground">{next ? `${fmtCompact(end - total)} left` : "500K reached"}</span>
+        <span className="font-mono text-xs text-muted-foreground">
+          <span className="font-semibold text-primary">{fmtPct((total / GOAL) * 100)}</span> of 500K
+        </span>
       </div>
       <div
         className="mt-2.5 h-2.5 overflow-hidden rounded-full bg-surface-highest"
@@ -117,10 +118,6 @@ function NextMilestone({ total, milestones }: { total: number; milestones: Miles
       </div>
       <div className="mt-2 flex items-center justify-between gap-3 font-mono text-xs text-muted-foreground">
         <span>{fmtCompact(start)}</span>
-        <span className="flex items-center gap-1">
-          <Check className="size-3" strokeWidth={3} aria-hidden />
-          {reachedCount}/{milestones.length}
-        </span>
         <span className="flex items-center gap-1 font-semibold text-primary">
           <Flag className="size-3" aria-hidden />
           {fmtCompact(end)}

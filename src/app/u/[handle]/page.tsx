@@ -6,17 +6,19 @@ import { ArrowUpRight } from "lucide-react";
 import { ConsistencyCard } from "@/components/progress/consistency-card";
 import { GainHeatmap } from "@/components/progress/gain-heatmap";
 import { GoalTrack } from "@/components/progress/goal-track";
-import { MilestoneBadges } from "@/components/progress/milestone-badges";
 import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { Avatar, Brand } from "@/components/shell/brand";
-import { fmt, fmtDate, fmtPct, fmtSigned } from "@/lib/format";
+import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
 import { GOAL, milestones, paceOver } from "@/lib/progress";
 import { cardPath, cardVersion, getPublicProgress } from "@/lib/public";
 import { getPublicShareData } from "@/lib/share-data";
 import { buildShareCard, isShareKind } from "@/lib/share-cards";
 
 type Props = { params: Promise<{ handle: string }> };
+
+/** "+1.9K" / "−1.2K": signed and short, for phone-width stat cells. */
+const fmtSignedCompact = (n: number) => `${n >= 0 ? "+" : "−"}${fmtCompact(Math.abs(n))}`;
 
 export async function generateMetadata({ params, searchParams }: PageProps<"/u/[handle]">): Promise<Metadata> {
   const [{ handle }, query] = await Promise.all([params, searchParams]);
@@ -67,7 +69,7 @@ export default function PublicProfilePage({ params }: Props) {
           <Brand />
           <Link
             href="/login"
-            className="inline-flex h-10 items-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed"
+            className="inline-flex h-10 shrink-0 items-center whitespace-nowrap rounded-lg bg-primary px-4 text-sm font-semibold max-[359px]:px-3 text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed"
           >
             Track your own
           </Link>
@@ -89,19 +91,24 @@ async function Profile({ params }: Props) {
   const { profile, latest, rows, rank } = data;
   const name = profile.display_name || profile.handle;
   const today = new Date().toISOString().slice(0, 10);
+  // Highest single-day gain (earliest day wins a tie).
+  const best = rows.reduce<{ gain: number; date: string } | null>(
+    (b, r) => (r.delta !== null && r.delta > 0 && (!b || r.delta > b.gain) ? { gain: r.delta, date: r.date } : b),
+    null,
+  );
 
   return (
     <div className="flex flex-col gap-6 lg:gap-8">
-      <section className="flex flex-col gap-6 sm:flex-row sm:items-end sm:justify-between">
-        <div className="flex items-center gap-4">
-          <Avatar name={name} src={profile.avatar_url} className="size-16 text-lg" />
+      <section className="flex items-center justify-between gap-3 sm:items-end sm:gap-6">
+        <div className="flex min-w-0 items-center gap-3 sm:gap-4">
+          <Avatar name={name} src={profile.avatar_url} className="size-12 shrink-0 text-base sm:size-16 sm:text-lg" />
           <div className="min-w-0">
-            <h1 className="truncate text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">{name}</h1>
+            <h1 className="truncate text-xl leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">{name}</h1>
             <a
               href={`https://x.com/${profile.handle}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="-my-2 inline-block py-2 font-mono text-base font-semibold text-primary underline-offset-4 hover:underline"
+              className="-my-2 block truncate py-2 font-mono text-sm font-semibold text-primary underline-offset-4 hover:underline sm:text-base"
             >
               @{profile.handle}
             </a>
@@ -112,9 +119,11 @@ async function Profile({ params }: Props) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`View @${profile.handle} on X (opens in a new tab)`}
-          className="inline-flex h-14 w-full shrink-0 items-center justify-center gap-2 rounded-xl bg-primary px-8 text-lg font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:w-auto"
+          className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:h-14 sm:gap-2 sm:rounded-xl sm:px-8 sm:text-lg"
         >
-          View X profile <ArrowUpRight className="size-5" aria-hidden />
+          <span className="sm:hidden">X<span className="max-[359px]:hidden"> profile</span></span>
+          <span className="hidden sm:inline">View X profile</span>
+          <ArrowUpRight className="size-4 sm:size-5" aria-hidden />
         </a>
       </section>
 
@@ -134,7 +143,9 @@ async function Profile({ params }: Props) {
               <p className="text-sm text-muted-foreground">
                 {data.eta ? (
                   <>
-                    500K around <span className="font-mono font-semibold text-primary">{fmtDate(data.eta.etaDate)}</span>
+                    <span className="sm:hidden">est.</span>
+                    <span className="hidden sm:inline">500K around</span>{" "}
+                    <span className="font-mono font-semibold text-primary">{fmtDate(data.eta.etaDate)}</span>
                   </>
                 ) : (
                   `Last logged ${fmtDate(latest.date)}`
@@ -144,29 +155,48 @@ async function Profile({ params }: Props) {
             <GoalTrack total={latest.total} milestones={milestones(rows, data.pace7)} />
           </section>
 
-          <section aria-label="Rank and latest day" className="panel-dark flex flex-col rounded-2xl">
-            <Link href="/leaderboard" className="group flex flex-1 flex-col justify-center p-5 transition-colors hover:bg-hover sm:p-6">
-              <span className="text-sm text-muted-foreground">Leaderboard</span>
-              <span className="mt-1 font-mono text-[3rem] leading-none font-semibold tracking-[-0.05em] text-primary">
+          {/* Phones: rank and best day side by side. sm and up: big rank on top, best day below. */}
+          <section aria-label="Rank and best day" className="panel-dark grid grid-cols-2 rounded-2xl sm:flex sm:flex-col">
+            <Link
+              href="/leaderboard"
+              aria-label={rank ? `Leaderboard rank ${rank.rank} of ${rank.of}` : "Leaderboard"}
+              className="group flex flex-col justify-center rounded-l-2xl p-3 transition-colors hover:bg-hover sm:flex-1 sm:rounded-l-none sm:rounded-t-2xl sm:p-6"
+            >
+              <span className="text-xs text-muted-foreground sm:text-sm">
+                <span className="sm:hidden">Rank</span>
+                <span className="hidden sm:inline">Leaderboard</span>
+              </span>
+              <span className="mt-1 font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.05em] text-primary sm:text-[3rem] sm:tracking-[-0.05em]">
                 {rank ? `#${rank.rank}` : "—"}
+                {rank && (
+                  <span className="ml-1 text-sm font-medium tracking-normal text-subtle sm:hidden">/{fmt(rank.of)}</span>
+                )}
               </span>
               {rank && (
-                <span className="mt-1.5 text-xs text-subtle group-hover:text-muted-foreground">
+                <span className="mt-1.5 hidden text-xs text-subtle group-hover:text-muted-foreground sm:block">
                   of {fmt(rank.of)} {rank.of === 1 ? "creator" : "creators"}
                 </span>
               )}
             </Link>
-            <div className="grid grid-cols-2 divide-x divide-hairline border-t border-hairline">
-              <div className="p-4">
-                <p className="text-xs text-muted-foreground">Latest day</p>
-                <p className="mt-1 font-mono text-lg font-semibold">{latest.delta === null ? "—" : fmtSigned(latest.delta)}</p>
-              </div>
-              <div className="p-4">
-                <p className="text-xs text-muted-foreground">7-day pace</p>
-                <p className="mt-1 font-mono text-lg font-semibold">
-                  {fmtSigned(data.pace7)}
-                  <span className="text-xs font-medium text-subtle">/day</span>
+            <div className="contents sm:block sm:border-t sm:border-hairline">
+              {/* The highest single-day gain and the day it happened */}
+              <div
+                className="flex flex-col justify-center border-l border-hairline p-3 sm:block sm:border-l-0 sm:p-4"
+                aria-label={best ? `Best day: ${fmtSigned(best.gain)} on ${fmtDate(best.date)}` : "No best day yet"}
+              >
+                <p className="text-xs text-muted-foreground">Best day</p>
+                <p className="mt-1 font-mono text-[2rem] leading-none font-semibold tracking-[-0.05em] min-[360px]:text-[2.5rem] sm:text-lg sm:leading-normal sm:tracking-normal">
+                  {best ? (
+                    <>
+                      <span className="sm:hidden">{fmtSignedCompact(best.gain)}</span>
+                      <span className="hidden sm:inline">{fmtSigned(best.gain)}</span>
+                      <span className="ml-1.5 hidden text-xs font-medium tracking-normal text-subtle sm:inline">{fmtDateShort(best.date)}</span>
+                    </>
+                  ) : (
+                    "—"
+                  )}
                 </p>
+                {best && <p className="mt-1.5 font-mono text-xs text-subtle sm:hidden">{fmtDateShort(best.date)}</p>}
               </div>
             </div>
           </section>
@@ -182,9 +212,8 @@ async function Profile({ params }: Props) {
             <ConsistencyCard rows={rows} today={today} streak={data.streak} pace7={data.pace7} pace28={paceOver(rows, 28)} />
           )}
 
-          {/* Row 3: milestones + daily gains (wide) */}
-          <MilestoneBadges rows={rows} />
-          <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
+          {/* Row 3: daily gains (full width) */}
+          <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-3">
             <h2 className="mb-5 text-xl font-bold tracking-[-0.015em]">Daily gains</h2>
             <GainHeatmap rows={rows} today={today} />
           </section>

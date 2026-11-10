@@ -19,7 +19,7 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
 
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1.5 sm:gap-2">
+      <div className="grid grid-cols-7 gap-1 min-[360px]:gap-1.5 sm:gap-2">
         {WEEKDAYS.map((d) => (
           <span key={d} className="pb-1 text-center text-[11px] text-subtle">
             {d}
@@ -34,7 +34,7 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
               key={d}
               title={r ? `${fmtDate(d)}: ${fmtSigned(r.delta ?? 0)} (${fmt(r.total)} total)` : fmtDate(d)}
               className={cn(
-                "flex aspect-square flex-col justify-between rounded-md p-1 font-mono text-[10px] sm:aspect-[5/3] sm:p-1.5 sm:text-[11px]",
+                "flex aspect-square flex-col justify-between rounded-md p-1 font-mono text-[10px] max-[359px]:p-0.5 max-[359px]:text-[9px] sm:aspect-[5/3] sm:p-1.5 sm:text-[11px]",
                 future ? "opacity-0" : r && lv ? "" : r ? "border border-border" : "border border-dashed border-hairline",
                 lv >= 3 ? "text-primary-foreground" : "text-muted-foreground",
                 d === today && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
@@ -43,8 +43,9 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
             >
               <span className={lv >= 3 ? "" : "text-subtle"}>{Number(d.slice(8))}</span>
               {r?.delta != null && (
-                <span className="hidden font-semibold sm:block">
-                  +{fmtCompact(r.delta)}
+                <span className="truncate font-semibold tracking-[-0.04em] sm:tracking-normal">
+                  <span className="hidden sm:inline">+</span>
+                  {fmtCompact(r.delta)}
                 </span>
               )}
             </div>
