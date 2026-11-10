@@ -32,11 +32,22 @@ export const getRank = cache(async (userId: string) => {
   const db = anon();
   const { data: me } = await db.from("leaderboard").select("total").eq("user_id", userId).maybeSingle();
   if (!me) return null;
-  const [{ count: ahead }, { count: of }] = await Promise.all([
+  const [{ count: ahead }, { count: of }, above, below] = await Promise.all([
     db.from("leaderboard").select("user_id", { count: "exact", head: true }).gt("total", me.total),
     db.from("leaderboard").select("user_id", { count: "exact", head: true }),
+    // The nearest totals just above and below, for "+3.1K to #1" / "leads by 2K".
+    db.from("leaderboard").select("total").gt("total", me.total).order("total", { ascending: true }).limit(1).maybeSingle(),
+    db.from("leaderboard").select("total").lt("total", me.total).order("total", { ascending: false }).limit(1).maybeSingle(),
   ]);
-  return { rank: (ahead ?? 0) + 1, of: of ?? 1 };
+  const mine = Number(me.total);
+  return {
+    rank: (ahead ?? 0) + 1,
+    of: of ?? 1,
+    /** Impressions needed to pass the creator one place up (null at #1). */
+    toNext: above.data ? Number(above.data.total) - mine : null,
+    /** Lead over the creator one place down (null in last place). */
+    lead: below.data ? mine - Number(below.data.total) : null,
+  };
 });
 
 /** Where a total not yet on the board would rank, counting that visitor in the size of the board. */

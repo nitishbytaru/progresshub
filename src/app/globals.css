@@ -287,6 +287,34 @@
   animation: you-pulse 1.8s ease-in-out infinite;
 }
 
+/* Rank ladder: the steps grow up one after another, then #1's crown drops in. */
+@keyframes step-up {
+  from {
+    transform: scaleY(0);
+  }
+}
+.animate-step {
+  transform-origin: bottom;
+  animation: step-up 0.7s var(--ease-out-expo) both;
+}
+@keyframes crown-drop {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -8px) rotate(-14deg);
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, 1px) rotate(6deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translate(-50%, 0) rotate(0);
+  }
+}
+.animate-crown {
+  animation: crown-drop 0.6s var(--ease-out-expo) 0.9s both;
+}
+
 /* Inside an <InView> card, hold these until the card scrolls into view. */
 [data-inview="false"] .reveal-anim {
   animation-play-state: paused;
@@ -297,7 +325,9 @@
   .rise-in > *,
   .skeleton-scan::before,
   .animate-race-run,
-  .animate-you-pulse {
+  .animate-you-pulse,
+  .animate-step,
+  .animate-crown {
     animation: none;
   }
 }

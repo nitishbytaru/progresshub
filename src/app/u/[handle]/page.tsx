@@ -14,6 +14,7 @@ import { GOAL, milestones } from "@/lib/progress";
 import { cardPath, cardVersion, getPublicProgress } from "@/lib/public";
 import { ProfileSkeleton } from "./profile-skeleton";
 import { RaceInvite } from "./race-invite";
+import { RankGap, RankLadder } from "./rank-ladder";
 import { getPublicShareData } from "@/lib/share-data";
 import { buildShareCard, isShareKind } from "@/lib/share-cards";
 
@@ -168,15 +169,23 @@ async function Profile({ params }: Props) {
                 <span className="sm:hidden">Rank</span>
                 <span className="hidden sm:inline">Leaderboard</span>
               </span>
-              <span className="mt-1 font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.05em] text-primary sm:text-[3rem] sm:tracking-[-0.05em]">
-                {rank ? `#${rank.rank}` : "—"}
-                {rank && (
-                  <span className="ml-1 text-sm font-medium tracking-normal text-subtle sm:hidden">/{fmt(rank.of)}</span>
-                )}
-              </span>
+              <div className="mt-1 flex items-end justify-between gap-3">
+                <span className="font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.05em] text-primary sm:text-[3rem]">
+                  {rank ? (
+                    <>
+                      #<CountUp value={rank.rank} duration={700} />
+                    </>
+                  ) : (
+                    "—"
+                  )}
+                  {rank && <span className="ml-1 text-sm font-medium tracking-normal text-subtle">/{fmt(rank.of)}</span>}
+                </span>
+                {rank && rank.of > 1 && <RankLadder rank={rank} className="hidden w-28 sm:flex" />}
+              </div>
+              {rank && rank.of > 1 && <RankLadder rank={rank} className={rank.rank === 1 ? "mt-6 sm:hidden" : "mt-3 sm:hidden"} />}
               {rank && (
-                <span className="mt-1.5 hidden text-xs text-subtle group-hover:text-muted-foreground sm:block">
-                  of {fmt(rank.of)} {rank.of === 1 ? "creator" : "creators"}
+                <span className="mt-2 block">
+                  <RankGap rank={rank} />
                 </span>
               )}
             </Link>
