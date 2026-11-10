@@ -3,15 +3,17 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { ArrowUpRight } from "lucide-react";
-import { ConsistencyCard } from "@/components/progress/consistency-card";
+import { MomentumCard } from "@/components/progress/consistency-card";
 import { GainHeatmap } from "@/components/progress/gain-heatmap";
 import { GoalTrack } from "@/components/progress/goal-track";
-import { PageSkeleton } from "@/components/progress/page-skeleton";
+import { CountUp } from "@/components/progress/count-up";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import { Avatar, Brand } from "@/components/shell/brand";
 import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
-import { GOAL, milestones, paceOver } from "@/lib/progress";
+import { GOAL, milestones } from "@/lib/progress";
 import { cardPath, cardVersion, getPublicProgress } from "@/lib/public";
+import { ProfileSkeleton } from "./profile-skeleton";
+import { RaceInvite } from "./race-invite";
 import { getPublicShareData } from "@/lib/share-data";
 import { buildShareCard, isShareKind } from "@/lib/share-cards";
 
@@ -76,7 +78,7 @@ export default function PublicProfilePage({ params }: Props) {
         </div>
       </header>
       <main className="mx-auto max-w-[1200px] px-4 py-8 sm:px-6 sm:py-12">
-        <Suspense fallback={<PageSkeleton blocks={["h-[96px]", "h-[260px]", "h-[420px]", "h-[360px]"]} />}>
+        <Suspense fallback={<ProfileSkeleton />}>
           <Profile params={params} />
         </Suspense>
       </main>
@@ -98,7 +100,7 @@ async function Profile({ params }: Props) {
   );
 
   return (
-    <div className="flex flex-col gap-6 lg:gap-8">
+    <div className="rise-in flex flex-col gap-6 lg:gap-8">
       <section className="flex items-center justify-between gap-3 sm:items-end sm:gap-6">
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Avatar name={name} src={profile.avatar_url} className="size-12 shrink-0 text-base sm:size-16 sm:text-lg" />
@@ -132,12 +134,12 @@ async function Profile({ params }: Props) {
           @{profile.handle} hasn&apos;t logged any impressions yet.
         </section>
       ) : (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="rise-in grid gap-6 lg:grid-cols-3">
           {/* Row 1: the total and the road to 500K (wide) + rank and latest day */}
           <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
             <div className="flex flex-col gap-1 sm:flex-row sm:items-baseline sm:justify-between">
               <p className="hidden font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.04em] sm:block sm:text-[3.25rem]">
-                {fmt(latest.total)}
+                <CountUp value={latest.total} duration={1400} />
                 <span className="ml-3 font-sans text-base font-medium tracking-normal text-muted-foreground">/ 500K</span>
               </p>
               <p className="text-sm text-muted-foreground">
@@ -201,7 +203,7 @@ async function Profile({ params }: Props) {
             </div>
           </section>
 
-          {/* Row 2: trajectory (wide) + consistency */}
+          {/* Row 2: trajectory (wide) + momentum */}
           {rows.length > 1 && (
             <section className="panel-dark rounded-2xl p-5 sm:p-6 lg:col-span-2">
               <h2 className="mb-6 text-xl font-bold tracking-[-0.015em]">Cumulative impressions</h2>
@@ -209,7 +211,7 @@ async function Profile({ params }: Props) {
             </section>
           )}
           {rows.length > 1 && (
-            <ConsistencyCard rows={rows} today={today} streak={data.streak} pace7={data.pace7} pace28={paceOver(rows, 28)} />
+            <MomentumCard rows={rows} today={today} />
           )}
 
           {/* Row 3: daily gains (full width) */}
@@ -218,21 +220,8 @@ async function Profile({ params }: Props) {
             <GainHeatmap rows={rows} today={today} />
           </section>
 
-          {/* Row 4: invite: every public page promotes progresshub */}
-          <section className="panel-dark flex flex-col items-start justify-between gap-4 rounded-2xl border-primary/40 p-5 sm:flex-row sm:items-center sm:p-6 lg:col-span-3">
-            <div>
-              <p className="text-lg font-bold tracking-[-0.015em]">
-                Race <span className="text-primary">@{profile.handle}</span> to 500K
-              </p>
-              <p className="mt-0.5 text-sm text-muted-foreground">Log your X impressions daily. Free.</p>
-            </div>
-            <Link
-              href="/login"
-              className="inline-flex h-11 shrink-0 items-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed"
-            >
-              Track your own
-            </Link>
-          </section>
+          {/* Row 4: invite as a race: every public page promotes progresshub */}
+          <RaceInvite handle={profile.handle} total={latest.total} />
         </div>
       )}
 

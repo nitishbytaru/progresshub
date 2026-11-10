@@ -63,6 +63,7 @@
   --color-danger: var(--danger);
   --color-danger-hover: var(--danger-hover);
   --color-danger-soft: var(--danger-soft);
+  --color-trend-down: var(--trend-down);
   --color-tour: var(--tour-highlight);
 
   --radius-sm: calc(var(--radius) * 0.5);
@@ -127,6 +128,8 @@
   --danger: #dc2626;
   --danger-hover: #ef4444;
   --danger-soft: #dc26261f;
+  /* User-approved: a falling week-over-week trend (Momentum card) shows in red. */
+  --trend-down: var(--danger);
 
   /* User-approved contrast highlight, for the tutorial only (src/components/tour). */
   --tour-highlight: #ff2e93;
@@ -216,8 +219,85 @@
   transform-origin: left center;
   animation: track-fill 1.4s var(--ease-out-expo) both;
 }
+/* Public profile: cards rise in one after another once the data arrives. */
+@keyframes rise {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+.rise-in > * {
+  animation: rise 0.75s var(--ease-out-expo) both;
+  animation-delay: calc(var(--rise-i, 0) * 90ms);
+}
+.rise-in > :nth-child(2) { --rise-i: 1; }
+.rise-in > :nth-child(3) { --rise-i: 2; }
+.rise-in > :nth-child(4) { --rise-i: 3; }
+.rise-in > :nth-child(5) { --rise-i: 4; }
+.rise-in > :nth-child(6) { --rise-i: 5; }
+.rise-in > :nth-child(7) { --rise-i: 6; }
+
+/* Loading skeleton: a solid lime scan line runs along each panel's top edge. */
+@keyframes scan {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(500%);
+  }
+}
+.skeleton-scan {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-scan::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 20%;
+  height: 2px;
+  background: var(--primary);
+  animation: scan 1.5s cubic-bezier(0.65, 0, 0.35, 1) var(--scan-delay, 0ms) infinite both;
+}
+
+/* Race invite: the creator's dot runs out to their spot, "you" waits at the start line. */
+@keyframes race-run {
+  from {
+    left: 0;
+  }
+}
+.animate-race-run {
+  animation: race-run 1.6s var(--ease-out-expo) 0.5s both;
+}
+@keyframes you-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--foreground) 0%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--foreground) 25%, transparent);
+  }
+}
+.animate-you-pulse {
+  animation: you-pulse 1.8s ease-in-out infinite;
+}
+
+/* Inside an <InView> card, hold these until the card scrolls into view. */
+[data-inview="false"] .reveal-anim {
+  animation-play-state: paused;
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .animate-track-fill {
+  .animate-track-fill,
+  .rise-in > *,
+  .skeleton-scan::before,
+  .animate-race-run,
+  .animate-you-pulse {
     animation: none;
   }
 }

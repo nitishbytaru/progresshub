@@ -15,7 +15,7 @@ type Props = {
   delta: number | null;
   streak: number;
   rank: { rank: number; of: number } | null;
-  /** Absolute public URL of the creator page, e.g. https://progresshub24.vercel.app/u/alexbuilds */
+  /** Absolute public URL of the creator page, e.g. https://progresshub.space/u/alexbuilds */
   shareUrl: string;
   /** Versioned share-card image path, so the preview never shows stale numbers. */
   imagePath: string;

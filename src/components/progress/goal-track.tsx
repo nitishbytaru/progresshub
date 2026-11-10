@@ -2,6 +2,7 @@ import { Check, Flag } from "lucide-react";
 import { fmtCompact, fmtDateShort, fmtPct } from "@/lib/format";
 import { GOAL, MILESTONE_STEP, type MilestoneStatus } from "@/lib/progress";
 import { cn } from "@/lib/utils";
+import { CountUp } from "./count-up";
 
 /**
  * The 500K runway: lime fill to today, a notch at every 25K milestone (darker once passed),
@@ -104,7 +105,9 @@ function NextMilestone({ total, milestones }: { total: number; milestones: Miles
   return (
     <div className="pt-4 sm:hidden">
       <div className="flex items-baseline justify-between gap-3">
-        <span className="font-mono text-3xl font-semibold tracking-[-0.03em] tabular-nums">{fmtCompact(total)}</span>
+        <span className="font-mono text-3xl font-semibold tracking-[-0.03em] tabular-nums">
+          <CountUp value={total} compact duration={1400} />
+        </span>
         <span className="font-mono text-xs text-muted-foreground">
           <span className="font-semibold text-primary">{fmtPct((total / GOAL) * 100)}</span> of 500K
         </span>
