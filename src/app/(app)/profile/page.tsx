@@ -38,8 +38,6 @@ async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["
     provider: i.provider,
     email: typeof i.identity_data?.email === "string" ? i.identity_data.email : null,
   }));
-  const hasPassword = logins.some((l) => l.provider === "email") || user.user_metadata?.has_password === true;
-  const googleOnly = !hasPassword && logins.length > 0 && logins.every((l) => l.provider === "google");
   const stats = [
     { label: "logs", value: fmt(p.rows.length) },
     { label: "streak", value: `${p.streak}d` },
@@ -84,14 +82,9 @@ async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["
         </div>
       </section>
 
-      <ProfileForms
-        email={user.email ?? ""}
-        pendingEmail={user.new_email ?? null}
-        handle={profile.handle ?? ""}
-        googleOnly={googleOnly}
-      />
+      <ProfileForms handle={profile.handle ?? ""} />
 
-      <SignInMethods logins={logins} hasPassword={hasPassword} accountEmail={user.email ?? ""} linkError={linkError} />
+      <SignInMethods logins={logins} linkError={linkError} />
 
       <section
         aria-label="Delete account"

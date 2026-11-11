@@ -7,14 +7,22 @@ import { GOAL } from "@/lib/progress";
  * The closing invite as a race: the creator's lime dot runs out to where they are on the
  * road to 500K, and a white "you" dot pulses at the start line next to the CTA.
  */
-export function RaceInvite({ handle, total }: { handle: string; total: number }) {
+export function RaceInvite({ handle, total, finished = false }: { handle: string; total: number; finished?: boolean }) {
   const pct = Math.min((total / GOAL) * 100, 100);
   return (
     <section className="panel-dark flex flex-col gap-5 rounded-2xl border-primary/40 p-5 sm:p-6 lg:col-span-3">
       <div className="flex flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
         <div>
           <p className="text-lg font-bold tracking-[-0.015em]">
-            Race <span className="text-primary">@{handle}</span> to 500K
+            {finished ? (
+              <>
+                <span className="text-primary">@{handle}</span> finished the race
+              </>
+            ) : (
+              <>
+                Race <span className="text-primary">@{handle}</span> to 500K
+              </>
+            )}
           </p>
           <p className="mt-0.5 text-sm text-muted-foreground">Log your X impressions daily. Free.</p>
         </div>
@@ -30,7 +38,7 @@ export function RaceInvite({ handle, total }: { handle: string; total: number })
       <div
         className="grid grid-cols-[minmax(0,7rem)_minmax(0,1fr)_auto] items-center gap-x-3 gap-y-3 font-mono text-[11px]"
         role="img"
-        aria-label={`@${handle} is at ${fmtCompact(total)} of 500K. You start at 0.`}
+        aria-label={finished ? `@${handle} reached 500K. You start at 0.` : `@${handle} is at ${fmtCompact(total)} of 500K. You start at 0.`}
       >
         <span className="truncate text-primary">@{handle}</span>
         <Lane>
@@ -39,7 +47,10 @@ export function RaceInvite({ handle, total }: { handle: string; total: number })
             style={{ left: `max(6px, ${pct}%)` }}
           />
         </Lane>
-        <span className="text-right text-foreground">{fmtCompact(total)}</span>
+        <span className="flex items-center justify-end gap-1 text-right text-primary">
+          {finished && <Flag className="size-3" aria-hidden />}
+          <span className={finished ? undefined : "text-foreground"}>{fmtCompact(total)}</span>
+        </span>
 
         <span className="text-muted-foreground">you</span>
         <Lane>

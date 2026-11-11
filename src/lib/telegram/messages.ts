@@ -56,6 +56,7 @@ export function statText(kind: StatKind, c: Creator): string {
         c.eta ? `500K around <b>${fmtDate(c.eta.etaDate)}</b>` : "Log a few more days for a 500K estimate.",
       ].join("\n");
     case "rank":
+      if (total >= GOAL) return `🏁 Race finished! You reached <b>500K</b>\n${fmt(total)} impressions. You're on the finishers list.`;
       return c.rank
         ? `🏆 You're <b>#${c.rank.rank}</b> of ${fmt(c.rank.of)} ${c.rank.of === 1 ? "creator" : "creators"}\n${fmt(total)} impressions · ${fmtPct(pct)} of 500K`
         : "🏆 You're not on the leaderboard yet. Add your X username on progresshub to join.";

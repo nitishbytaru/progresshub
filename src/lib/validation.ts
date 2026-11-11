@@ -95,21 +95,6 @@ export function validateEntry(args: {
 
 /* ---------- Account fields ---------- */
 
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-
-export function validateEmail(email: string): string | null {
-  if (!email) return "Enter your email.";
-  if (email.length > 254 || !EMAIL_RE.test(email)) return "That doesn't look like an email address. Check for typos.";
-  return null;
-}
-
-export function validateNewPassword(password: string): string | null {
-  if (password.length < 8) return "Use at least 8 characters for your password.";
-  if (password.length > 72) return "Keep your password to 72 characters or fewer.";
-  if (!/[A-Za-z]/.test(password) || !/\d/.test(password)) return "Use at least one letter and one number.";
-  return null;
-}
-
 export function validateHandle(raw: string): { handle: string; error: string | null } {
   const handle = raw.trim().replace(/^@/, "");
   if (!handle) return { handle, error: "Enter your X handle." };

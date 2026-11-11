@@ -1,44 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { cookies } from "next/headers";
-import { getOrigin } from "@/lib/public";
 import { createClient } from "@/lib/supabase/server";
-import { validateEmail, validateHandle } from "@/lib/validation";
+import { validateHandle } from "@/lib/validation";
 
 export type ProfileState = { error?: string; message?: string; value?: string } | null;
-
-/**
- * Starts an email change. Supabase emails a confirmation link (to the new address, and to the current
- * one too while "Secure email change" is on) and only switches the email once it's confirmed.
- */
-export async function updateEmail(_: ProfileState, formData: FormData): Promise<ProfileState> {
-  const email = String(formData.get("email") ?? "").trim().toLowerCase();
-  const problem = validateEmail(email);
-  if (problem) return { error: problem, value: email };
-
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-  if (!user) return { error: "Your session expired. Sign in again.", value: email };
-  if (email === user.email?.toLowerCase()) return { error: "That's already your email.", value: email };
-
-  const origin = process.env.NEXT_PUBLIC_SITE_URL ?? (await getOrigin());
-  // The confirm link lands on /auth/callback, which sends the creator back here.
-  (await cookies()).set("auth_next", "/profile", { path: "/", maxAge: 60 * 60, sameSite: "lax", httpOnly: true });
-  const { error } = await supabase.auth.updateUser({ email }, { emailRedirectTo: `${origin}/auth/callback` });
-  if (error) {
-    if (/already/i.test(error.message)) return { error: "Another account already uses that email.", value: email };
-    if (/rate|seconds/i.test(error.message)) return { error: "Too many tries. Wait a minute, then try again.", value: email };
-    return { error: "Couldn't change your email. Try again in a moment.", value: email };
-  }
-  revalidatePath("/profile"); // shows the "waiting to confirm" hint
-  return {
-    message: `We sent a confirmation link to ${email}. If one also arrives at your current email, click both. Your email changes after that.`,
-    value: email,
-  };
-}
 
 /** Changes the X handle: profile row (public page, leaderboard) and auth metadata (used by the proxy). */
 export async function updateHandle(_: ProfileState, formData: FormData): Promise<ProfileState> {

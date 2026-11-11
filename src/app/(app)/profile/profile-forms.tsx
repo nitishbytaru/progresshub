@@ -1,32 +1,17 @@
 "use client";
 
 import { useActionState, useId, useState } from "react";
-import { AtSign, Check, Loader2, Mail, type LucideIcon } from "lucide-react";
+import { AtSign, Check, Loader2, type LucideIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { updateEmail, updateHandle, type ProfileState } from "./actions";
+import { updateHandle, type ProfileState } from "./actions";
 
-type Props = { email: string; pendingEmail: string | null; handle: string; googleOnly: boolean };
+type Props = { handle: string };
 
-/** Email and X username, each saved on its own. */
-export function ProfileForms({ email, pendingEmail, handle, googleOnly }: Props) {
+/** X username. The account email comes from Google, so it isn't editable here. */
+export function ProfileForms({ handle }: Props) {
   return (
     <section aria-label="Account details" className="panel-dark flex flex-col divide-y divide-hairline rounded-2xl">
-      <Field
-        icon={Mail}
-        label="Email"
-        name="email"
-        type="email"
-        initial={email}
-        action={updateEmail}
-        hint={
-          pendingEmail
-            ? `Waiting for you to confirm ${pendingEmail}. Check your inbox.`
-            : googleOnly
-              ? "You'll keep signing in with Google. This only changes your account email, after you confirm the link."
-              : "Changing it sends a confirmation link. It only changes once you click it."
-        }
-      />
       <Field
         icon={AtSign}
         label="Username"

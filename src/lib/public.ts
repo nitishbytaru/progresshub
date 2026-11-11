@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { connection } from "next/server";
 import { cache } from "react";
 import { SUPABASE_KEY, SUPABASE_URL } from "./supabase/env";
-import { forecast, paceOver, streak, withDeltas, type Entry } from "./progress";
+import { forecast, GOAL, paceOver, streak, withDeltas, type Entry } from "./progress";
 
 /** Cookie-less client: reads only what the database already exposes to everyone (public profiles). */
 const anon = () =>
@@ -26,17 +26,21 @@ export const getPublicProfile = cache(async (handle: string): Promise<PublicProf
   return data ?? null;
 });
 
-/** Rank by total impressions (1 = closest to 500K) and how many creators are on the board. */
+/**
+ * Rank by total impressions (1 = closest to 500K) among creators still racing. Anyone at 500K has
+ * finished the race: they leave the ranking (null here) and show up in the finishers list instead.
+ */
 export const getRank = cache(async (userId: string) => {
   await connection();
   const db = anon();
   const { data: me } = await db.from("leaderboard").select("total").eq("user_id", userId).maybeSingle();
-  if (!me) return null;
+  if (!me || Number(me.total) >= GOAL) return null;
+  const racing = () => db.from("leaderboard").select("user_id", { count: "exact", head: true }).lt("total", GOAL);
   const [{ count: ahead }, { count: of }, above, below] = await Promise.all([
-    db.from("leaderboard").select("user_id", { count: "exact", head: true }).gt("total", me.total),
-    db.from("leaderboard").select("user_id", { count: "exact", head: true }),
+    racing().gt("total", me.total),
+    racing(),
     // The nearest totals just above and below, for "+3.1K to #1" / "leads by 2K".
-    db.from("leaderboard").select("total").gt("total", me.total).order("total", { ascending: true }).limit(1).maybeSingle(),
+    db.from("leaderboard").select("total").gt("total", me.total).lt("total", GOAL).order("total", { ascending: true }).limit(1).maybeSingle(),
     db.from("leaderboard").select("total").lt("total", me.total).order("total", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const mine = Number(me.total);
@@ -54,10 +58,8 @@ export const getRank = cache(async (userId: string) => {
 export async function getRankForTotal(total: number) {
   await connection();
   const db = anon();
-  const [ahead, board] = await Promise.all([
-    db.from("leaderboard").select("user_id", { count: "exact", head: true }).gt("total", total),
-    db.from("leaderboard").select("user_id", { count: "exact", head: true }),
-  ]);
+  const racing = () => db.from("leaderboard").select("user_id", { count: "exact", head: true }).lt("total", GOAL);
+  const [ahead, board] = await Promise.all([racing().gt("total", total), racing()]);
   if (ahead.error || board.error) return null;
   return { rank: (ahead.count ?? 0) + 1, of: (board.count ?? 0) + 1 };
 }

@@ -4,7 +4,7 @@ import { connection } from "next/server";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 import { createClient } from "./supabase/server";
-import { forecast, milestones, paceOver, streak, withDeltas, type Entry } from "./progress";
+import { forecast, GOAL, milestones, paceOver, streak, withDeltas, type Entry } from "./progress";
 
 export type Profile = {
   id: string;
@@ -146,3 +146,18 @@ export const getLeaderboard = cache(async (): Promise<LeaderRow[]> => {
     last_gain: r.last_gain == null ? null : Number(r.last_gain),
   }));
 });
+
+/** The first day each finisher's log reached 500K, keyed by user id (when they finished the race). */
+export async function getFinishDates(userIds: string[]): Promise<Record<string, string>> {
+  if (userIds.length === 0) return {};
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("progress_entries")
+    .select("user_id, entry_date")
+    .in("user_id", userIds)
+    .gte("total", GOAL)
+    .order("entry_date", { ascending: true });
+  const out: Record<string, string> = {};
+  for (const r of data ?? []) out[r.user_id as string] ??= r.entry_date as string;
+  return out;
+}

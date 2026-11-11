@@ -28,7 +28,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ han
       <OgFrame
         right={
           <>
-          {data?.rank && (
+          {(total >= GOAL || data?.rank) && (
             <div
               style={{
                 display: "flex",
@@ -43,8 +43,15 @@ export async function GET(_request: Request, { params }: { params: Promise<{ han
                 fontWeight: 600,
               }}
             >
-              #{data.rank.rank}
-              <span style={{ fontFamily: "Plus Jakarta Sans", fontSize: 22, fontWeight: 500 }}>of {data.rank.of} {data.rank.of === 1 ? "creator" : "creators"}</span>
+              {total >= GOAL || !data?.rank ? (
+                // 500K reached: the race is over, so the card shows the finish instead of a place.
+                <span style={{ fontFamily: "Plus Jakarta Sans", fontSize: 24, fontWeight: 700 }}>Race finished</span>
+              ) : (
+                <>
+                  #{data.rank.rank}
+                  <span style={{ fontFamily: "Plus Jakarta Sans", fontSize: 22, fontWeight: 500 }}>of {data.rank.of} {data.rank.of === 1 ? "creator" : "creators"}</span>
+                </>
+              )}
             </div>
           )}
           </>

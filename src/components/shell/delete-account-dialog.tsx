@@ -27,7 +27,7 @@ export function DeleteAccountDialog({ trigger, triggerLabel, handle, logCount }:
     `${fmt(logCount)} daily ${logCount === 1 ? "log" : "logs"}`,
     handle ? `Your profile and public page (@${handle})` : "Your profile",
     "Your spot on the leaderboard",
-    "Your sign-in (Google or email)",
+    "Your Google sign-in",
   ];
 
   return (

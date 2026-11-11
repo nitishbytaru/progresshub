@@ -1,7 +1,7 @@
 import "server-only";
 import { createHash } from "node:crypto";
 import { createAdminClient } from "../supabase/admin";
-import { forecast, paceOver, streak, withDeltas, type DayRow, type Forecast } from "../progress";
+import { forecast, GOAL, paceOver, streak, withDeltas, type DayRow, type Forecast } from "../progress";
 import type { ShareData } from "../share-cards";
 
 /**
@@ -105,11 +105,14 @@ export async function loadCreator(link: Pick<Link, "user_id" | "tz">): Promise<C
   };
 }
 
+/** Place among creators still racing; null once they've reached 500K (race finished). */
 async function rankOf(userId: string, total: number) {
+  if (total >= GOAL) return null;
   const client = db();
+  const racing = () => client.from("leaderboard").select("user_id", { count: "exact", head: true }).lt("total", GOAL);
   const [{ count: ahead }, { count: of }, { data: me }] = await Promise.all([
-    client.from("leaderboard").select("user_id", { count: "exact", head: true }).gt("total", total),
-    client.from("leaderboard").select("user_id", { count: "exact", head: true }),
+    racing().gt("total", total),
+    racing(),
     client.from("leaderboard").select("user_id").eq("user_id", userId).maybeSingle(),
   ]);
   return me ? { rank: (ahead ?? 0) + 1, of: of ?? 1 } : null;

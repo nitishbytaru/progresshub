@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
-import { ArrowUpRight } from "lucide-react";
+import { ArrowUpRight, Flag } from "lucide-react";
 import { MomentumCard } from "@/components/progress/consistency-card";
 import { GainHeatmap } from "@/components/progress/gain-heatmap";
 import { GoalTrack } from "@/components/progress/goal-track";
@@ -48,7 +48,7 @@ export async function generateMetadata({ params, searchParams }: PageProps<"/u/[
   }
 
   const total = data.latest?.total ?? 0;
-  const rank = data.rank ? `#${data.rank.rank} of ${data.rank.of} · ` : "";
+  const rank = total >= GOAL ? "Race finished · " : data.rank ? `#${data.rank.rank} of ${data.rank.of} · ` : "";
   const description = `${rank}${fmt(total)} / 500,000 impressions on X (${fmtPct((total / GOAL) * 100)}). Follow @${h}'s road to 500K.`;
   const image = {
     url: cardPath(h, cardVersion(data)),
@@ -92,6 +92,8 @@ async function Profile({ params }: Props) {
   const data = await getPublicProgress(handle);
   if (!data) notFound();
   const { profile, latest, rows, rank } = data;
+  // At 500K the race is over: the rank tile becomes a finish tile and the invite says so.
+  const finished = (latest?.total ?? 0) >= GOAL;
   const name = profile.display_name || profile.handle;
   const today = new Date().toISOString().slice(0, 10);
   // Highest single-day gain (earliest day wins a tie).
@@ -160,6 +162,21 @@ async function Profile({ params }: Props) {
 
           {/* Phones: rank and best day side by side. sm and up: big rank on top, best day below. */}
           <section aria-label="Rank and best day" className="panel-dark grid grid-cols-2 rounded-2xl sm:flex sm:flex-col">
+            {finished ? (
+              <Link
+                href="/leaderboard?finishers=1"
+                aria-label="Race finished: reached 500K. See all finishers"
+                className="group flex flex-col justify-center rounded-l-2xl p-3 transition-colors hover:bg-hover sm:flex-1 sm:rounded-l-none sm:rounded-t-2xl sm:p-6"
+              >
+                <span className="text-xs text-muted-foreground sm:text-sm">Race</span>
+                <span className="mt-1 flex items-center gap-2 font-mono text-[2rem] leading-none font-semibold tracking-[-0.05em] text-primary min-[360px]:text-[2.5rem] sm:text-[3rem]">
+                  <Flag className="size-6 shrink-0 sm:size-8" strokeWidth={2.5} aria-hidden />
+                  Done
+                </span>
+                <span className="mt-3 block h-1.5 rounded-full bg-primary" aria-hidden />
+                <span className="mt-2 block font-mono text-xs text-subtle">500K reached</span>
+              </Link>
+            ) : (
             <Link
               href="/leaderboard"
               aria-label={rank ? `Leaderboard rank ${rank.rank} of ${rank.of}` : "Leaderboard"}
@@ -189,6 +206,7 @@ async function Profile({ params }: Props) {
                 </span>
               )}
             </Link>
+            )}
             <div className="contents sm:block sm:border-t sm:border-hairline">
               {/* The highest single-day gain and the day it happened */}
               <div
@@ -230,7 +248,7 @@ async function Profile({ params }: Props) {
           </section>
 
           {/* Row 4: invite as a race: every public page promotes progresshub */}
-          <RaceInvite handle={profile.handle} total={latest.total} />
+          <RaceInvite handle={profile.handle} total={latest.total} finished={finished} />
         </div>
       )}
 

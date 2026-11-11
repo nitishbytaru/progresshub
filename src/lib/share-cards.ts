@@ -162,6 +162,25 @@ export function buildShareCard(
     }
 
     case "rank": {
+      // At 500K the race is finished: no place on the board, a finish card instead.
+      if (d.latest && total >= GOAL) {
+        return {
+          kind,
+          name: "Rank",
+          available: true,
+          title: `@${h} finished the race to 500K on progresshub`,
+          description: `Race finished: ${fmt(total)} impressions on X, past the 500K line.`,
+          postText: [`Race finished 🏁`, `${fmt(total)} impressions on X, past the 500K line.`, `Join the race on progresshub.`].join("\n"),
+          imagePath: imageKindPath("rank"),
+          sharePath: shareKindPath("rank"),
+          face: {
+            label: "Race to 500K",
+            hero: "Finished",
+            sub: `${fmt(total)} impressions`,
+            visual: { type: "bar", pct: 100, left: "500K reached", right: "done" },
+          },
+        };
+      }
       if (!d.rank || !d.latest) return locked("Rank", "log a day to join the board");
       return {
         kind,

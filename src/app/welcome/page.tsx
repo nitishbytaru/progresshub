@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   twitter: { card: "summary_large_image", title: SHARE_TITLE, description: SHARE_DESCRIPTION, images: [SHARE_IMAGE] },
 };
 
-const SIGN_UP = "/login?mode=signup";
+const SIGN_UP = "/login";
 const LOG_IN = "/login";
 
 const primary =
