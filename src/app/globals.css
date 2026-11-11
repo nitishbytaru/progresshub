@@ -64,6 +64,9 @@
   --color-danger-hover: var(--danger-hover);
   --color-danger-soft: var(--danger-soft);
   --color-trend-down: var(--trend-down);
+  --color-gold: var(--gold);
+  --color-silver: var(--silver);
+  --color-bronze: var(--bronze);
   --color-tour: var(--tour-highlight);
 
   --radius-sm: calc(var(--radius) * 0.5);
@@ -130,6 +133,11 @@
   --danger-soft: #dc26261f;
   /* User-approved: a falling week-over-week trend (Momentum card) shows in red. */
   --trend-down: var(--danger);
+
+  /* User-approved (2026-11-11): podium tints for leaderboard places 1–3 only, as faint row shades + rank badges. */
+  --gold: #d4af37;
+  --silver: #c0c4cc;
+  --bronze: #cd7f32;
 
   /* User-approved contrast highlight, for the tutorial only (src/components/tour). */
   --tour-highlight: #ff2e93;

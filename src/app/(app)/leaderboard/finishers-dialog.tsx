@@ -35,15 +35,16 @@ export function FinishersDialog({ finishers }: { finishers: Finisher[] }) {
             type="button"
             aria-label={`${finishers.length} ${finishers.length === 1 ? "creator has" : "creators have"} reached 500K. Show finishers`}
             className={cn(
-              "inline-flex h-9 items-center gap-1.5 rounded-full border px-3 font-mono text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
+              "inline-flex size-11 items-center justify-center gap-1.5 rounded-xl border font-mono sm:h-9 sm:w-auto sm:rounded-full sm:px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary",
               youFinished ? "border-primary bg-primary text-primary-foreground hover:bg-primary-hover" : "border-primary/40 text-primary hover:bg-primary-soft",
             )}
           />
         }
       >
-        <Flag className="size-3.5" strokeWidth={2.5} aria-hidden />
-        {fmt(finishers.length)}
-        <span className="font-sans font-medium">finished</span>
+        <Flag className="size-4 sm:size-3.5" strokeWidth={2.5} aria-hidden />
+        {/* Phones: the flag alone. sm and up: flag, count and "finished". */}
+        <span className="hidden sm:inline">{fmt(finishers.length)}</span>
+        <span className="hidden font-sans font-medium sm:inline">finished</span>
       </DialogTrigger>
 
       <DialogContent className="panel-dark gap-0 rounded-2xl p-0 ring-0 sm:max-w-[440px] [&>[data-slot=dialog-close]]:top-4 [&>[data-slot=dialog-close]]:right-4">
