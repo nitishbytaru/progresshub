@@ -58,5 +58,6 @@ export async function finishScoreClaim(): Promise<string> {
   const result = await saveEntryFor(supabase, user.id, today, Number(raw), addDays(today, 1));
   if (!result.ok) return "/share?score=skipped";
   revalidatePath("/", "layout");
-  return "/share?score=saved";
+  // The rank stayed hidden on the landing page; the leaderboard reveals it, scrolled to their row.
+  return "/leaderboard#you";
 }

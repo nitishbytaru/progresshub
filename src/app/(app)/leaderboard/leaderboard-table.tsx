@@ -180,8 +180,10 @@ export function LeaderboardTable({ creators, today, finishers, count }: Props) {
               return (
                 <li
                   key={c.handle}
+                  // `#you` (after login from the landing page's rank check) scrolls here, below the sticky header.
+                  id={c.isYou ? "you" : undefined}
                   aria-current={c.isYou ? "true" : undefined}
-                  className="border-b border-hairline last:border-b-0"
+                  className="scroll-mt-24 border-b border-hairline last:border-b-0"
                 >
                   {/* The whole row opens the creator's public progresshub page. */}
                   <Link

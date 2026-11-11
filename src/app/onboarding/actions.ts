@@ -54,5 +54,5 @@ export async function completeOnboarding(_: OnboardingState, formData: FormData)
 
   // The landing page's number (if any) only prefilled the field; it's been saved above.
   await clearPendingScore();
-  redirect("/leaderboard");
+  redirect("/leaderboard#you");
 }
