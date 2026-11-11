@@ -108,14 +108,27 @@ async function Profile({ params }: Props) {
         <div className="flex min-w-0 items-center gap-3 sm:gap-4">
           <Avatar name={name} src={profile.avatar_url} className="size-12 shrink-0 text-base sm:size-16 sm:text-lg" />
           <div className="min-w-0">
-            <h1 className="truncate text-xl leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">{name}</h1>
+            {/* Phones: the name and handle open the X profile (no separate button). sm and up: plain name + the button. */}
+            <h1 className="truncate text-xl leading-tight font-bold tracking-[-0.025em] sm:text-[2rem]">
+              <a
+                href={`https://x.com/${profile.handle}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="underline-offset-4 hover:underline sm:pointer-events-none sm:no-underline"
+                tabIndex={-1}
+              >
+                {name}
+              </a>
+            </h1>
             <a
               href={`https://x.com/${profile.handle}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="-my-2 block truncate py-2 font-mono text-sm font-semibold text-primary underline-offset-4 hover:underline sm:text-base"
+              aria-label={`@${profile.handle} on X (opens in a new tab)`}
+              className="-my-2 flex items-center gap-1 truncate py-2 font-mono text-sm font-semibold text-primary underline-offset-4 hover:underline sm:text-base"
             >
-              @{profile.handle}
+              <span className="truncate">@{profile.handle}</span>
+              <ArrowUpRight className="size-3.5 shrink-0 sm:hidden" aria-hidden />
             </a>
           </div>
         </div>
@@ -124,7 +137,7 @@ async function Profile({ params }: Props) {
           target="_blank"
           rel="noopener noreferrer"
           aria-label={`View @${profile.handle} on X (opens in a new tab)`}
-          className="inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:h-14 sm:gap-2 sm:rounded-xl sm:px-8 sm:text-lg"
+          className="hidden h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg bg-primary px-3 text-sm font-semibold sm:inline-flex text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:h-14 sm:gap-2 sm:rounded-xl sm:px-8 sm:text-lg"
         >
           <span className="sm:hidden">X<span className="max-[359px]:hidden"> profile</span></span>
           <span className="hidden sm:inline">View X profile</span>
@@ -186,8 +199,8 @@ async function Profile({ params }: Props) {
                 <span className="sm:hidden">Rank</span>
                 <span className="hidden sm:inline">Leaderboard</span>
               </span>
-              <div className="mt-1 flex items-end justify-between gap-3">
-                <span className="font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.05em] text-primary sm:text-[3rem]">
+              <div className="mt-1 flex items-end justify-between gap-2 sm:gap-3">
+                <span className="shrink-0 font-mono text-[2.5rem] leading-none font-semibold tracking-[-0.05em] text-primary sm:text-[3rem]">
                   {rank ? (
                     <>
                       #<CountUp value={rank.rank} duration={700} />
@@ -197,9 +210,9 @@ async function Profile({ params }: Props) {
                   )}
                   {rank && <span className="ml-1 text-sm font-medium tracking-normal text-subtle">/{fmt(rank.of)}</span>}
                 </span>
-                {rank && rank.of > 1 && <RankLadder rank={rank} className="hidden w-28 sm:flex" />}
+                {/* Beside the number on every screen (phones used to stack it below, leaving the card half-empty). */}
+                {rank && rank.of > 1 && <RankLadder rank={rank} className="max-w-20 min-w-0 flex-1 sm:w-28 sm:max-w-none sm:flex-none" />}
               </div>
-              {rank && rank.of > 1 && <RankLadder rank={rank} className={rank.rank === 1 ? "mt-6 sm:hidden" : "mt-3 sm:hidden"} />}
               {rank && (
                 <span className="mt-2 block">
                   <RankGap rank={rank} />

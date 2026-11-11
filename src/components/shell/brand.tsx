@@ -16,9 +16,10 @@ export function BrandMark({ className = "size-8" }: { className?: string }) {
 
 export function Brand() {
   return (
-    <Link href="/" className="flex items-center gap-2.5 rounded-lg" aria-label="progresshub home">
-      <BrandMark />
-      <span className="text-[17px] font-bold tracking-[-0.02em] text-foreground">progresshub</span>
+    <Link href="/" className="flex items-center gap-2 rounded-lg sm:gap-2.5" aria-label="progresshub home">
+      {/* Smaller on phones so the header stays light. */}
+      <BrandMark className="size-6 sm:size-8" />
+      <span className="text-[15px] font-bold tracking-[-0.02em] text-foreground sm:text-[17px]">progresshub</span>
     </Link>
   );
 }

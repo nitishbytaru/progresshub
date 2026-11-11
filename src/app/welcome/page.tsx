@@ -60,9 +60,9 @@ export default function WelcomePage() {
 
       <header className="sticky top-0 z-30 border-b border-hairline bg-background">
         <nav aria-label="Main" className="mx-auto flex h-16 max-w-[1320px] items-center justify-between gap-3 px-5 sm:px-8 lg:px-12">
-          <span className="flex items-center gap-2.5">
-            <BrandMark className="size-8" />
-            <span className="text-lg font-bold tracking-[-0.02em]">progresshub</span>
+          <span className="flex items-center gap-2 sm:gap-2.5">
+            <BrandMark className="size-6 sm:size-8" />
+            <span className="text-[15px] font-bold tracking-[-0.02em] sm:text-lg">progresshub</span>
           </span>
           <span className="flex items-center gap-1 sm:gap-2">
             <Link href={LOG_IN} className="rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground">
