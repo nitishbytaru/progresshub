@@ -4,7 +4,7 @@ import { useActionState } from "react";
 import { Field, FormNotice, SubmitButton } from "@/components/auth/auth-shell";
 import { completeOnboarding, type OnboardingState } from "./actions";
 
-export function OnboardingForm({ defaultName }: { defaultName: string }) {
+export function OnboardingForm({ defaultName, defaultTotal }: { defaultName: string; defaultTotal: number | null }) {
   const [state, action, pending] = useActionState<OnboardingState, FormData>(completeOnboarding, null);
   return (
     <form action={action} noValidate className="flex flex-col gap-4">
@@ -27,12 +27,22 @@ export function OnboardingForm({ defaultName }: { defaultName: string }) {
         autoComplete="name"
         defaultValue={state?.name ?? defaultName}
       />
+      <Field
+        label="Total impressions"
+        name="total"
+        required
+        inputMode="numeric"
+        autoComplete="off"
+        placeholder="e.g. 157400"
+        hint={<span className="font-mono text-xs font-normal text-subtle">from X analytics</span>}
+        defaultValue={state?.total ?? (defaultTotal !== null ? String(defaultTotal) : undefined)}
+      />
       <p className="text-xs text-subtle">
         <span className="sm:hidden">Shown on the public leaderboard.</span>
         <span className="hidden sm:inline">Your handle, name and progress appear on the public leaderboard.</span>
       </p>
       {state?.error && <FormNotice tone="error">{state.error}</FormNotice>}
-      <SubmitButton pending={pending}>{pending ? "Saving…" : "Start tracking"}</SubmitButton>
+      <SubmitButton pending={pending}>{pending ? "Saving…" : "See my rank"}</SubmitButton>
     </form>
   );
 }

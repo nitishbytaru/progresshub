@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "motion/react";
 import { useReduced } from "@/components/landing/motion-bits";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ export const TOUR_EVENT = "progresshub:tour";
 
 const SEEN_KEY = "progresshub-tutorial-done";
 const EASE = [0.16, 1, 0.3, 1] as const;
+/** How long a new creator uses the app before the tour is offered. */
+const OFFER_AFTER_MS = 10_000;
 
 const STEPS = [
   { href: "/progress", title: "Log daily", tags: ["once a day"], meaning: "Save your X analytics total once a day.", Demo: LogDemo },
@@ -49,12 +51,21 @@ function findTab(href: string): Box | null {
   return null;
 }
 
-export function Tour({ autoStartFor }: { autoStartFor: string | null }) {
+/**
+ * The guided tour. New creators aren't dropped into it: after 10 seconds in the app they get a
+ * small "Want a quick tour?" prompt. Yes plays it; Skip (or finishing it) records it on the account.
+ * Profile → Replay tutorial plays it any time.
+ */
+export function Tour({ offerFor }: { offerFor: string | null }) {
   const router = useRouter();
+  const pathname = usePathname();
   const reduced = useReduced();
-  const seenKey = `${SEEN_KEY}:${autoStartFor}`;
+  const seenKey = `${SEEN_KEY}:${offerFor}`;
   const seen = useSyncExternalStore(subscribeNothing, () => readSeen(seenKey), () => false);
-  const [mode, setMode] = useState<Mode | null>(autoStartFor ? "first" : null);
+  const [mode, setMode] = useState<Mode | null>(null);
+  const [offering, setOffering] = useState(false);
+  // Where the creator was when they said yes; the tour returns them there.
+  const returnTo = useRef("/");
   const [step, setStep] = useState(0);
   const [box, setBox] = useState<Box | null>(null);
   const [viewport, setViewport] = useState({ width: 0, height: 0 });
@@ -73,19 +84,40 @@ export function Tour({ autoStartFor }: { autoStartFor: string | null }) {
     return () => window.removeEventListener(TOUR_EVENT, replay);
   }, []);
 
-  const close = useCallback(() => {
-    router.replace(mode === "replay" ? "/profile" : "/progress");
-    if (mode === "first") {
-      try {
-        localStorage.setItem(seenKey, "1");
-      } catch {
-        // Storage blocked: the account flag below still records it.
-      }
-      void finishTutorial();
+  /** Remembers the tour as taken or declined, so it's never offered again. */
+  const markDone = useCallback(() => {
+    try {
+      localStorage.setItem(seenKey, "1");
+    } catch {
+      // Storage blocked: the account flag below still records it.
     }
+    void finishTutorial();
+  }, [seenKey]);
+
+  // Offer the tour once the creator has spent 10 seconds in the app (the timer survives page changes).
+  useEffect(() => {
+    if (!offerFor || seen) return;
+    const timer = setTimeout(() => setOffering(true), OFFER_AFTER_MS);
+    return () => clearTimeout(timer);
+  }, [offerFor, seen]);
+
+  const acceptOffer = () => {
+    returnTo.current = pathname;
+    setOffering(false);
+    setStep(0);
+    setMode("first");
+  };
+  const declineOffer = () => {
+    setOffering(false);
+    markDone();
+  };
+
+  const close = useCallback(() => {
+    router.replace(mode === "replay" ? "/profile" : returnTo.current);
+    if (mode === "first") markDone();
     setMode(null);
     setBox(null);
-  }, [mode, router, seenKey]);
+  }, [markDone, mode, router]);
 
   // Show each step's real page behind the spotlight.
   useEffect(() => {
@@ -148,6 +180,7 @@ export function Tour({ autoStartFor }: { autoStartFor: string | null }) {
     if (ready) cardRef.current?.querySelector<HTMLElement>("[data-tour-next]")?.focus();
   }, [ready, atStart]);
 
+  if (offering && !active && !seen) return <TourOffer onYes={acceptOffer} onSkip={declineOffer} reduced={reduced} />;
   if (!ready || !box) return null;
 
   const spring = reduced ? { duration: 0 } : { type: "spring" as const, stiffness: 260, damping: 30 };
@@ -241,5 +274,57 @@ export function Tour({ autoStartFor }: { autoStartFor: string | null }) {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+/** The small corner prompt: take the tour or skip it for good. Sits above the phone tab bar. */
+function TourOffer({ onYes, onSkip, reduced }: { onYes: () => void; onSkip: () => void; reduced: boolean }) {
+  const yesRef = useRef<HTMLButtonElement>(null);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && onSkip();
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [onSkip]);
+
+  return (
+    <motion.div
+      role="dialog"
+      aria-labelledby="tour-offer-title"
+      aria-describedby="tour-offer-meaning"
+      className="fixed inset-x-4 bottom-24 z-[60] rounded-2xl border border-primary/40 bg-background p-4 shadow-[0_16px_40px_#000000cc] sm:inset-x-auto sm:right-6 sm:bottom-6 sm:w-[320px]"
+      initial={reduced ? false : { opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: reduced ? 0 : 0.3, ease: EASE }}
+      onAnimationComplete={() => yesRef.current?.focus({ preventScroll: true })}
+    >
+      <div className="flex items-center gap-2.5">
+        <BrandMark className="size-6" />
+        <h2 id="tour-offer-title" className="text-base font-bold tracking-[-0.015em]">
+          Want a quick tour?
+        </h2>
+        <span className="ml-auto rounded-md border border-hairline px-2 py-0.5 font-mono text-xs text-muted-foreground" aria-hidden>
+          6 steps
+        </span>
+      </div>
+      <p id="tour-offer-meaning" className="sr-only">
+        A six-step walkthrough of logging, progress, analytics, the leaderboard, sharing and Telegram.
+      </p>
+      <div className="mt-4 flex gap-2">
+        <Button
+          variant="outline"
+          onClick={onSkip}
+          className="h-11 flex-1 border-border bg-transparent text-sm font-semibold text-foreground hover:bg-hover dark:border-border dark:bg-transparent dark:hover:bg-hover"
+        >
+          Skip
+        </Button>
+        <Button
+          ref={yesRef}
+          onClick={onYes}
+          className="h-11 flex-1 border-primary bg-primary bg-clip-border text-sm font-semibold text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed"
+        >
+          Yes, show me
+        </Button>
+      </div>
+    </motion.div>
   );
 }

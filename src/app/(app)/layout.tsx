@@ -3,7 +3,7 @@ import { Brand, BrandMark } from "@/components/shell/brand";
 import { BottomNav, MobileTitle, SidebarNav } from "@/components/shell/nav";
 import { UserMenu } from "@/components/shell/user-menu";
 import { Tour } from "@/components/tour/tour";
-import { getProgress, getToday, isTelegramConnected, shouldAutoStartTour } from "@/lib/data";
+import { getProgress, getToday, isTelegramConnected, shouldOfferTour } from "@/lib/data";
 import { fmt, fmtDate, fmtPct } from "@/lib/format";
 import { GOAL } from "@/lib/progress";
 
@@ -38,7 +38,7 @@ async function SidebarBottomNav() {
 }
 
 async function TourGate() {
-  return <Tour autoStartFor={await shouldAutoStartTour()} />;
+  return <Tour offerFor={await shouldOfferTour()} />;
 }
 
 const Placeholder = ({ className }: { className: string }) => (

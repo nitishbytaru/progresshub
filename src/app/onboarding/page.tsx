@@ -2,13 +2,14 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { getViewer } from "@/lib/data";
+import { readPendingScore } from "@/lib/pending-score";
 import { OnboardingForm } from "./onboarding-form";
 
 export const metadata: Metadata = { title: "Set up your profile" };
 
 async function FormWithDefaults() {
-  const { profile } = await getViewer();
-  return <OnboardingForm defaultName={profile.display_name} />;
+  const [{ profile }, pending] = await Promise.all([getViewer(), readPendingScore()]);
+  return <OnboardingForm defaultName={profile.display_name} defaultTotal={pending} />;
 }
 
 export default function OnboardingPage() {

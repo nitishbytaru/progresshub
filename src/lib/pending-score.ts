@@ -27,6 +27,16 @@ export async function hasPendingScore() {
   return (await cookies()).has(COOKIE);
 }
 
+/** The landing page's number, if any, to prefill onboarding's impressions field. */
+export async function readPendingScore(): Promise<number | null> {
+  const raw = (await cookies()).get(COOKIE)?.value;
+  return raw && /^\d+$/.test(raw) ? Number(raw) : null;
+}
+
+export async function clearPendingScore() {
+  (await cookies()).delete(COOKIE);
+}
+
 /**
  * Logs the pending number as today's total, under the same rules as the log form, and returns
  * where to go next. Creators without an X handle finish onboarding first, which calls this again.

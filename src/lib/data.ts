@@ -78,10 +78,10 @@ export const getAccount = cache(async () => {
   return user;
 });
 
-/** The account the tutorial should play for: only one that hasn't seen it and has nothing logged yet. */
-export const shouldAutoStartTour = cache(async (): Promise<string | null> => {
-  const [{ id, tutorialDone }, { entries }] = await Promise.all([getSessionUser(), getProgress()]);
-  return !tutorialDone && entries.length === 0 ? id : null;
+/** The account to offer the tour to (after 10s in the app): any that hasn't taken or declined it yet. */
+export const shouldOfferTour = cache(async (): Promise<string | null> => {
+  const { id, tutorialDone } = await getSessionUser();
+  return tutorialDone ? null : id;
 });
 
 /** Whether the creator has linked the Telegram bot. On a failed read, says yes so no false alert shows. */
