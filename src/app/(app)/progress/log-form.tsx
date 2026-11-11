@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useMemo, useState, useTransition } from "react";
-import { Check, Loader2 } from "lucide-react";
+import { Check, ChevronDown, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -98,6 +98,12 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
 
   // Format and range problems show as you type; "enter a number" waits until you've tried.
   const showError = serverError ?? (value === null && !parsed.error ? (touched ? error : null) : error);
+
+  const stats = [
+    { label: "Daily gain", value: preview?.row.delta != null ? fmtSigned(preview.row.delta) : "—", key: true },
+    { label: "Of 500K", value: preview ? fmtPct(preview.row.progressPct, 2) : "—" },
+    { label: "500K around", value: preview?.eta ? fmtDateShort(preview.eta.etaDate) : "—" },
+  ];
 
   const dayLabel = date === today ? `today, ${fmtDateShort(date)}` : fmtDate(date);
 
@@ -218,12 +224,28 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
               </p>
             </div>
 
-            <div className="mt-4 grid grid-cols-3 divide-x divide-hairline rounded-xl border border-hairline">
-              {[
-                { label: "Daily gain", value: preview?.row.delta != null ? fmtSigned(preview.row.delta) : "—", key: true },
-                { label: "Of 500K", value: preview ? fmtPct(preview.row.progressPct, 2) : "—" },
-                { label: "500K around", value: preview?.eta ? fmtDateShort(preview.eta.etaDate) : "—" },
-              ].map((s) => (
+            {/* Phones: these three fold into an accordion under the input. sm and up: always shown. */}
+            <details className="group mt-4 rounded-xl border border-hairline sm:hidden">
+              <summary className="flex h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+                <span className="flex items-center gap-2">
+                  Preview
+                  {preview?.row.delta != null && <span className="font-mono text-xs font-semibold text-primary">{fmtSigned(preview.row.delta)}</span>}
+                </span>
+                <ChevronDown className="size-4 transition-transform group-open:rotate-180" aria-hidden />
+              </summary>
+              <div className="grid grid-cols-3 divide-x divide-hairline border-t border-hairline">
+                {stats.map((s) => (
+                  <div key={s.label} className="min-w-0 p-3">
+                    <p className="text-xs text-muted-foreground">{s.label}</p>
+                    <p className="mt-1 font-mono text-base font-semibold tracking-[-0.02em]">
+                      {s.key && preview ? <span className="text-primary">{s.value}</span> : s.value}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </details>
+            <div className="mt-4 hidden grid-cols-3 divide-x divide-hairline rounded-xl border border-hairline sm:grid">
+              {stats.map((s) => (
                 <div key={s.label} className="min-w-0 p-3 sm:p-4 lg:p-3 xl:p-4">
                   <p className="text-xs text-muted-foreground">{s.label}</p>
                   <p className="mt-1 font-mono text-base font-semibold tracking-[-0.02em] sm:text-lg lg:text-base xl:text-lg">
