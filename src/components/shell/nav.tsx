@@ -71,7 +71,7 @@ export function SidebarNav({ section, connectBadge = false }: SidebarProps) {
 }
 
 // Share is the main action, so it sits in the middle. Connect lives in the account menu.
-const PHONE_TABS = ["/", "/leaderboard", "/share", "/analytics", "/progress"];
+const PHONE_TABS = ["/", "/progress", "/share", "/analytics", "/leaderboard"];
 
 /** Phone tabs: four quiet ones around one lime Share button. */
 export function BottomNav() {

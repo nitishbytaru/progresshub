@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { DateField } from "@/components/progress/date-field";
 import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtPct, fmtSigned } from "@/lib/format";
 import { addDays, forecast, GOAL, MILESTONE_STEP, milestoneCrossed, paceOver, toUTC, withDeltas, type Entry } from "@/lib/progress";
 import { cn } from "@/lib/utils";
@@ -125,6 +126,19 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                 </button>
               )}
             </div>
+            {/* Phones: a single date field. sm and up: the month calendar with logged-day dots. */}
+            <DateField
+              value={date}
+              min={minDate}
+              max={today}
+              onChange={(d) => {
+                pickDate(d);
+                setMonth(toLocalDate(d));
+              }}
+              aria-label="Day to log"
+              className="mt-2 sm:hidden"
+            />
+            <div className="hidden sm:block">
             <Calendar
               mode="single"
               required
@@ -146,7 +160,8 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
               className="-mx-2 bg-transparent [--cell-size:--spacing(10)]"
               onSelect={(d) => d && pickDate(fromLocalDate(d))}
             />
-            <p className="mt-1 flex items-center gap-4 text-xs text-subtle">
+            </div>
+            <p className="mt-1 hidden items-center gap-4 text-xs text-subtle sm:flex">
               <span className="flex items-center gap-1.5">
                 <span className="size-3 rounded-sm ring-2 ring-primary ring-inset" aria-hidden /> Today
               </span>

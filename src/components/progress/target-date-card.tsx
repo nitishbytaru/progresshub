@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Share2 } from "lucide-react";
 import { XShareDialog } from "@/components/progress/share-dialog";
 import { Calendar } from "@/components/ui/calendar";
+import { DateField } from "@/components/progress/date-field";
 import { fmt, fmtDate, fmtSigned } from "@/lib/format";
 import { addDays, MAX_TARGET_YEARS, targetPlan } from "@/lib/progress";
 
@@ -74,6 +75,19 @@ export function TargetDateCard({ total, from, today, share }: Props) {
       </div>
       <p className="mt-1 hidden text-sm text-muted-foreground sm:block">Choose a day to see what it takes.</p>
 
+      {/* Phones: a single date field. sm and up: the month calendar. */}
+      <DateField
+        value={target}
+        min={firstDay}
+        max={lastDay}
+        onChange={(d) => {
+          setTarget(d);
+          setMonth(toLocalDate(d));
+        }}
+        aria-label="Target day"
+        className="mt-3 mb-4 sm:hidden"
+      />
+      <div className="hidden sm:block">
       <Calendar
         mode="single"
         required
@@ -89,6 +103,7 @@ export function TargetDateCard({ total, from, today, share }: Props) {
         classNames={{ root: "mt-3 mb-4 w-full" }}
         className="-mx-2 bg-transparent"
       />
+      </div>
 
       <div className="mt-auto rounded-xl border border-hairline p-5">
         {remaining === 0 ? (
