@@ -105,7 +105,7 @@ export function TargetDateCard({ total, from, today, share }: Props) {
       />
       </div>
 
-      <div className="mt-auto rounded-xl border border-hairline p-5">
+      <div className="mt-auto border-t border-hairline pt-5">
         {remaining === 0 ? (
           <p className="text-sm font-semibold">You&apos;ve already reached 500K.</p>
         ) : (

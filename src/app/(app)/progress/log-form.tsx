@@ -225,8 +225,8 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
             </div>
 
             {/* Phones: these three fold into an accordion under the input. sm and up: always shown. */}
-            <details className="group mt-4 rounded-xl border border-hairline sm:hidden">
-              <summary className="flex h-11 cursor-pointer list-none items-center justify-between gap-3 px-3 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
+            <details className="group mt-4 border-y border-hairline sm:hidden">
+              <summary className="flex h-11 cursor-pointer list-none items-center justify-between gap-3 text-sm text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary [&::-webkit-details-marker]:hidden">
                 <span className="flex items-center gap-2">
                   Preview
                   {preview?.row.delta != null && <span className="font-mono text-xs font-semibold text-primary">{fmtSigned(preview.row.delta)}</span>}
@@ -235,7 +235,7 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
               </summary>
               <div className="grid grid-cols-3 divide-x divide-hairline border-t border-hairline">
                 {stats.map((s) => (
-                  <div key={s.label} className="min-w-0 p-3">
+                  <div key={s.label} className="min-w-0 px-3 py-3 first:pl-0">
                     <p className="text-xs text-muted-foreground">{s.label}</p>
                     <p className="mt-1 font-mono text-base font-semibold tracking-[-0.02em]">
                       {s.key && preview ? <span className="text-primary">{s.value}</span> : s.value}
@@ -244,9 +244,9 @@ export function LogForm({ initialEntries, today, initialDate }: Props) {
                 ))}
               </div>
             </details>
-            <div className="mt-4 hidden grid-cols-3 divide-x divide-hairline rounded-xl border border-hairline sm:grid">
+            <div className="mt-4 hidden grid-cols-3 divide-x divide-hairline border-y border-hairline sm:grid">
               {stats.map((s) => (
-                <div key={s.label} className="min-w-0 p-3 sm:p-4 lg:p-3 xl:p-4">
+                <div key={s.label} className="min-w-0 px-4 py-3 first:pl-0 lg:px-3 xl:px-4">
                   <p className="text-xs text-muted-foreground">{s.label}</p>
                   <p className="mt-1 font-mono text-base font-semibold tracking-[-0.02em] sm:text-lg lg:text-base xl:text-lg">
                     {s.key && preview ? <span className="text-primary">{s.value}</span> : s.value}

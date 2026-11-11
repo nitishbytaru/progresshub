@@ -19,7 +19,7 @@ async function DaysLogged() {
   const { rows } = await getProgress();
   if (!rows.length) return null;
   return (
-    <div className="panel-dark flex items-center gap-3 rounded-2xl px-4 py-2 sm:gap-4 sm:px-5 sm:py-3.5">
+    <div className="panel-dark flex w-full items-center gap-3 rounded-2xl px-4 py-2 sm:w-auto sm:gap-4 sm:px-5 sm:py-3.5">
       <span className="font-mono text-2xl sm:text-[2.75rem] leading-none font-semibold tracking-[-0.04em] text-primary tabular-nums">
         {rows.length}
       </span>

@@ -133,7 +133,8 @@
   --danger-hover: #ef4444;
   --danger-soft: #dc26261f;
   /* User-approved: a falling week-over-week trend (Momentum card) shows in red. */
-  --trend-down: var(--danger);
+  /* #ef4444: 4.6:1 on the canvas, so small ▼ text passes AA (the button red stays --danger). */
+  --trend-down: #ef4444;
 
   /* User-approved (2026-11-11): podium tints for leaderboard places 1–3 only, as faint row shades + rank badges. */
   --gold: #d4af37;

@@ -88,7 +88,7 @@ export function FinishersDialog({ finishers }: { finishers: Finisher[] }) {
                   <span className="min-w-0 flex-1">
                     <span className="flex items-center gap-1.5 truncate text-sm font-semibold">
                       {f.name}
-                      {f.isYou && <span className="rounded-full bg-foreground px-1.5 py-px text-[10px] font-semibold text-background">You</span>}
+                      {f.isYou && <span className="rounded-full bg-foreground px-1.5 py-px text-[11px] font-semibold text-background">You</span>}
                     </span>
                     <span className="block truncate font-mono text-xs text-muted-foreground">@{f.handle}</span>
                   </span>

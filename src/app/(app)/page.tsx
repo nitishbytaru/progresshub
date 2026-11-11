@@ -79,7 +79,7 @@ async function Overview() {
           <Link
             href="/progress"
             aria-label={loggedToday ? "Update today's log" : "Log today's impressions"}
-            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 sm:px-5 text-sm font-semibold text-primary-foreground shadow-[0_6px_20px_-6px_#c8f43266] transition-colors hover:bg-primary-hover active:bg-primary-pressed"
+            className="inline-flex h-11 items-center justify-center gap-2 rounded-lg bg-primary px-4 sm:px-5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed"
           >
             <Plus className="size-4" strokeWidth={2.5} />
             <span className="sm:hidden">{loggedToday ? "Update" : "Log"}</span>

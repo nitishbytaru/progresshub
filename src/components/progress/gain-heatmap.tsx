@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import { Crown, Flame } from "lucide-react";
+import { ArrowDown, ArrowUp, Crown, Flame } from "lucide-react";
 import { fmt, fmtCompact, fmtDate, fmtSigned } from "@/lib/format";
 import { addDays, toUTC, type DayRow } from "@/lib/progress";
 import { cn } from "@/lib/utils";
@@ -57,13 +57,13 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
               key={d}
               title={r ? `${fmtDate(d)}: ${fmtSigned(r.delta ?? 0)} (${fmt(r.total)} total)` : fmtDate(d)}
               className={cn(
-                "viz-tile flex aspect-square flex-col justify-between rounded-md p-1 font-mono text-[10px] max-[359px]:p-0.5 max-[359px]:text-[9px] sm:aspect-[5/3] sm:p-2 sm:text-[11px]",
+                "viz-tile flex aspect-square flex-col justify-between rounded-md p-1 font-mono text-[11px] max-[359px]:p-0.5 max-[359px]:text-[10px] sm:aspect-[5/3] sm:p-2",
                 !future && "heat-pop",
                 future ? "opacity-0" : r && lv ? "" : r ? "border border-border" : "border border-dashed border-hairline",
                 dark ? "text-primary-foreground" : "text-muted-foreground",
                 d === today && !isBest && "ring-2 ring-foreground ring-offset-2 ring-offset-background",
                 // The best day: gold ring + glow, so it's the first thing you see.
-                isBest && "relative z-10 ring-2 ring-gold ring-offset-2 ring-offset-background shadow-[0_0_28px_-4px_var(--gold)] sm:scale-[1.03]",
+                isBest && "relative z-10 ring-2 ring-gold ring-offset-2 ring-offset-background sm:scale-[1.03]",
               )}
               style={{ background: r && lv ? fills[lv] : undefined, ...pop(i) }}
             >
@@ -79,12 +79,13 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
                     // A black chip keeps green/red readable on dim and bright tiles alike.
                     <span
                       className={cn(
-                        "hidden size-4 items-center justify-center rounded-full bg-background text-[8px] leading-none sm:inline-flex",
+                        "hidden size-[18px] items-center justify-center rounded-full bg-background sm:inline-flex",
                         trend === "up" ? "text-trend-up" : "text-trend-down",
                       )}
+                      role="img"
                       aria-label={trend === "up" ? "up on the day before" : "down on the day before"}
                     >
-                      {trend === "up" ? "▲" : "▼"}
+                      {trend === "up" ? <ArrowUp className="size-3" strokeWidth={3} aria-hidden /> : <ArrowDown className="size-3" strokeWidth={3} aria-hidden />}
                     </span>
                   )
                 )}
@@ -100,7 +101,8 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
                   {fmtCompact(r.delta)}
                 </span>
               )}
-              {!r && !future && <span className="hidden text-[10px] text-subtle sm:inline">no log</span>}
+              {!r && !future && <span className="hidden text-subtle sm:inline">no log</span>}
+              {r && r.delta == null && <span className="hidden text-subtle sm:inline">first log</span>}
             </div>
           );
 
@@ -136,7 +138,7 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
                 className={cn("heat-fill absolute inset-x-0 bottom-0", topWeek ? "bg-primary/35" : "bg-primary/20")}
                 style={{ height: `${Math.max((total / bestWeek) * 100, total > 0 ? 6 : 0)}%`, ...pop(i + 8) }}
               />
-              <span className="relative flex items-center justify-between text-[10px] text-subtle">
+              <span className="relative flex items-center justify-between text-[11px] text-subtle">
                 wk {w + 1}
                 {topWeek && <Flame className="size-3.5 text-primary" strokeWidth={2.5} aria-hidden />}
               </span>
@@ -146,11 +148,20 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
               <span
                 aria-hidden
                 className={cn(
-                  "relative w-fit rounded-full bg-background px-1.5 py-0.5 text-[10px] leading-none font-semibold",
+                  "relative inline-flex w-fit items-center gap-0.5 rounded-full bg-background px-1.5 py-0.5 text-[11px] leading-none font-semibold",
                   wow == null || wow === 0 ? "text-subtle" : wow > 0 ? "text-trend-up" : "text-trend-down",
                 )}
               >
-                {wow == null ? "first" : wow === 0 ? "= same" : `${wow > 0 ? "▲" : "▼"} ${Math.abs(wow)}%`}
+                {wow == null ? (
+                  "first"
+                ) : wow === 0 ? (
+                  "same"
+                ) : (
+                  <>
+                    {wow > 0 ? <ArrowUp className="size-3" strokeWidth={3} aria-hidden /> : <ArrowDown className="size-3" strokeWidth={3} aria-hidden />}
+                    {Math.abs(wow)}%
+                  </>
+                )}
               </span>
             </div>,
           ];
@@ -166,8 +177,10 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
           <span className="flex items-center gap-1">
             <Crown className="size-3 text-gold" aria-hidden /> best
           </span>
-          <span>
-            <span className="text-trend-up">▲</span>/<span className="text-trend-down">▼</span> vs day before
+          <span className="flex items-center gap-0.5">
+            <ArrowUp className="size-3 text-trend-up" strokeWidth={3} aria-hidden />
+            <ArrowDown className="size-3 text-trend-down" strokeWidth={3} aria-hidden />
+            <span className="ml-1">vs day before</span>
           </span>
         </span>
         <span>Less</span>

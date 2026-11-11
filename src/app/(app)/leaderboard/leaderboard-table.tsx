@@ -208,7 +208,7 @@ export function LeaderboardTable({ creators, today, finishers, count }: Props) {
                       <span className="flex items-center gap-1.5 truncate text-sm font-semibold">
                         {c.name}
                         {c.isYou && (
-                          <span className="rounded-full bg-foreground px-1.5 py-px text-[10px] font-semibold text-background">You</span>
+                          <span className="rounded-full bg-foreground px-1.5 py-px text-[11px] font-semibold text-background">You</span>
                         )}
                       </span>
                       <span className="hidden truncate font-mono text-xs text-muted-foreground sm:block">@{c.handle}</span>

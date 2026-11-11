@@ -73,7 +73,7 @@ export function WhatsAppVoteCard({ voted: votedBefore, votes }: Props) {
               className="h-auto min-h-10 min-w-0 flex-1 gap-2 border-primary bg-primary bg-clip-border px-4 py-2 whitespace-normal text-sm font-semibold text-primary-foreground hover:bg-primary-hover active:bg-primary-pressed"
             >
               {pending ? <Loader2 className="size-4 animate-spin" aria-hidden /> : <ThumbsUp className="size-4" aria-hidden />}
-              Vote for WhatsApp connectivity
+              Vote for WhatsApp<span className="hidden sm:inline"> connectivity</span>
             </Button>
           )}
 

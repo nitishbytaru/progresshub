@@ -47,9 +47,9 @@ export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
           ]}
         />
         <h2 className="hidden text-xl font-bold tracking-[-0.015em] sm:block">When you&apos;ll reach 500K</h2>
-        <dl className="mt-5 hidden grid-cols-2 divide-x divide-hairline rounded-xl border border-hairline sm:grid">
+        <dl className="mt-5 hidden grid-cols-2 divide-x divide-hairline border-y border-hairline sm:grid">
           {scenarios.map((s) => (
-            <div key={s.label} className="p-3 sm:p-5">
+            <div key={s.label} className="py-4 first:pr-5 last:pl-5">
               <dt className="text-sm text-muted-foreground"><span className="hidden sm:inline">At your </span>{s.short}</dt>
               <dd className="mt-1.5">
                 <span className={`font-mono text-base font-semibold tracking-[-0.03em] sm:text-2xl ${s.primary ? "text-primary" : ""}`}>

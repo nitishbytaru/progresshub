@@ -18,7 +18,7 @@ type MilestoneOption = { target: number; date: string; card: ShareCard };
 /** One tile per shareable stat: the real X preview image and a Share button. Locked tiles say what unlocks them. */
 export function ShareGrid({ cards, milestones, origin }: { cards: ShareCard[]; milestones: MilestoneOption[]; origin: string }) {
   return (
-    <ul className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+    <ul className="grid gap-6 md:grid-cols-2">
       {cards.map((c) =>
         c.kind === "milestone" && milestones.length > 1 ? (
           <MilestoneTile key={c.kind} options={milestones} origin={origin} />
@@ -56,7 +56,7 @@ function MilestoneTile({ options, origin }: { options: MilestoneOption[]; origin
                 {on && <Check className="size-3" strokeWidth={3} aria-hidden />}
                 {fmtCompact(o.target)}
               </span>
-              <span className="text-[10px] text-subtle">{fmtDateShort(o.date)}</span>
+              <span className="text-[11px] text-subtle">{fmtDateShort(o.date)}</span>
             </button>
           );
         })}
