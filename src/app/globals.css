@@ -186,8 +186,7 @@
   a {
     text-underline-offset: 3px;
   }
-  .font-mono,
-  .tabular {
+  .font-mono {
     font-variant-numeric: tabular-nums slashed-zero;
   }
   h1,
@@ -398,20 +397,14 @@
   }
 }
 
-/* Daily gains calendar: tiles pop in one after another, week bars fill (inline animation-delay staggers). */
+/* Daily gains calendar: tiles pop in one after another (inline animation-delay staggers). */
 @keyframes heat-pop {
   from { opacity: 0; transform: scale(0.85); }
   to { opacity: 1; transform: none; }
 }
-@keyframes heat-bar {
-  from { transform: scaleX(0); }
-  to { transform: none; }
-}
 .heat-pop { animation: heat-pop 0.45s var(--ease-out-expo) both; }
-.heat-bar { animation: heat-bar 0.9s var(--ease-out-expo) both; transform-origin: left center; }
 @media (prefers-reduced-motion: reduce) {
-  .heat-pop,
-  .heat-bar {
+  .heat-pop {
     animation: none;
   }
 }
@@ -468,17 +461,14 @@ main :is(.panel-dark, .card-in):nth-child(12 of .panel-dark, .card-in) { --card-
   }
 
   /* Progress / comparison tracks: the track thickens and its fill brightens. */
-  :has(> .animate-track-fill),
-  .viz-track {
+  :has(> .animate-track-fill) {
     transition: scale 0.3s var(--ease-out-expo);
     transform-origin: left center;
   }
-  :has(> .animate-track-fill):hover,
-  .viz-track:hover {
+  :has(> .animate-track-fill):hover {
     scale: 1 1.6;
   }
-  :has(> .animate-track-fill):hover > .animate-track-fill,
-  .viz-track:hover > * {
+  :has(> .animate-track-fill):hover > .animate-track-fill {
     filter: brightness(1.3);
   }
 

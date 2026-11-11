@@ -9,9 +9,6 @@ import { createClient } from "./supabase/server";
 const COOKIE = "pending_score";
 const MAX_AGE_SECONDS = 60 * 60 * 24;
 
-/** Login's `next` target that adds the number from the landing page's score check. */
-export const CLAIM_PATH = "/claim";
-
 /** Holds the signed-out visitor's number until they log in. */
 export async function rememberPendingScore(total: number) {
   (await cookies()).set(COOKIE, String(total), {
@@ -21,10 +18,6 @@ export async function rememberPendingScore(total: number) {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
   });
-}
-
-export async function hasPendingScore() {
-  return (await cookies()).has(COOKIE);
 }
 
 /** The landing page's number, if any, to prefill onboarding's impressions field. */
