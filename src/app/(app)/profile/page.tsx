@@ -88,7 +88,7 @@ async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["
 
       <section
         aria-label="Delete account"
-        className="flex items-center justify-between gap-4 rounded-2xl border border-danger/40 bg-danger-soft p-5 sm:p-6"
+        className="card-in flex items-center justify-between gap-4 rounded-2xl border border-danger/40 bg-danger-soft p-5 sm:p-6"
       >
         <p className="text-sm text-foreground">Erase your account and all your data.</p>
         <DeleteAccountDialog

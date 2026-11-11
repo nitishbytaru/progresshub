@@ -28,7 +28,7 @@ export function RankLadder({ rank, className }: { rank: Rank; className?: string
         // #1 is full height; last place keeps a visible stub.
         const height = 100 - ((place - 1) / Math.max(rank.of - 1, 1)) * 72;
         return (
-          <span key={place} className="relative flex h-full flex-1 items-end">
+          <span key={place} className="viz-bar relative flex h-full flex-1 items-end">
             {me && place === 1 && (
               <Crown
                 className="animate-crown absolute -top-4 left-1/2 size-3.5 -translate-x-1/2 text-primary sm:-top-5 sm:size-4"

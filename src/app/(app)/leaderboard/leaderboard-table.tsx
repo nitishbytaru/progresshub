@@ -190,7 +190,7 @@ export function LeaderboardTable({ creators, today, finishers, count }: Props) {
                     href={`/u/${c.handle}`}
                     prefetch={false}
                     className={cn(
-                      "grid grid-cols-[24px_minmax(0,1fr)] items-center gap-x-2.5 gap-y-2 px-4 py-3 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary md:grid-cols-[56px_minmax(0,1.3fr)_minmax(0,2fr)_104px_96px_72px] md:gap-x-6 md:px-6",
+                      "viz-row grid grid-cols-[24px_minmax(0,1fr)] items-center gap-x-2.5 gap-y-2 px-4 py-3 transition-colors focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary md:grid-cols-[56px_minmax(0,1.3fr)_minmax(0,2fr)_104px_96px_72px] md:gap-x-6 md:px-6",
                       podium ? podium.row : c.isYou ? "bg-primary-soft hover:bg-primary-soft/70" : "hover:bg-hover",
                     )}
                   >
@@ -239,7 +239,7 @@ export function LeaderboardTable({ creators, today, finishers, count }: Props) {
                       aria-label={`${fmt(c.total)} of 500,000, ${c.total >= GOAL ? "goal reached" : `${fmt(GOAL - c.total)} to go`}`}
                     >
                       <span
-                        className={cn("block h-full rounded-full", c.isYou || c.total >= GOAL ? "bg-primary" : "bg-foreground/70")}
+                        className={cn("animate-track-fill block h-full rounded-full", c.isYou || c.total >= GOAL ? "bg-primary" : "bg-foreground/70")}
                         style={{ width: `${Math.min(pct, 100)}%` }}
                       />
                     </span>

@@ -1,6 +1,11 @@
 import { fmt, fmtCompact, fmtDate, fmtDateShort, fmtSigned } from "@/lib/format";
 import { GOAL, addDays, daysBetween, type DayRow, type Forecast } from "@/lib/progress";
 import { cn } from "@/lib/utils";
+import { InView } from "./in-view";
+
+/** Load animation: the line draws left to right over DRAW_MS; bars and dots follow it by x position. */
+const DRAW_MS = 1300;
+const at = (pct: number) => ({ animationDelay: `${Math.round((pct / 100) * DRAW_MS * 0.9)}ms` });
 
 const W = 1000;
 const H = 300;
@@ -77,6 +82,8 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
   const startLabelCrowded = pctX(last.date) < 16;
 
   return (
+    // InView holds the load animation until the chart scrolls into view.
+    <InView className="m-0">
     <figure className="m-0">
       <div className={`relative ${height}`}>
         <svg
@@ -116,6 +123,8 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
             return (
               <rect
                 key={r.date}
+                className="viz-bar chart-grow reveal-anim"
+                style={at(pctX(r.date))}
                 x={x(r.date) - barW / 2}
                 y={H - h}
                 width={barW}
@@ -123,7 +132,9 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
                 rx={Math.min(3, barW / 3)}
                 fill="#c8f432"
                 fillOpacity="0.28"
-              />
+              >
+                <title>{`${fmtDate(r.date)}: ${fmtSigned(r.delta!)}`}</title>
+              </rect>
             );
           })}
 
@@ -133,6 +144,8 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
               y1={y(last.total)}
               x2={x(slowEnd.date)}
               y2={y(slowEnd.value)}
+              className="chart-fade reveal-anim pointer-events-none"
+              style={{ animationDelay: `${DRAW_MS}ms` }}
               stroke="#ffffff40"
               strokeWidth="1.5"
               strokeDasharray="3 6"
@@ -145,6 +158,8 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
               y1={y(last.total)}
               x2={x(end)}
               y2={y(projectedEnd)}
+              className="chart-fade reveal-anim pointer-events-none"
+              style={{ animationDelay: `${DRAW_MS}ms` }}
               stroke="#ffffff99"
               strokeWidth="2"
               strokeDasharray="7 7"
@@ -152,8 +167,10 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
             />
           )}
 
-          <path d={area} fill="url(#traj-area)" />
+          {/* The line and area let the mouse through to the bars underneath. */}
+          <path className="chart-reveal reveal-anim pointer-events-none" d={area} fill="url(#traj-area)" />
           <polyline
+            className="chart-reveal reveal-anim pointer-events-none"
             points={line}
             fill="none"
             stroke="#c8f432"
@@ -185,25 +202,26 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
             <span
               key={r.date}
               title={`${fmtDate(r.date)}: ${fmt(r.total)}${r.delta !== null ? ` (${fmtSigned(r.delta)})` : ""}`}
-              className={cn("absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary", rows.length > 14 && "hidden sm:block")}
-              style={{ left: `${pctX(r.date)}%`, top: `${pctY(r.total)}%` }}
+              className={cn("viz-dot chart-pop reveal-anim absolute size-2 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary", rows.length > 14 && "hidden sm:block")}
+              style={{ left: `${pctX(r.date)}%`, top: `${pctY(r.total)}%`, ...at(pctX(r.date)) }}
             />
           ))}
 
         {/* Latest point + label */}
         <span
           title={`${fmtDate(last.date)}: ${fmt(last.total)}${last.delta !== null ? ` (${fmtSigned(last.delta)})` : ""}`}
-          className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[2.5px] border-primary bg-background"
-          style={{ left: `${pctX(last.date)}%`, top: `${pctY(last.total)}%` }}
+          className="chart-pop reveal-anim absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border-[2.5px] border-primary bg-background"
+          style={{ left: `${pctX(last.date)}%`, top: `${pctY(last.total)}%`, animationDelay: `${DRAW_MS * 0.9}ms` }}
         />
         <div
           className={cn(
-            "pointer-events-none absolute rounded-lg border border-border bg-background px-2.5 py-1.5 font-mono text-[11px] whitespace-nowrap",
+            "chart-fade reveal-anim pointer-events-none absolute rounded-lg border border-border bg-background px-2.5 py-1.5 font-mono text-[11px] whitespace-nowrap",
             projection ? "-translate-x-1/2 -translate-y-[calc(100%+14px)]" : "-translate-x-[calc(100%+10px)] -translate-y-[calc(100%+6px)]",
           )}
           style={{
             left: projection ? `clamp(4.5rem, ${pctX(last.date)}%, calc(100% - 4.5rem))` : `${pctX(last.date)}%`,
             top: `${pctY(last.total)}%`,
+            animationDelay: `${DRAW_MS}ms`,
           }}
         >
           <span className="block text-subtle">
@@ -271,5 +289,6 @@ export function TrajectoryChart({ rows, eta, pace, etaSlow, paceSlow, projection
         )}
       </figcaption>
     </figure>
+    </InView>
   );
 }

@@ -423,3 +423,149 @@
 @media (prefers-reduced-motion: reduce) {
   .heat-fill { animation: none; }
 }
+
+/*
+ * Entrance, every screen and size: each card glides up out of a soft blur and settles, one after
+ * another (siblings stagger by --card-i). `.card-in` opts in blocks that aren't .panel-dark.
+ * Client navigations remount the page, so it replays per screen.
+ */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(22px) scale(0.985); filter: blur(8px); }
+  60% { filter: blur(0); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+main .panel-dark,
+.card-in {
+  animation: card-in 0.85s var(--ease-out-expo) both;
+  animation-delay: calc(var(--card-i, 0) * 90ms);
+}
+main :is(.panel-dark, .card-in):nth-child(2 of .panel-dark, .card-in) { --card-i: 1; }
+main :is(.panel-dark, .card-in):nth-child(3 of .panel-dark, .card-in) { --card-i: 2; }
+main :is(.panel-dark, .card-in):nth-child(4 of .panel-dark, .card-in) { --card-i: 3; }
+main :is(.panel-dark, .card-in):nth-child(5 of .panel-dark, .card-in) { --card-i: 4; }
+main :is(.panel-dark, .card-in):nth-child(6 of .panel-dark, .card-in) { --card-i: 5; }
+main :is(.panel-dark, .card-in):nth-child(7 of .panel-dark, .card-in) { --card-i: 6; }
+main :is(.panel-dark, .card-in):nth-child(8 of .panel-dark, .card-in) { --card-i: 7; }
+main :is(.panel-dark, .card-in):nth-child(9 of .panel-dark, .card-in) { --card-i: 8; }
+main :is(.panel-dark, .card-in):nth-child(10 of .panel-dark, .card-in) { --card-i: 9; }
+main :is(.panel-dark, .card-in):nth-child(11 of .panel-dark, .card-in) { --card-i: 10; }
+main :is(.panel-dark, .card-in):nth-child(12 of .panel-dark, .card-in) { --card-i: 11; }
+
+/*
+ * Hover, mouse/trackpad only (phones get the entrance alone). Uses translate/scale (not transform),
+ * so it layers on top of the entrance animation's held transform.
+ *  - Cards that show data (anything with a chart: role="img" or an svg) lift and get a lime edge.
+ *  - Bars brighten and thicken, chart bars/dots grow, calendar tiles lift, leaderboard rows slide.
+ */
+@media (hover: hover) and (pointer: fine) {
+  main .panel-dark:has([role="img"], svg) {
+    transition: translate 0.35s var(--ease-out-expo), border-color 0.35s ease, box-shadow 0.35s ease;
+  }
+  main .panel-dark:has([role="img"], svg):hover {
+    translate: 0 -3px;
+    border-color: color-mix(in oklab, var(--primary) 40%, var(--border));
+    box-shadow: 0 22px 44px -28px color-mix(in oklab, var(--primary) 60%, transparent);
+  }
+
+  /* Progress / comparison tracks: the track thickens and its fill brightens. */
+  :has(> .animate-track-fill),
+  .viz-track {
+    transition: scale 0.3s var(--ease-out-expo);
+    transform-origin: left center;
+  }
+  :has(> .animate-track-fill):hover,
+  .viz-track:hover {
+    scale: 1 1.6;
+  }
+  :has(> .animate-track-fill):hover > .animate-track-fill,
+  .viz-track:hover > * {
+    filter: brightness(1.3);
+  }
+
+  /* Vertical bars (trajectory chart, rank ladder): siblings dim, the hovered bar grows. */
+  .viz-bar {
+    transition: scale 0.25s var(--ease-out-expo), opacity 0.25s ease, filter 0.25s ease, fill-opacity 0.25s ease;
+    transform-box: fill-box;
+    transform-origin: center bottom;
+  }
+  :has(> .viz-bar):hover > .viz-bar { opacity: 0.55; }
+  :has(> .viz-bar):hover > .viz-bar:hover {
+    opacity: 1;
+    scale: 1.12 1.08;
+    filter: brightness(1.4);
+    fill-opacity: 0.7;
+  }
+
+  /* Chart dots */
+  .viz-dot { transition: scale 0.2s var(--ease-out-expo); }
+  .viz-dot:hover { scale: 1.9; }
+
+  /* Calendar tiles and weekly gauges */
+  .viz-tile {
+    transition: translate 0.25s var(--ease-out-expo), scale 0.25s var(--ease-out-expo), box-shadow 0.25s ease;
+  }
+  .viz-tile:hover {
+    position: relative;
+    z-index: 20;
+    translate: 0 -3px;
+    scale: 1.06;
+    box-shadow: 0 12px 26px -12px color-mix(in oklab, var(--primary) 70%, transparent);
+  }
+
+  /* Leaderboard rows */
+  .viz-row { transition: translate 0.25s var(--ease-out-expo), background-color 0.2s ease; }
+  .viz-row:hover { translate: 4px 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  main .panel-dark,
+  .card-in {
+    animation: none;
+  }
+  .viz-tile:hover,
+  .viz-row:hover,
+  .viz-dot:hover,
+  main .panel-dark:hover {
+    translate: none;
+    scale: none;
+  }
+}
+
+/*
+ * Graph load (trajectory chart): the line and its area draw left to right, the daily bars grow up out
+ * of the baseline in step with it, dots pop in along the line, then the projection and latest label
+ * fade in. Held by <InView> until the chart scrolls into view. `backwards` fill only, so nothing is
+ * held after the run and the hover effects (scale) still apply.
+ */
+@keyframes chart-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes chart-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes chart-pop {
+  from { opacity: 0; scale: 0; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes chart-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.chart-reveal { animation: chart-reveal 1.3s cubic-bezier(0.45, 0, 0.15, 1) backwards; }
+.chart-grow {
+  animation: chart-grow 0.6s var(--ease-out-expo) backwards;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+.chart-pop { animation: chart-pop 0.4s var(--ease-out-expo) backwards; }
+.chart-fade { animation: chart-fade 0.6s ease backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .chart-reveal,
+  .chart-grow,
+  .chart-pop,
+  .chart-fade {
+    animation: none;
+  }
+}

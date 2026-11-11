@@ -57,7 +57,7 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
               key={d}
               title={r ? `${fmtDate(d)}: ${fmtSigned(r.delta ?? 0)} (${fmt(r.total)} total)` : fmtDate(d)}
               className={cn(
-                "flex aspect-square flex-col justify-between rounded-md p-1 font-mono text-[10px] max-[359px]:p-0.5 max-[359px]:text-[9px] sm:aspect-[5/3] sm:p-2 sm:text-[11px]",
+                "viz-tile flex aspect-square flex-col justify-between rounded-md p-1 font-mono text-[10px] max-[359px]:p-0.5 max-[359px]:text-[9px] sm:aspect-[5/3] sm:p-2 sm:text-[11px]",
                 !future && "heat-pop",
                 future ? "opacity-0" : r && lv ? "" : r ? "border border-border" : "border border-dashed border-hairline",
                 dark ? "text-primary-foreground" : "text-muted-foreground",
@@ -123,7 +123,7 @@ export function GainHeatmap({ rows, today, weeks = 5 }: { rows: DayRow[]; today:
                   : undefined
               }
               className={cn(
-                "relative hidden flex-col justify-between overflow-hidden rounded-xl border-2 p-2 font-mono sm:flex",
+                "viz-tile relative hidden flex-col justify-between overflow-hidden rounded-xl border-2 p-2 font-mono sm:flex",
                 topWeek ? "border-primary" : "border-primary/25",
                 !weekStarted && "opacity-0",
                 weekStarted && "heat-pop",

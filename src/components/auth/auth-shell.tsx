@@ -4,7 +4,7 @@ import { BrandMark } from "@/components/shell/brand";
 export function AuthShell({ title, subtitle, children }: { title: string; subtitle?: string; children: React.ReactNode }) {
   return (
     <main className="flex min-h-dvh flex-col items-center justify-center px-4 py-12">
-      <div className="w-full max-w-[400px]">
+      <div className="card-in w-full max-w-[400px]">
         <div className="mb-8 flex items-center gap-2.5">
           <BrandMark />
           <span className="text-[17px] font-bold tracking-[-0.02em]">progresshub</span>
