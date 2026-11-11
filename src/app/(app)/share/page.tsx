@@ -3,8 +3,9 @@ import { Suspense } from "react";
 import Link from "next/link";
 import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { getProgress } from "@/lib/data";
-import { getOrigin, getRank } from "@/lib/public";
-import { buildShareCard, reachedMilestones, SHARE_KINDS } from "@/lib/share-cards";
+import { getOrigin, getRacers, getRank } from "@/lib/public";
+import { buildRichCard } from "@/lib/rich-card";
+import { buildShareCard, reachedMilestones, SHARE_KINDS, type ShareCard } from "@/lib/share-cards";
 import { ShareGrid } from "./share-grid";
 
 export const metadata: Metadata = { title: "Share on X" };
@@ -63,13 +64,27 @@ async function Cards() {
     );
   }
 
-  const [rank, origin] = await Promise.all([getRank(p.profile.id), getOrigin()]);
-  const data = { handle, rows: p.rows, latest: p.latest, streak: p.streak, rank, eta: p.eta, today: p.today };
-  const cards = SHARE_KINDS.map((kind) => buildShareCard(kind, data));
+  const [rank, origin, { racers, racing }] = await Promise.all([getRank(p.profile.id), getOrigin(), getRacers(p.profile.id)]);
+  const data = {
+    handle,
+    rows: p.rows,
+    latest: p.latest,
+    streak: p.streak,
+    rank,
+    eta: p.eta,
+    today: p.today,
+    avatarUrl: p.profile.avatar_url,
+    racers,
+    racing,
+  };
+  const site = origin.replace(/^https?:\/\//, "");
+  // Each card with the props for its animated in-app version (the same design X gets as a PNG).
+  const withRich = (card: ShareCard) => ({ ...card, rich: buildRichCard(card, data, site) });
+  const cards = SHARE_KINDS.map((kind) => withRich(buildShareCard(kind, data)));
   // One ready-made card per milestone passed, so the Milestone tile can switch between them.
   const milestones = reachedMilestones(p.rows).map((m) => ({
     ...m,
-    card: buildShareCard("milestone", data, { milestone: m.target }),
+    card: withRich(buildShareCard("milestone", data, { milestone: m.target })),
   }));
   return <ShareGrid cards={cards} milestones={milestones} origin={origin} />;
 }

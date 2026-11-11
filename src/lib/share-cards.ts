@@ -23,6 +23,10 @@ export type ShareData = {
   rank: { rank: number; of: number } | null;
   eta: Forecast;
   today: string;
+  /** For the dense card (lib/rich-card.ts): the creator's avatar and the creators racing nearest them. */
+  avatarUrl?: string | null;
+  racers?: { handle: string; avatarUrl: string | null }[];
+  racing?: number;
 };
 
 /** What the image shows: a label, one big number, one line under it, and an optional visual. */
@@ -110,6 +114,13 @@ export function buildShareCard(
           .join("\n"),
         imagePath: `/u/${h}/card?v=${v}`,
         sharePath: `/u/${h}?v=${v}`,
+        face: {
+          label: "My race to 500K",
+          hero: fmtCompact(total),
+          unit: "impressions",
+          sub: fmtDate(d.latest.date),
+          visual: { type: "bar", pct, left: `${fmt(total)} / 500K`, right: `${fmtCompact(Math.max(0, GOAL - total))} to go` },
+        },
       };
     }
 
@@ -132,6 +143,13 @@ export function buildShareCard(
         ].join("\n"),
         imagePath: `/u/${h}/target-card?d=${target}&v=${tv}`,
         sharePath: `/u/${h}?target=${target}&v=${tv}`,
+        face: {
+          label: "My 500K target",
+          hero: fmtSigned(plan.perDay),
+          unit: `/day to 500K by ${fmtDate(target)}`,
+          sub: `${fmt(plan.remaining)} to go in ${plan.days} days`,
+          visual: { type: "bar", pct, left: `${fmt(total)} now`, right: `${plan.days} days left` },
+        },
       };
     }
 

@@ -4,11 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Check, Lock, Share2 } from "lucide-react";
 import { XShareDialog } from "@/components/progress/share-dialog";
+import { AnimatedRichCard } from "@/components/share/animated-rich-card";
 import { Button } from "@/components/ui/button";
 import { fmtCompact, fmtDateShort } from "@/lib/format";
-import type { ShareCard } from "@/lib/share-cards";
+import type { RichCardProps } from "@/lib/rich-card";
+import type { ShareCard as BaseCard } from "@/lib/share-cards";
 import { cn } from "@/lib/utils";
 
+/** A share card plus the props for its animated in-app version (null when locked). */
+type ShareCard = BaseCard & { rich: RichCardProps | null };
 type MilestoneOption = { target: number; date: string; card: ShareCard };
 
 /** One tile per shareable stat: the real X preview image and a Share button. Locked tiles say what unlocks them. */
@@ -64,7 +68,10 @@ function MilestoneTile({ options, origin }: { options: MilestoneOption[]; origin
 function Tile({ card: c, origin, children }: { card: ShareCard; origin: string; children?: React.ReactNode }) {
   return (
     <li className={cn("panel-dark flex flex-col overflow-hidden rounded-2xl", !c.available && "opacity-60")}>
-      {c.available ? (
+      {c.available && c.rich ? (
+        // Animated here; X gets the same design as a static PNG (c.imagePath).
+        <AnimatedRichCard key={c.imagePath} p={c.rich} label={c.title} className="border-b border-hairline bg-background" />
+      ) : c.available ? (
         // eslint-disable-next-line @next/next/no-img-element -- generated OG image, shown as-is
         <img
           key={c.imagePath}

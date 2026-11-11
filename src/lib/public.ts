@@ -54,6 +54,29 @@ export const getRank = cache(async (userId: string) => {
   };
 });
 
+/**
+ * The creators racing nearest someone on the board (closest places first, then shown top-down),
+ * for the share card's "Racing with" panel, plus how many are racing. Finishers aren't racing.
+ */
+export const getRacers = cache(async (userId: string, limit = 8) => {
+  const { data } = await anon()
+    .from("leaderboard")
+    .select("user_id, handle, avatar_url, total")
+    .lt("total", GOAL)
+    .order("total", { ascending: false })
+    .limit(500);
+  const board = (data ?? []) as { user_id: string; handle: string; avatar_url: string | null; total: number }[];
+  const me = board.findIndex((r) => r.user_id === userId);
+  const racers = board
+    .map((r, i) => ({ r, i, gap: me < 0 ? i : Math.abs(i - me) }))
+    .filter(({ r }) => r.user_id !== userId)
+    .sort((x, y) => x.gap - y.gap)
+    .slice(0, limit)
+    .sort((x, y) => x.i - y.i)
+    .map(({ r }) => ({ handle: r.handle, avatarUrl: r.avatar_url }));
+  return { racers, racing: board.length };
+});
+
 /** Where a total not yet on the board would rank, counting that visitor in the size of the board. */
 export async function getRankForTotal(total: number) {
   await connection();

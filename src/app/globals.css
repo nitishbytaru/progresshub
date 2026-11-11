@@ -339,3 +339,58 @@
     animation: none;
   }
 }
+
+/*
+ * In-app share cards (components/share/rich-card.tsx, animated): the card builds itself up piece by
+ * piece, holds, fades and replays every 7s, like a GIF. Every piece shares the 7s cycle; inline
+ * animation-delay staggers them. X gets the same card as a static PNG.
+ */
+@keyframes rc-rise {
+  0% { opacity: 0; transform: translateY(14px); }
+  8%, 90% { opacity: 1; transform: none; }
+  97%, 100% { opacity: 0; transform: none; }
+}
+@keyframes rc-hero {
+  0% { opacity: 0; transform: scale(0.82); }
+  9% { opacity: 1; transform: scale(1.05); }
+  12%, 90% { opacity: 1; transform: scale(1); }
+  97%, 100% { opacity: 0; transform: scale(1); }
+}
+@keyframes rc-pop {
+  0% { opacity: 0; transform: scale(0.6); }
+  8% { opacity: 1; transform: scale(1.07); }
+  11%, 90% { opacity: 1; transform: scale(1); }
+  97%, 100% { opacity: 0; transform: scale(1); }
+}
+@keyframes rc-bar {
+  0% { transform: scaleX(0); }
+  15%, 90% { transform: scaleX(1); }
+  97%, 100% { transform: scaleX(0); }
+}
+@keyframes rc-day {
+  0% { opacity: 0.15; transform: scale(0.7); }
+  5% { opacity: 1; transform: scale(1.15); }
+  8%, 92% { opacity: 1; transform: scale(1); }
+  100% { opacity: 0.15; transform: scale(1); }
+}
+@keyframes rc-glow {
+  0% { box-shadow: 0 0 0 0 #c8f43273; }
+  70%, 100% { box-shadow: 0 0 0 18px #c8f43200; }
+}
+.rc-rise { animation: rc-rise 7s cubic-bezier(0.16, 1, 0.3, 1) infinite both; }
+.rc-hero { animation: rc-hero 7s cubic-bezier(0.16, 1, 0.3, 1) infinite both; transform-origin: left bottom; }
+.rc-pop { animation: rc-pop 7s cubic-bezier(0.16, 1, 0.3, 1) infinite both; }
+.rc-bar { animation: rc-bar 7s cubic-bezier(0.45, 0, 0.15, 1) infinite both; transform-origin: left center; }
+.rc-day { animation: rc-day 7s ease-out infinite both; }
+.rc-glow { animation: rc-glow 1.8s ease-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .rc-rise,
+  .rc-hero,
+  .rc-pop,
+  .rc-bar,
+  .rc-day,
+  .rc-glow {
+    animation: none;
+  }
+}
