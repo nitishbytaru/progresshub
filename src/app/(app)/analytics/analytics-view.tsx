@@ -4,6 +4,7 @@ import { TargetDateCard } from "@/components/progress/target-date-card";
 import { TrajectoryChart } from "@/components/progress/trajectory-chart";
 import type { Progress } from "@/lib/data";
 import { fmtDate, fmtSigned } from "@/lib/format";
+import { EtaCardMobile } from "./eta-card-mobile";
 
 /** The Analytics screen for one creator's progress. Pure: the page loads the data. */
 export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
@@ -38,8 +39,15 @@ export function AnalyticsView({ p, origin }: { p: Progress; origin: string }) {
       {/* Bento row 1: forecast (wide) + deadline picker */}
       <div className="grid gap-4 sm:gap-6 xl:grid-cols-3">
       <section className="panel-dark rounded-2xl p-4 sm:p-6 xl:col-span-2">
-        <h2 className="text-xl font-bold tracking-[-0.015em]">When you&apos;ll reach 500K <span className="font-mono text-xs font-medium text-subtle sm:hidden">est.</span></h2>
-        <dl className="mt-4 grid grid-cols-2 divide-x divide-hairline rounded-xl border border-hairline sm:mt-5">
+        {/* Phones: one glanceable forecast with a 7d/28d menu. sm and up: both paces side by side. */}
+        <EtaCardMobile
+          scenarios={[
+            { days: 7, pace: p.pace7, eta: p.eta ? { etaDate: p.eta.etaDate, daysLeft: p.eta.daysLeft } : null },
+            { days: 28, pace: p.pace28, eta: p.etaSlow ? { etaDate: p.etaSlow.etaDate, daysLeft: p.etaSlow.daysLeft } : null },
+          ]}
+        />
+        <h2 className="hidden text-xl font-bold tracking-[-0.015em] sm:block">When you&apos;ll reach 500K</h2>
+        <dl className="mt-5 hidden grid-cols-2 divide-x divide-hairline rounded-xl border border-hairline sm:grid">
           {scenarios.map((s) => (
             <div key={s.label} className="p-3 sm:p-5">
               <dt className="text-sm text-muted-foreground"><span className="hidden sm:inline">At your </span>{s.short}</dt>
