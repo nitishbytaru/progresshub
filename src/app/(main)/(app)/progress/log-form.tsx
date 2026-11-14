@@ -12,14 +12,8 @@ import { addDays, forecast, GOAL, MILESTONE_STEP, milestoneCrossed, paceOver, to
 import { cn } from "@/lib/utils";
 import { LIMITS, parseImpressions, validateEntry } from "@/lib/validation";
 import { saveEntry } from "./actions";
+import { fromLocalDate, toLocalDate } from "@/lib/local-date";
 
-// react-day-picker works in local time; logs are plain YYYY-MM-DD calendar days.
-const toLocalDate = (d: string) => {
-  const [y, m, day] = d.split("-").map(Number);
-  return new Date(y, m - 1, day);
-};
-const fromLocalDate = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 type Props = { initialEntries: Entry[]; today: string; initialDate?: string };
 

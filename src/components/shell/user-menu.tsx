@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Bot, LogOut, UserRound } from "lucide-react";
-import { signOut } from "@/app/auth/actions";
+import { signOut } from "@/app/(main)/auth/actions";
 import { getViewer, isTelegramConnected } from "@/lib/data";
 import { Avatar } from "./brand";
 import { ClosingDetails } from "./nav";

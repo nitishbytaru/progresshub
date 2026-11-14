@@ -1,9 +1,11 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { requestOrigin } from "@/lib/origin";
 import { createClient } from "@/lib/supabase/server";
 
 /** Lands Google OAuth: sign in from /login, or "Connect another Google account" from Profile. */
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl;
+  const { searchParams } = request.nextUrl;
+  const origin = requestOrigin(request);
   // `next` comes from the auth_next cookie (set before leaving), or a legacy ?next= param.
   const rawNext = searchParams.get("next") ?? decodeURIComponent(request.cookies.get("auth_next")?.value ?? "/");
   const next = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";

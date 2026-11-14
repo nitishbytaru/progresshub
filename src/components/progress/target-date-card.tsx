@@ -7,14 +7,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { DateField } from "@/components/progress/date-field";
 import { fmt, fmtDate, fmtSigned } from "@/lib/format";
 import { addDays, MAX_TARGET_YEARS, targetPlan } from "@/lib/progress";
+import { fromLocalDate, toLocalDate } from "@/lib/local-date";
 
-// react-day-picker works in local time; these are plain YYYY-MM-DD calendar days.
-const toLocalDate = (d: string) => {
-  const [y, m, day] = d.split("-").map(Number);
-  return new Date(y, m - 1, day);
-};
-const fromLocalDate = (d: Date) =>
-  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 type Props = {
   /** Latest logged total and its day: the starting point of the countdown. */

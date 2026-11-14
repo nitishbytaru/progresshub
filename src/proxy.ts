@@ -1,6 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { SUPABASE_KEY, SUPABASE_URL, hasSupabaseEnv } from "@/lib/supabase/env";
+import { COOKIE_OPTIONS, SUPABASE_KEY, SUPABASE_URL, hasSupabaseEnv } from "@/lib/supabase/env";
 
 const PUBLIC_PATHS = ["/login", "/auth", "/welcome"];
 const isPublic = (path: string) => PUBLIC_PATHS.some((p) => path === p || path.startsWith(`${p}/`));
@@ -22,6 +22,7 @@ export async function proxy(request: NextRequest) {
 
   let response = NextResponse.next({ request });
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_KEY, {
+    cookieOptions: COOKIE_OPTIONS,
     cookies: {
       getAll: () => request.cookies.getAll(),
       setAll: (toSet) => {
@@ -46,6 +47,24 @@ export async function proxy(request: NextRequest) {
     response.cookies.getAll().forEach((c) => res.cookies.set(c));
     return res;
   };
+
+  // fit.progresshub.space (fit.localhost in dev) is the Fitness app: same account, its own /fit route tree.
+  // Sign-in reuses the main /login and /auth pages on this host; everything else is served from /fit.
+  const host = (request.headers.get("host") ?? "").toLowerCase();
+  if (host.startsWith("fit.")) {
+    if (path === "/login" && claims) return redirectTo("/");
+    if (isPublic(path) || path.startsWith("/api/")) return response;
+    if (!claims) return redirectTo("/login", true);
+    const url = request.nextUrl.clone();
+    url.pathname = path === "/" ? "/fit" : `/fit${path}`;
+    const res = NextResponse.rewrite(url);
+    response.cookies.getAll().forEach((c) => res.cookies.set(c));
+    return res;
+  }
+  // The Fitness routes only exist on their own subdomain.
+  if (path === "/fit" || path.startsWith("/fit/")) {
+    return NextResponse.rewrite(new URL("/404-no-route", request.url));
+  }
 
   // Creator pages, their share cards and robots.txt are public to everyone (and to X's crawler).
   if (path.startsWith("/u/") || path === "/robots.txt") return response;

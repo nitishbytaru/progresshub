@@ -1,0 +1,102 @@
+/* Carbon Ice: the Fitness theme (see FIT-DESIGN.md). Never import globals.css here. */
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@theme inline {
+  --font-sans: var(--font-jakarta);
+  --font-mono: var(--font-jetbrains);
+
+  --color-background: var(--canvas);
+  --color-foreground: var(--ink);
+  --color-surface: var(--surface);
+  --color-surface-high: var(--surface-high);
+  --color-track: var(--track);
+  --color-hover: var(--hover);
+  --color-ink: var(--ink);
+  --color-ink-variant: var(--ink-variant);
+  --color-ink-subtle: var(--ink-subtle);
+  --color-outline: var(--outline);
+  --color-outline-variant: var(--outline-variant);
+  --color-primary: var(--ice);
+  --color-primary-foreground: var(--on-ice);
+  --color-primary-hover: var(--ice-hover);
+  --color-primary-pressed: var(--ice-pressed);
+  --color-primary-soft: var(--ice-soft);
+  --color-ring: var(--ice);
+
+  /* Shared shadcn primitives (src/components/ui: calendar, popover, button, input) read these names,
+     so they render in Carbon Ice here and Midnight Lime in the main app with no code changes. */
+  --color-card: var(--surface);
+  --color-card-foreground: var(--ink);
+  --color-popover: var(--surface-high);
+  --color-popover-foreground: var(--ink);
+  --color-muted: var(--track);
+  --color-muted-foreground: var(--ink-variant);
+  --color-secondary: var(--surface-high);
+  --color-secondary-foreground: var(--ink);
+  --color-accent: var(--hover);
+  --color-accent-foreground: var(--ink);
+  --color-border: var(--outline);
+  --color-input: var(--outline);
+  --color-hairline: var(--outline-variant);
+  --color-subtle: var(--ink-subtle);
+  --color-surface-low: var(--surface);
+  --color-surface-highest: var(--track);
+  --color-destructive: var(--ink);
+
+  --radius-sm: calc(var(--radius) * 0.5);
+  --radius-md: calc(var(--radius) * 0.75);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.5);
+  --radius-2xl: calc(var(--radius) * 2);
+  --radius-3xl: calc(var(--radius) * 2.5);
+}
+
+:root {
+  color-scheme: dark;
+  --radius: 0.5rem;
+  /* Carbon (~50%) */
+  --canvas: #0e0d10;
+  --surface: #16151a;
+  --surface-high: #1f1e24;
+  --track: #2b2930;
+  --hover: #f5f5f70d;
+  --outline: #f5f5f729;
+  --outline-variant: #f5f5f714;
+  /* Chalk (~40%) */
+  --ink: #f5f5f7;
+  --ink-variant: #f5f5f7b3;
+  --ink-subtle: #f5f5f77a;
+  /* Ice blue (~10%) — text on it is carbon: chalk on it fails AA */
+  --ice: #5b9dff;
+  --on-ice: #0e0d10;
+  --ice-hover: #7aafff;
+  --ice-pressed: #4688f0;
+  --ice-soft: #5b9dff1f;
+}
+
+body {
+  background: var(--canvas);
+  color: var(--ink);
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+}
+
+::selection {
+  background: var(--ice);
+  color: var(--on-ice);
+}
+
+:focus-visible {
+  outline: 2px solid var(--ice);
+  outline-offset: 2px;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type="number"] {
+  -moz-appearance: textfield;
+}

@@ -3,7 +3,7 @@ import { SiteAnalytics } from "@/components/site-analytics";
 import { JetBrains_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { TimezoneCookie } from "@/components/shell/timezone-cookie";
 import { Toaster } from "@/components/ui/sonner";
-import "./globals.css";
+import "../globals.css";
 
 const jakarta = Plus_Jakarta_Sans({
   variable: "--font-jakarta",

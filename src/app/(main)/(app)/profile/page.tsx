@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import Link from "next/link";
-import { ArrowUpRight, Trash2 } from "lucide-react";
+import { ArrowUpRight, Dumbbell, Trash2 } from "lucide-react";
 import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { Avatar } from "@/components/shell/brand";
 import { DeleteAccountDialog } from "@/components/shell/delete-account-dialog";
@@ -85,6 +85,20 @@ async function Profile({ searchParams }: { searchParams: PageProps<"/profile">["
       <ProfileForms handle={profile.handle ?? ""} />
 
       <SignInMethods logins={logins} linkError={linkError} />
+
+      {/* Sister app on its own subdomain, same account. Full page load, different theme. */}
+      <a
+        href="/auth/fit"
+        aria-label="Open progresshub fit, the fitness app"
+        className="panel-dark group flex items-center justify-between gap-4 rounded-2xl p-4 transition-colors hover:bg-hover sm:p-6"
+      >
+        <span className="flex items-center gap-3">
+          <Dumbbell className="size-5 text-primary" aria-hidden />
+          <span className="text-sm font-semibold">Fitness</span>
+          <span className="font-mono text-xs text-subtle">daily weight</span>
+        </span>
+        <ArrowUpRight className="size-4 text-subtle transition-colors group-hover:text-primary" aria-hidden />
+      </a>
 
       <section
         aria-label="Delete account"

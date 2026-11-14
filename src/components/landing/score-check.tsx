@@ -6,7 +6,7 @@ import { animate, AnimatePresence, motion } from "motion/react";
 import { useReduced } from "@/components/landing/motion-bits";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { checkScore, type ScoreResult } from "@/app/welcome/score-actions";
+import { checkScore, type ScoreResult } from "@/app/(main)/welcome/score-actions";
 import { Lock } from "lucide-react";
 import { BrandMark } from "@/components/shell/brand";
 import { fmt } from "@/lib/format";
