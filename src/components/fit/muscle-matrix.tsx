@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { MuscleRow } from "@/lib/fit-insights";
 import { PLATE, muscleLabel } from "@/lib/fit-units";
 
@@ -16,6 +16,12 @@ export function MuscleMatrix({ weeks, rows }: { weeks: string[]; rows: MuscleRow
   const [sel, setSel] = useState(() => [...rows].sort((a, b) => b.total - a.total)[0]?.muscle ?? rows[0].muscle);
   const row = rows.find((r) => r.muscle === sel)!;
   const maxWd = Math.max(1, ...row.byWeekday);
+  // Phones can't fit 8 weeks: start scrolled to the newest week (and the avg column).
+  const scroller = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    const el = scroller.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, []);
 
   return (
     <section aria-label="Muscle groups by week" className="card-in flex min-w-0 flex-col gap-5 rounded-2xl border border-outline-variant bg-surface p-4 sm:p-6">
@@ -23,11 +29,11 @@ export function MuscleMatrix({ weeks, rows }: { weeks: string[]; rows: MuscleRow
         <h2 className="font-display text-3xl font-bold uppercase">Muscles × weeks</h2>
         <span className="text-xs text-ink-subtle">tap a group</span>
       </div>
-      <div className="overflow-x-auto">
+      <div ref={scroller} className="overflow-x-auto">
         <table className="w-full min-w-[440px] border-separate border-spacing-y-1.5">
           <thead>
             <tr>
-              <th className="w-24 text-left text-[0.6875rem] font-bold text-ink-subtle" scope="col">
+              <th className="sticky left-0 z-10 w-24 bg-surface text-left text-[0.6875rem] font-bold text-ink-subtle" scope="col">
                 <span className="sr-only">Muscle group</span>
               </th>
               {weeks.map((w, i) => (
@@ -42,16 +48,16 @@ export function MuscleMatrix({ weeks, rows }: { weeks: string[]; rows: MuscleRow
             {rows.map((r) => {
               const on = r.muscle === sel;
               return (
-                <tr key={r.muscle} className={`cursor-pointer transition-opacity ${on ? "" : "opacity-70 hover:opacity-100"}`} onClick={() => setSel(r.muscle)}>
-                  <th scope="row" className="text-left">
-                    <button type="button" aria-pressed={on} onClick={() => setSel(r.muscle)} className={`flex items-center gap-2 rounded-full py-1 pr-2 text-sm font-semibold ${on ? "text-ink" : "text-ink-variant"}`}>
+                <tr key={r.muscle} className={`transition-opacity ${on ? "" : "opacity-70 hover:opacity-100"}`}>
+                  <th scope="row" className="sticky left-0 z-10 bg-surface pr-1 text-left">
+                    <button type="button" aria-pressed={on} onClick={() => setSel(r.muscle)} className={`flex min-h-11 items-center gap-2 rounded-full pr-2 text-sm font-semibold ${on ? "text-ink" : "text-ink-variant"}`}>
                       <span className={`size-3 rounded-full ${on ? "ring-2 ring-ink ring-offset-2 ring-offset-surface" : ""}`} style={{ background: PLATE[r.muscle].fill }} aria-hidden />
                       {muscleLabel(r.muscle)}
                     </button>
                   </th>
                   {r.perWeek.map((n, i) => (
                     <td key={i} className="px-0.5" title={`${muscleLabel(r.muscle)}, week of ${short.format(utc(weeks[i]))}: ${n}`}>
-                      <span className="flex h-9 flex-col-reverse gap-[2px] rounded-md bg-background p-[3px]">
+                      <span className="flex h-11 flex-col-reverse gap-[2px] rounded-md bg-background p-[3px]">
                         {Array.from({ length: Math.min(n, 4) }, (_, k) => (
                           <span key={k} className="h-[6px] rounded-[2px]" style={{ background: PLATE[r.muscle].fill }} />
                         ))}
@@ -70,7 +76,7 @@ export function MuscleMatrix({ weeks, rows }: { weeks: string[]; rows: MuscleRow
       <div className="grid gap-4 border-t border-outline-variant pt-4 sm:grid-cols-[1fr_auto]" aria-live="polite">
         <dl className="grid grid-cols-2 gap-x-6 gap-y-3 sm:grid-cols-4">
           {[
-            { l: "Per week", v: `${row.avgPerWeek}`, u: "×" },
+            { l: "Per week", v: `${row.avgPerWeek}`, u: "sessions" },
             { l: "Last trained", v: row.daysSince === null ? "never" : row.daysSince === 0 ? "today" : `${row.daysSince}`, u: row.daysSince ? "d ago" : "" },
             { l: "Longest gap", v: row.longestGap === null ? "—" : `${row.longestGap}`, u: row.longestGap ? "days" : "" },
             { l: "8 weeks", v: `${row.total}`, u: "sessions" },
@@ -90,7 +96,7 @@ export function MuscleMatrix({ weeks, rows }: { weeks: string[]; rows: MuscleRow
             {row.byWeekday.map((n, i) => (
               <div key={i} className="flex w-5 flex-col items-center gap-1">
                 <span className="w-full rounded-sm" style={{ height: `${Math.max(3, (n / maxWd) * 32)}px`, background: n ? PLATE[row.muscle].fill : "var(--track)" }} />
-                <span className="text-[0.625rem] font-bold text-ink-subtle">{WD[i]}</span>
+                <span className="text-[0.6875rem] font-bold text-ink-subtle">{WD[i]}</span>
               </div>
             ))}
           </div>

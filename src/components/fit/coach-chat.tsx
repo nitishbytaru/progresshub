@@ -29,14 +29,20 @@ export function CoachChat() {
     <section aria-label="Ask the coach" className="card-in flex flex-col gap-4 rounded-2xl border border-outline-variant bg-surface p-4 sm:p-6" style={{ ["--card-i" as string]: 3 }}>
       <div className="flex items-center justify-between">
         <h2 className="font-display text-3xl font-bold uppercase">Ask coach</h2>
-        <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink-subtle">
-          <Sparkles className="size-3.5" aria-hidden /> AI · uses your numbers
-        </span>
+        {thread.length > 0 ? (
+          <button type="button" onClick={() => setThread([])} disabled={pending} className="h-11 rounded-full px-3 text-sm font-semibold text-ink-subtle hover:bg-hover hover:text-ink">
+            Clear
+          </button>
+        ) : (
+          <span className="inline-flex items-center gap-1 text-xs font-semibold text-ink-subtle">
+            <Sparkles className="size-3.5" aria-hidden /> AI · uses your numbers
+          </span>
+        )}
       </div>
       {thread.length === 0 && (
         <div className="flex flex-wrap gap-2">
-          {STARTERS.map((s) => (
-            <button key={s} type="button" onClick={() => ask(s)} className="rounded-full border border-outline px-3 py-2 text-left text-sm font-semibold text-ink-variant hover:bg-hover hover:text-ink">
+          {STARTERS.map((s, i) => (
+            <button key={s} type="button" onClick={() => ask(s)} className={`min-h-11 rounded-full border border-outline px-3.5 py-2 text-left text-sm font-semibold text-ink-variant hover:bg-hover hover:text-ink ${i > 1 ? "hidden sm:inline-flex" : ""}`}>
               {s}
             </button>
           ))}
@@ -67,7 +73,7 @@ export function CoachChat() {
         className="flex items-center gap-2 rounded-full border border-outline bg-background p-1.5 pl-4 focus-within:border-ink"
       >
         <input value={q} onChange={(e) => setQ(e.target.value.slice(0, 300))} placeholder="Ask about training or food…" aria-label="Your question" className="min-w-0 flex-1 bg-transparent text-base outline-none placeholder:text-ink-subtle" />
-        <button type="submit" disabled={pending || !q.trim()} aria-label="Send" className="grid size-10 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-40">
+        <button type="submit" disabled={pending || !q.trim()} aria-label="Send" className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-40">
           <ArrowUp className="size-5" aria-hidden />
         </button>
       </form>

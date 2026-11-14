@@ -89,7 +89,7 @@ export function FuelWeightCard({ days, target, unit }: { days: FuelDay[]; target
     <Panel label="Calories and weight, 30 days" title="Fuel vs weight" i={3}>
       {logged.length < 3 ? (
         <p className="text-sm text-ink-subtle">
-          Log food on 3+ days to compare intake with your weight. <Link href="/food" className="font-semibold text-ink underline underline-offset-4">Open Food</Link>
+          Log food on 3+ days to compare intake with your weight. <Link href="/food" className="inline-block py-3 font-semibold text-ink underline underline-offset-4">Open Food</Link>
         </p>
       ) : (
         <>
@@ -149,7 +149,7 @@ export function StrengthCard({ prs, volume, weeks, unit }: { prs: { key: string;
     return (
       <Panel label="Strength" title="Strength" i={6}>
         <p className="text-sm text-ink-subtle">
-          Log sets (exercise, reps, weight) on a gym day to track PRs and weekly volume. <Link href="/log" className="font-semibold text-ink underline underline-offset-4">Open Log</Link>
+          Log sets (exercise, reps, weight) on a gym day to track PRs and weekly volume. <Link href="/log" className="inline-block py-3 font-semibold text-ink underline underline-offset-4">Open Log</Link>
         </p>
       </Panel>
     );
@@ -169,7 +169,7 @@ export function StrengthCard({ prs, volume, weeks, unit }: { prs: { key: string;
             </span>
             <span className="text-right">
               <span className="block font-display text-2xl leading-none font-bold">{fmtWeight(p.e1rm, unit)}</span>
-              <span className="text-[0.625rem] font-bold tracking-wide text-ink-subtle uppercase">est. 1RM</span>
+              <span className="text-[0.6875rem] font-bold tracking-wide text-ink-subtle uppercase">est. 1RM</span>
             </span>
           </li>
         ))}

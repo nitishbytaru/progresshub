@@ -24,7 +24,7 @@ export default function FoodPage({ searchParams }: { searchParams: Promise<Recor
 
 async function Diary({ searchParams }: { searchParams: Promise<Record<string, string | string[] | undefined>> }) {
   const [ready, profile, { today, logs }, query] = await Promise.all([trainerReady(), getProfile(), getWeights(60), searchParams]);
-  if (!ready) return <NotReady />;
+  if (!ready) return <NotReady feature="food" />;
   const asked = typeof query.day === "string" ? query.day : today;
   const day = validateDay(asked, today) ? today : asked;
 

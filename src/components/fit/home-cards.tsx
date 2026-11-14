@@ -96,7 +96,7 @@ export function LoggedCard({ s, today, loggedDays }: { s: FitStats; today: strin
           />
         ))}
       </ol>
-      <div className="mt-1.5 flex justify-between text-[0.625rem] font-bold text-ink-subtle">
+      <div className="mt-1.5 flex justify-between text-[0.6875rem] font-bold text-ink-subtle">
         <span>{fmtDay(days[0])}</span>
         <span>today</span>
       </div>

@@ -18,7 +18,7 @@ export function WeekPlan({ logs, today, keepPace, target }: { logs: FitLog[]; to
   const [n, setN] = useState(initial);
   const plan = useMemo(() => nextWeekPlan(logs, today, n), [logs, today, n]);
   const presets = [
-    { n: keepPace, label: "Keep pace" },
+    { n: keepPace, label: "Your usual" },
     ...(target !== null && target !== keepPace ? [{ n: target, label: "Your target" }] : []),
   ].filter((p) => p.n > 0);
 
@@ -30,19 +30,22 @@ export function WeekPlan({ logs, today, keepPace, target }: { logs: FitLog[]; to
           <p className="text-sm text-ink-variant">
             {plan.sessions} days · {plan.split}
           </p>
+          <p className="mt-1 max-w-[46ch] text-xs text-ink-subtle">
+            Muscles you&apos;ve waited longest on come first; the same group never trains two days in a row.
+          </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {presets.map((p) => (
-            <button key={p.label} type="button" aria-pressed={n === p.n} onClick={() => setN(p.n)} className={`h-9 rounded-full border px-3 text-xs font-bold transition-colors ${n === p.n ? "border-ink bg-primary text-primary-foreground" : "border-outline text-ink-variant hover:bg-hover"}`}>
+            <button key={p.label} type="button" aria-pressed={n === p.n} onClick={() => setN(p.n)} className={`h-11 rounded-full border px-3.5 text-xs font-bold transition-colors ${n === p.n ? "border-ink bg-primary text-primary-foreground" : "border-outline text-ink-variant hover:bg-hover"}`}>
               {p.label} · {p.n}
             </button>
           ))}
           <div className="flex items-center rounded-full border border-outline p-0.5" role="group" aria-label="Gym days next week">
-            <button type="button" aria-label="Fewer days" onClick={() => setN(Math.max(1, n - 1))} className="grid size-8 place-items-center rounded-full text-ink-variant hover:bg-hover">
+            <button type="button" aria-label="Fewer days" onClick={() => setN(Math.max(1, n - 1))} className="grid size-10 place-items-center rounded-full text-ink-variant hover:bg-hover">
               −
             </button>
             <span className="w-6 text-center font-display text-lg font-bold">{n}</span>
-            <button type="button" aria-label="More days" onClick={() => setN(Math.min(7, n + 1))} className="grid size-8 place-items-center rounded-full text-ink-variant hover:bg-hover">
+            <button type="button" aria-label="More days" onClick={() => setN(Math.min(7, n + 1))} className="grid size-10 place-items-center rounded-full text-ink-variant hover:bg-hover">
               +
             </button>
           </div>
@@ -62,7 +65,7 @@ export function WeekPlan({ logs, today, keepPace, target }: { logs: FitLog[]; to
                   ))}
                 </span>
               ) : (
-                <span className="mb-1 text-[0.625rem] font-bold tracking-wide text-ink-subtle uppercase">{d.rest ? "rest" : "move"}</span>
+                <span className="mb-1 text-[0.6875rem] font-bold tracking-wide text-ink-subtle uppercase">{d.rest ? "rest" : "move"}</span>
               )}
             </span>
           </li>
@@ -78,7 +81,8 @@ export function WeekPlan({ logs, today, keepPace, target }: { logs: FitLog[]; to
               <span className="flex flex-wrap gap-1.5">
                 {d.muscles.length ? (
                   d.muscles.map((m) => (
-                    <span key={m} className="rounded-full px-2.5 py-0.5 text-xs font-bold" style={{ background: PLATE[m].fill, color: PLATE[m].ink }}>
+                    <span key={m} className="inline-flex items-center gap-1.5 rounded-full border border-outline px-2.5 py-0.5 text-xs font-bold">
+                      <span className="size-2 rounded-full" style={{ background: PLATE[m].fill }} aria-hidden />
                       {muscleLabel(m)}
                     </span>
                   ))

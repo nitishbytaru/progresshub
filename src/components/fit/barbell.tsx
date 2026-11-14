@@ -111,7 +111,7 @@ export function Barbell({
       />
       <span
         className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full ${lg ? "h-2.5 w-[18%]" : "h-1.5 w-[14%]"}`}
-        style={{ background: "repeating-linear-gradient(90deg, #6b737c 0 2px, #b8c0c8 2px 4px)" }}
+        style={{ background: "repeating-linear-gradient(90deg, var(--track) 0 2px, var(--steel) 2px 4px)" }}
         aria-hidden
       />
       <div className={`relative flex w-full items-center justify-between ${lg ? "px-1" : ""}`}>

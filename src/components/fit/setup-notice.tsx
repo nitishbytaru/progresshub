@@ -20,7 +20,24 @@ export function SetupNotice({ title, body, cta }: { title: string; body: ReactNo
   );
 }
 
-/** The trainer tables haven't been migrated on this database yet. */
-export const NotReady = () => (
-  <SetupNotice title="Almost ready" body="This part of the coach is being set up on the server. Weight and gym logging already work." cta={{ href: "/log", label: "Log weight" }} />
+/** The trainer tables haven't been migrated on this database yet: say what's coming, offer what works. */
+export const NotReady = ({ feature }: { feature: "food" | "profile" }) => (
+  <SetupNotice
+    title={feature === "food" ? "Food tracking unlocks soon" : "Your profile unlocks soon"}
+    body={
+      <>
+        {feature === "food" ? "Calorie counting, meal plans and the food diary are on their way." : "Calorie targets and your personal meal plan are on their way."} Your weigh-ins and gym days already
+        power{" "}
+        <Link href="/coach" className="font-semibold text-ink underline underline-offset-4">
+          Coach
+        </Link>{" "}
+        and{" "}
+        <Link href="/insights" className="font-semibold text-ink underline underline-offset-4">
+          Insights
+        </Link>
+        .
+      </>
+    }
+    cta={{ href: "/log", label: "Log today" }}
+  />
 );

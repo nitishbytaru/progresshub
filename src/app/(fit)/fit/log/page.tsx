@@ -54,6 +54,9 @@ async function Logger() {
     getFitDays(today, today),
     trainerReady(),
   ]);
+  // Last set per exercise (today first, then history) so reps/weight start where you left off.
+  const last: Record<string, { reps: number; weight_kg: number }> = {};
+  [...history, ...sets].forEach((x) => (last[x.exercise_key] = { reps: x.reps, weight_kg: x.weight_kg }));
   const bests: Record<string, number> = {};
   history.forEach(
     (s) =>
@@ -80,6 +83,7 @@ async function Logger() {
               day={today}
               sets={sets}
               bests={bests}
+              last={last}
               unit={unit}
               defaultMuscles={todayLog?.muscles ?? []}
               sleep={extras[0]?.sleep_h ?? null}

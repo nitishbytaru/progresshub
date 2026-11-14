@@ -1,7 +1,8 @@
 import Link from "next/link";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Plus } from "lucide-react";
 import type { Tip, WeekPlan } from "@/lib/fit-coach";
 import type { Targets, Totals } from "@/lib/fit-nutrition";
+import { PLATE, muscleLabel, type Muscle } from "@/lib/fit-units";
 import { PlateFace } from "./barbell";
 import { KcalRing } from "./kcal-ring";
 
@@ -13,23 +14,50 @@ const head = (label: string) => (
   </span>
 );
 
-/** Home: today's fuel, next week's plan and the top coach tip, each a doorway to its page. */
-export function CoachStrip({ totals, targets, plan, tip }: { totals: Totals; targets: Targets | null; plan: WeekPlan; tip: Tip | null }) {
+/**
+ * Home's one "what now" row: the muscle group that's due (with the Log action), next week's plan,
+ * and today's fuel once food tracking exists. Each tile is a doorway to its page.
+ */
+export function CoachStrip({
+  ready,
+  due,
+  trainedToday,
+  totals,
+  targets,
+  plan,
+  tip,
+}: {
+  ready: boolean;
+  due: Muscle[];
+  trainedToday: Muscle[] | null;
+  totals: Totals;
+  targets: Targets | null;
+  plan: WeekPlan;
+  tip: Tip | null;
+}) {
   return (
-    <div className="grid gap-4 sm:grid-cols-3 md:col-span-12 lg:gap-6">
-      <Link href="/food" className={card} style={{ ["--card-i" as string]: 2 }}>
-        {head("Today's fuel")}
-        <div className="flex items-center gap-4">
-          <KcalRing eaten={totals.kcal} target={targets?.kcal ?? null} size={104} />
-          <div className="flex flex-col">
-            <span className="text-xs text-ink-subtle">Protein</span>
-            <span className="font-display text-3xl leading-none font-bold">
-              {Math.round(totals.protein)}
-              <span className="text-base text-ink-subtle">{targets ? ` / ${targets.protein} g` : " g"}</span>
-            </span>
-          </div>
+    <div className={`grid gap-4 md:col-span-12 lg:gap-6 ${ready ? "sm:grid-cols-3" : "sm:grid-cols-2"}`}>
+      {/* Next up: the action. */}
+      <section aria-label="Next up" className="card-in flex flex-col gap-3 rounded-2xl border border-ink/30 bg-surface-high p-4 sm:p-5" style={{ ["--card-i" as string]: 2 }}>
+        <span className="text-xs font-bold tracking-[0.14em] text-ink-variant uppercase">{trainedToday ? "Today" : "Next up"}</span>
+        <div className="flex flex-wrap gap-1.5">
+          {(trainedToday ?? due).length ? (
+            (trainedToday ?? due).map((m) => (
+              <span key={m} className="inline-flex items-center gap-1.5 rounded-full border border-outline px-2.5 py-1 text-sm font-bold">
+                <span className="size-2.5 rounded-full" style={{ background: PLATE[m].fill }} aria-hidden />
+                {muscleLabel(m)}
+              </span>
+            ))
+          ) : (
+            <span className="text-sm text-ink-variant">{trainedToday ? "Gym logged" : "Tag muscles on gym days to get a next-up pick"}</span>
+          )}
         </div>
-      </Link>
+        {tip && <p className="text-sm text-ink-variant">{tip.text}</p>}
+        <Link href="/log" className="mt-auto inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover">
+          <Plus className="size-4" aria-hidden /> {trainedToday ? "Log sets" : "Log today"}
+        </Link>
+      </section>
+
       <Link href="/coach" className={card} style={{ ["--card-i" as string]: 3 }}>
         {head(`Next week · ${plan.sessions} days`)}
         <ol className="grid grid-cols-7 gap-1" aria-label={`Next week: ${plan.days.filter((d) => d.muscles.length).map((d) => `${d.weekday} ${d.muscles.join(" and ")}`).join("; ")}`}>
@@ -40,16 +68,28 @@ export function CoachStrip({ totals, targets, plan, tip }: { totals: Totals; tar
                   <PlateFace key={m} muscles={[m]} className="h-full max-h-4 w-full rounded-[2px]" />
                 ))}
               </span>
-              <span className="text-[0.625rem] font-bold text-ink-subtle">{d.weekday.charAt(0)}</span>
+              <span className="text-[0.6875rem] font-bold text-ink-subtle">{d.weekday.charAt(0)}</span>
             </li>
           ))}
         </ol>
         <span className="text-sm text-ink-variant">{plan.split}</span>
       </Link>
-      <Link href="/coach" className={card} style={{ ["--card-i" as string]: 4 }}>
-        {head("Coach says")}
-        <p className={`text-base ${tip?.strong ? "font-semibold text-ink" : "text-ink-variant"}`}>{tip?.text ?? "You're on track. Keep logging."}</p>
-      </Link>
+
+      {ready && (
+        <Link href="/food" className={card} style={{ ["--card-i" as string]: 4 }}>
+          {head("Today's fuel")}
+          <div className="flex items-center gap-4">
+            <KcalRing eaten={totals.kcal} target={targets?.kcal ?? null} size={104} />
+            <div className="flex flex-col">
+              <span className="text-xs text-ink-subtle">Protein</span>
+              <span className="font-display text-3xl leading-none font-bold">
+                {Math.round(totals.protein)}
+                <span className="text-base text-ink-subtle">{targets ? ` / ${targets.protein} g` : " g"}</span>
+              </span>
+            </div>
+          </div>
+        </Link>
+      )}
     </div>
   );
 }

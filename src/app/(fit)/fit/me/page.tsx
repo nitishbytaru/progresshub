@@ -21,6 +21,6 @@ export default function MePage() {
 
 async function Profile() {
   const [ready, profile, { today, logs }, unit] = await Promise.all([trainerReady(), getProfile(), getWeights(30), getUnit()]);
-  if (!ready) return <NotReady />;
+  if (!ready) return <NotReady feature="profile" />;
   return <ProfileForm profile={profile} latestKg={logs[0]?.kg ?? null} today={today} unit={unit} />;
 }

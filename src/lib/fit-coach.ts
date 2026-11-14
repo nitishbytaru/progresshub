@@ -79,11 +79,11 @@ const SPLITS: Record<number, Muscle[][]> = {
 const SPLIT_NAME: Record<number, string> = {
   1: "Full body",
   2: "Upper / lower",
-  3: "Push / pull / legs",
-  4: "Bro-lite (4-day)",
-  5: "Body-part split",
-  6: "PPL ×2",
-  7: "PPL ×2 + recovery",
+  3: "Push · pull · legs",
+  4: "4-day split",
+  5: "One group a day",
+  6: "Push · pull · legs ×2",
+  7: "Push · pull · legs ×2 + recovery",
 };
 /** Weekday slots (0 = Mon) that space N sessions out with recovery. */
 const SLOTS: Record<number, number[]> = {
@@ -178,8 +178,10 @@ export function coachTips(input: {
   foodDays: { day: string; totals: Totals }[];
   trend: { perWeek: number } | null;
   pace: Pace;
+  /** False while the profile/food tables don't exist: never point people at a page that can't work yet. */
+  ready?: boolean;
 }): Tip[] {
-  const { logs, today, profile, targets: t, foodDays, trend, pace: p } = input;
+  const { logs, today, profile, targets: t, foodDays, trend, pace: p, ready = true } = input;
   const tips: Tip[] = [];
   const gym = logs.filter((l) => l.gym);
 
@@ -217,7 +219,7 @@ export function coachTips(input: {
   // Logging habit.
   const weighIns = logs.filter((l) => l.day > addDays(today, -7)).length;
   if (weighIns < 4) tips.push({ kind: "habit", text: `Only ${weighIns} weigh-ins this week. Daily weigh-ins make the trend reliable.` });
-  if (!profile) tips.unshift({ kind: "habit", strong: true, text: "Set up your profile to unlock calorie targets and meal plans." });
+  if (!profile && ready) tips.unshift({ kind: "habit", strong: true, text: "Set up your profile to unlock calorie targets and meal plans." });
 
   return tips.slice(0, 4);
 }

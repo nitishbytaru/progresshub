@@ -92,7 +92,7 @@ export function WeightLogger({ unit: savedUnit, today, minDay, logs, gymBefore, 
   };
 
   const chip = (active: boolean) =>
-    `inline-flex h-10 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-colors ${
+    `inline-flex h-11 items-center gap-1.5 rounded-full border px-4 text-sm font-semibold transition-colors ${
       active ? "border-primary bg-primary-soft text-primary" : "border-outline text-ink-variant hover:bg-hover hover:text-ink"
     }`;
 
@@ -148,7 +148,7 @@ export function WeightLogger({ unit: savedUnit, today, minDay, logs, gymBefore, 
               <span className="text-ink-subtle">{dayLabel}</span>
               {current !== null && <span className="font-display text-sm tracking-normal text-ink normal-case">logged {fmtWeight(current, unit)}</span>}
             </label>
-            <div role="radiogroup" aria-label="Weight unit" className="flex h-8 rounded-full border border-outline p-0.5">
+            <div role="radiogroup" aria-label="Weight unit" className="flex h-11 rounded-full border border-outline p-1">
               {(["kg", "lb"] as const).map((u) => (
                 <button
                   key={u}
@@ -156,7 +156,7 @@ export function WeightLogger({ unit: savedUnit, today, minDay, logs, gymBefore, 
                   role="radio"
                   aria-checked={unit === u}
                   onClick={() => setUnit(u)}
-                  className={`min-w-11 rounded-full px-3 text-xs font-bold transition-colors ${
+                  className={`min-w-12 rounded-full px-3 text-sm font-bold transition-colors ${
                     unit === u ? "bg-primary text-primary-foreground" : "text-ink-subtle hover:text-ink"
                   }`}
                 >
@@ -168,7 +168,7 @@ export function WeightLogger({ unit: savedUnit, today, minDay, logs, gymBefore, 
           <input type="hidden" name="unit" value={unit} />
           {/* Left empty on a logged day, the server keeps that day's weight and only updates gym. */}
           <input type="hidden" name="kg" value={kgText.trim()} />
-          <div className={`-mt-2 flex h-20 items-center rounded-2xl border bg-background px-5 transition-colors focus-within:border-primary ${pending ? "border-primary/60 opacity-70" : "border-outline"}`}>
+          <div className={`-mt-2 flex h-20 items-center border-b-2 px-1 transition-colors focus-within:border-ink ${pending ? "border-ink/60 opacity-70" : "border-outline"}`}>
             <input
               id="kg"
               type="number"
@@ -309,7 +309,7 @@ export function WeightLogger({ unit: savedUnit, today, minDay, logs, gymBefore, 
             <span className="text-sm font-semibold text-ink-variant">This week</span>
             <span className="font-display text-2xl font-bold">
               {logged}
-              <span className="text-ink-subtle">/7</span>
+              <span className="text-ink-subtle"> / 7 logged</span>
             </span>
           </div>
           <ol className="grid grid-cols-7 gap-2">
