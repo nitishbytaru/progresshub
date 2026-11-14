@@ -27,3 +27,9 @@ export function parseWeight(raw: string, unit: Unit): { kg: number } | { error: 
   const kg = unit === "lb" ? Math.round(Math.round(n * 10) / 10 * KG_PER_LB * 100) / 100 : Math.round(n * 10) / 10;
   return { kg: Math.min(Math.max(kg, KG_MIN), KG_MAX) };
 }
+
+/** Muscle groups a gym day can be tagged with (matches the weight_logs.muscles check constraint). */
+export const MUSCLES = ["chest", "back", "shoulders", "biceps", "triceps", "legs"] as const;
+export type Muscle = (typeof MUSCLES)[number];
+export const isMuscle = (v: unknown): v is Muscle => MUSCLES.includes(v as Muscle);
+export const muscleLabel = (m: Muscle) => m.charAt(0).toUpperCase() + m.slice(1);

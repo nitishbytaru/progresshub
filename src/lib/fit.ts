@@ -1,8 +1,9 @@
 import "server-only";
 import { createClient } from "./supabase/server";
 import { getToday } from "./data";
+import { isMuscle, type Muscle } from "./fit-units";
 
-export type WeightLog = { day: string; kg: number; gym: boolean };
+export type WeightLog = { day: string; kg: number; gym: boolean; muscles: Muscle[] };
 
 /** How far back a weight can be added or corrected. */
 export const MAX_BACKFILL_DAYS = 365;
@@ -33,13 +34,18 @@ export async function getWeights(days = MAX_BACKFILL_DAYS + 1) {
   const [recent, older] = await Promise.all([
     supabase
       .from("weight_logs")
-      .select("day, kg, gym")
+      .select("day, kg, gym, muscles")
       .gte("day", since)
       .lte("day", today)
       .order("day", { ascending: false }),
     supabase.from("weight_logs").select("day", { count: "exact", head: true }).eq("gym", true).lt("day", since),
   ]);
   if (recent.error) throw recent.error;
-  const logs: WeightLog[] = (recent.data ?? []).map((r) => ({ day: r.day as string, kg: Number(r.kg), gym: Boolean(r.gym) }));
+  const logs: WeightLog[] = (recent.data ?? []).map((r) => ({
+    day: r.day as string,
+    kg: Number(r.kg),
+    gym: Boolean(r.gym),
+    muscles: ((r.muscles as string[] | null) ?? []).filter(isMuscle),
+  }));
   return { today, logs, gymBefore: older.count ?? 0 };
 }

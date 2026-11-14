@@ -1,6 +1,7 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "./motion.css";
 
 /* progresshub is dark-only (Midnight Lime). The variant is kept so shadcn
    primitives that reference `dark:` resolve against the same tokens. */
@@ -326,10 +327,6 @@
   animation: crown-drop 0.6s var(--ease-out-expo) 0.9s both;
 }
 
-/* Inside an <InView> card, hold these until the card scrolls into view. */
-[data-inview="false"] .reveal-anim {
-  animation-play-state: paused;
-}
 
 @media (prefers-reduced-motion: reduce) {
   .animate-track-fill,
@@ -423,13 +420,7 @@
  * another (siblings stagger by --card-i). `.card-in` opts in blocks that aren't .panel-dark.
  * Client navigations remount the page, so it replays per screen.
  */
-@keyframes card-in {
-  from { opacity: 0; transform: translateY(22px) scale(0.985); filter: blur(8px); }
-  60% { filter: blur(0); }
-  to { opacity: 1; transform: none; filter: none; }
-}
-main .panel-dark,
-.card-in {
+main .panel-dark {
   animation: card-in 0.85s var(--ease-out-expo) both;
   animation-delay: calc(var(--card-i, 0) * 90ms);
 }
@@ -509,8 +500,7 @@ main :is(.panel-dark, .card-in):nth-child(12 of .panel-dark, .card-in) { --card-
 }
 
 @media (prefers-reduced-motion: reduce) {
-  main .panel-dark,
-  .card-in {
+  main .panel-dark {
     animation: none;
   }
   .viz-tile:hover,
@@ -522,41 +512,3 @@ main :is(.panel-dark, .card-in):nth-child(12 of .panel-dark, .card-in) { --card-
   }
 }
 
-/*
- * Graph load (trajectory chart): the line and its area draw left to right, the daily bars grow up out
- * of the baseline in step with it, dots pop in along the line, then the projection and latest label
- * fade in. Held by <InView> until the chart scrolls into view. `backwards` fill only, so nothing is
- * held after the run and the hover effects (scale) still apply.
- */
-@keyframes chart-reveal {
-  from { clip-path: inset(0 100% 0 0); }
-  to { clip-path: inset(0 0 0 0); }
-}
-@keyframes chart-grow {
-  from { transform: scaleY(0); }
-  to { transform: scaleY(1); }
-}
-@keyframes chart-pop {
-  from { opacity: 0; scale: 0; }
-  to { opacity: 1; scale: 1; }
-}
-@keyframes chart-fade {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-.chart-reveal { animation: chart-reveal 1.3s cubic-bezier(0.45, 0, 0.15, 1) backwards; }
-.chart-grow {
-  animation: chart-grow 0.6s var(--ease-out-expo) backwards;
-  transform-box: fill-box;
-  transform-origin: center bottom;
-}
-.chart-pop { animation: chart-pop 0.4s var(--ease-out-expo) backwards; }
-.chart-fade { animation: chart-fade 0.6s ease backwards; }
-@media (prefers-reduced-motion: reduce) {
-  .chart-reveal,
-  .chart-grow,
-  .chart-pop,
-  .chart-fade {
-    animation: none;
-  }
-}

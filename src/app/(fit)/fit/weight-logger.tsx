@@ -2,11 +2,12 @@
 
 import { useActionState, useMemo, useRef, useState } from "react";
 import { CalendarDays, Dumbbell, Pencil } from "lucide-react";
+import { FitGlyph } from "@/components/fit/fit-glyph";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import type { WeightLog } from "@/lib/fit";
 import { fromLocalDate, toLocalDate } from "@/lib/local-date";
-import { UNIT_COOKIE, fmtWeight, fromKg, unitRange, type Unit } from "@/lib/fit-units";
+import { MUSCLES, UNIT_COOKIE, fmtWeight, fromKg, muscleLabel, unitRange, type Muscle, type Unit } from "@/lib/fit-units";
 import { logWeight, type WeightState } from "./actions";
 
 const utc = (d: string) => new Date(`${d}T00:00:00Z`);
@@ -28,20 +29,43 @@ export function WeightLogger({ unit: savedUnit, today, minDay, logs, gymBefore, 
   const [unit, setUnitState] = useState<Unit>(savedUnit);
   const setUnit = (u: Unit) => {
     setUnitState(u);
+    setKgText("");
     rememberUnit(u);
   };
   const range = unitRange(unit);
   const byDay = useMemo(() => new Map(logs.map((l) => [l.day, l.kg])), [logs]);
   const gymDays = useMemo(() => logs.filter((l) => l.gym).map((l) => l.day), [logs]); // newest first
-  const [day, setDay] = useState(today);
+  const [kgText, setKgText] = useState("");
+  const [day, setDayState] = useState(today);
+  // Switching day starts a fresh entry.
+  const setDay = (d: string) => {
+    setDayState(d);
+    setKgText("");
+  };
   const [calendarOpen, setCalendarOpen] = useState(false);
-  const [state, action, pending] = useActionState<WeightState, FormData>(logWeight, null);
+  // The gym toggle follows the saved value for the picked day until the user flips it.
+  const [gymPick, setGymPick] = useState<{ day: string; on: boolean } | null>(null);
+  // Same for the trained muscles.
+  const [musclePick, setMusclePick] = useState<{ day: string; list: Muscle[] } | null>(null);
+  // The kg field is controlled so it only empties after a successful save (a failed one keeps what you typed);
+  // the gym toggle then drops its unsaved override and shows what was just saved.
+  const [state, action, pending] = useActionState<WeightState, FormData>(async (prev, formData) => {
+    const result = await logWeight(prev, formData);
+    if (result?.saved) {
+      setKgText("");
+      setGymPick(null);
+      setMusclePick(null);
+    }
+    return result;
+  }, null);
   const formRef = useRef<HTMLDivElement>(null);
   const yesterday = addDays(today, -1);
   const current = byDay.get(day) ?? null;
-  // The gym toggle follows the saved value for the picked day until the user flips it.
-  const [gymPick, setGymPick] = useState<{ day: string; on: boolean } | null>(null);
   const gym = gymPick?.day === day ? gymPick.on : gymDays.includes(day);
+  const savedMuscles = logs.find((l) => l.day === day)?.muscles ?? [];
+  const muscles = musclePick?.day === day ? musclePick.list : savedMuscles;
+  const toggleMuscle = (m: Muscle) =>
+    setMusclePick({ day, list: muscles.includes(m) ? muscles.filter((x) => x !== m) : [...muscles, m] });
   // "Gym day N": every logged gym day before the picked day, plus this one.
   const earlierGym = gymDays.filter((d) => d < day);
   const gymNumber = gymBefore + earlierGym.length + 1;
@@ -64,7 +88,7 @@ export function WeightLogger({ unit: savedUnit, today, minDay, logs, gymBefore, 
   return (
     <div className="flex flex-col gap-4">
       <section ref={formRef} aria-label="Log a weight" className="scroll-mt-4 rounded-3xl border border-outline-variant bg-surface p-5 sm:p-6">
-        <form action={action} className="flex flex-col gap-4">
+        <form action={action} aria-busy={pending} className="flex flex-col gap-4">
           <div className="flex flex-wrap items-center gap-2" role="group" aria-label="Day">
             <button type="button" className={chip(day === today)} aria-pressed={day === today} onClick={() => setDay(today)}>
               Today
@@ -131,21 +155,23 @@ export function WeightLogger({ unit: savedUnit, today, minDay, logs, gymBefore, 
             </div>
           </div>
           <input type="hidden" name="unit" value={unit} />
-          <div className="-mt-2 flex h-20 items-center rounded-2xl border border-outline bg-background px-5 transition-colors focus-within:border-primary">
+          {/* Left empty on a logged day, the server keeps that day's weight and only updates gym. */}
+          <input type="hidden" name="kg" value={kgText.trim()} />
+          <div className={`-mt-2 flex h-20 items-center rounded-2xl border bg-background px-5 transition-colors focus-within:border-primary ${pending ? "border-primary/60 opacity-70" : "border-outline"}`}>
             <input
-              key={`${day}-${unit}`}
               id="kg"
-              name="kg"
               type="number"
               inputMode="decimal"
               step="0.1"
               min={range.min}
               max={range.max}
-              required
-              defaultValue={current === null ? undefined : fmtWeight(current, unit)}
-              placeholder={unit === "lb" ? "160.0" : "72.4"}
+              required={current === null}
+              value={kgText}
+              onChange={(e) => setKgText(e.target.value)}
+              placeholder={current !== null ? fmtWeight(current, unit) : unit === "lb" ? "160.0" : "72.4"}
               aria-invalid={Boolean(state?.error)}
               aria-describedby="kg-status"
+              readOnly={pending}
               className="w-full min-w-0 bg-transparent font-mono text-4xl font-semibold tracking-[-0.04em] text-ink outline-none placeholder:text-track"
               style={{ outline: "none" }}
             />
@@ -184,17 +210,58 @@ export function WeightLogger({ unit: savedUnit, today, minDay, logs, gymBefore, 
             </span>
           </div>
 
+          {gym && (
+            <fieldset className="-mt-1 flex flex-col gap-2">
+              <legend className="mb-2 font-mono text-xs tracking-[0.04em] text-ink-subtle uppercase">Trained</legend>
+              <div className="grid grid-cols-3 gap-2">
+                {MUSCLES.map((m) => {
+                  const on = muscles.includes(m);
+                  return (
+                    <button
+                      key={m}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggleMuscle(m)}
+                      className={`h-11 rounded-xl border text-sm font-semibold transition-colors ${
+                        on ? "border-primary bg-primary-soft text-primary" : "border-outline text-ink-variant hover:bg-hover hover:text-ink"
+                      }`}
+                    >
+                      {muscleLabel(m)}
+                    </button>
+                  );
+                })}
+              </div>
+              {muscles.map((m) => (
+                <input key={m} type="hidden" name="muscle" value={m} />
+              ))}
+            </fieldset>
+          )}
+
           <button
             type="submit"
             disabled={pending}
-            className="h-14 rounded-full bg-primary text-base font-bold text-primary-foreground transition-[background-color,transform] hover:bg-primary-hover active:scale-[0.98] active:bg-primary-pressed disabled:opacity-60"
+            aria-busy={pending}
+            className={`relative inline-flex h-14 items-center justify-center gap-2.5 overflow-hidden rounded-full bg-primary text-base font-bold text-primary-foreground transition-[background-color,transform] hover:bg-primary-hover active:scale-[0.98] active:bg-primary-pressed disabled:cursor-progress ${
+              pending ? "fit-sweep" : ""
+            }`}
           >
-            {pending ? "Saving…" : current !== null ? "Update" : day === today ? "Log today" : `Log ${dayLabel}`}
+            {pending ? (
+              <>
+                <FitGlyph className="fit-ascent size-5" />
+                Saving…
+              </>
+            ) : current !== null ? (
+              "Update"
+            ) : day === today ? (
+              "Log today"
+            ) : (
+              `Log ${dayLabel}`
+            )}
           </button>
           <p id="kg-status" aria-live="polite" className="-mt-1 min-h-5 font-mono text-xs text-ink-variant">
             {state?.error ??
               (state?.saved
-                ? `Saved ${fmtWeight(state.saved.kg, unit)} ${unit}${state.saved.gym ? " + gym" : ""} for ${shortDate.format(utc(state.saved.day))}.`
+                ? `Saved ${fmtWeight(state.saved.kg, unit)} ${unit}${state.saved.gym ? ` + gym${state.saved.muscles.length ? ` (${state.saved.muscles.join(", ")})` : ""}` : ""} for ${shortDate.format(utc(state.saved.day))}.`
                 : "")}
           </p>
         </form>

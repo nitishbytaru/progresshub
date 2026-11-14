@@ -1,0 +1,65 @@
+/*
+ * Shared motion for progresshub and fit.progresshub (imported by globals.css and fit.css).
+ * Colour-free: only keyframes and timing, so each app keeps its own theme.
+ */
+
+/* Entrance: a card glides up out of a soft blur and settles; siblings stagger by --card-i. */
+@keyframes card-in {
+  from { opacity: 0; transform: translateY(22px) scale(0.985); filter: blur(8px); }
+  60% { filter: blur(0); }
+  to { opacity: 1; transform: none; filter: none; }
+}
+.card-in {
+  animation: card-in 0.85s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: calc(var(--card-i, 0) * 90ms);
+}
+
+/* Inside an <InView> card, hold these until the card scrolls into view. */
+[data-inview="false"] .reveal-anim {
+  animation-play-state: paused;
+}
+
+/*
+ * Graph load (trajectory chart): the line and its area draw left to right, the daily bars grow up out
+ * of the baseline in step with it, dots pop in along the line, then the projection and latest label
+ * fade in. Held by <InView> until the chart scrolls into view. `backwards` fill only, so nothing is
+ * held after the run and the hover effects (scale) still apply.
+ */
+@keyframes chart-reveal {
+  from { clip-path: inset(0 100% 0 0); }
+  to { clip-path: inset(0 0 0 0); }
+}
+@keyframes chart-grow {
+  from { transform: scaleY(0); }
+  to { transform: scaleY(1); }
+}
+@keyframes chart-pop {
+  from { opacity: 0; scale: 0; }
+  to { opacity: 1; scale: 1; }
+}
+@keyframes chart-fade {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+.chart-reveal { animation: chart-reveal 1.3s cubic-bezier(0.45, 0, 0.15, 1) backwards; }
+.chart-grow {
+  animation: chart-grow 0.6s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+  transform-box: fill-box;
+  transform-origin: center bottom;
+}
+.chart-pop { animation: chart-pop 0.4s cubic-bezier(0.16, 1, 0.3, 1) backwards; }
+.chart-fade { animation: chart-fade 0.6s ease backwards; }
+@media (prefers-reduced-motion: reduce) {
+  .chart-reveal,
+  .chart-grow,
+  .chart-pop,
+  .chart-fade {
+    animation: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-in {
+    animation: none;
+  }
+}
