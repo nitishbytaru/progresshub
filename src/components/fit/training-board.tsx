@@ -15,7 +15,7 @@ const shortDate = new Intl.DateTimeFormat("en", { month: "short", day: "numeric"
  * This week's loaded bar, the 30-day muscle split and the weekly stacks, sharing one highlight:
  * tap a muscle group and every plate that trained it stays lit while the rest fade.
  */
-export function TrainingBoard({ s, unit, today, weight }: { s: FitStats; unit: Unit; today: string; weight: ReactNode }) {
+export function TrainingBoard({ s, unit, today, weight, after }: { s: FitStats; unit: Unit; today: string; weight: ReactNode; after?: ReactNode }) {
   const [highlight, setHighlight] = useState<Muscle | null>(null);
   const loaded = s.gymWeek.filter((d) => d.gym).map((d) => ({ day: d.day, muscles: d.muscles, kg: d.kg }));
   const maxWeek = Math.max(4, ...s.gymWeeks.map((w) => w.count));
@@ -70,6 +70,8 @@ export function TrainingBoard({ s, unit, today, weight }: { s: FitStats; unit: U
       </InView>
 
       <div className="md:col-span-12 lg:col-span-4 lg:self-center">{weight}</div>
+
+      {after}
 
       {/* 30-day split: one plate face per group, tap to trace it. */}
       <InView aria-label="Muscle split, last 30 days" className="card-in rounded-2xl border border-outline-variant bg-surface p-4 sm:p-5 md:col-span-6 lg:col-span-5 lg:p-6" style={{ ["--card-i" as string]: 2 }}>

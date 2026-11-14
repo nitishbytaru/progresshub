@@ -1,0 +1,26 @@
+import type { Metadata } from "next";
+import { Suspense } from "react";
+import { NotReady } from "@/components/fit/setup-notice";
+import { getProfile, getUnit, getWeights, trainerReady } from "@/lib/fit";
+import { ProfileForm } from "./profile-form";
+
+export const metadata: Metadata = { title: "Me" };
+
+export default function MePage() {
+  return (
+    <>
+      <h1 className="pt-6 pb-6 font-display text-5xl leading-[0.9] font-bold uppercase sm:pt-10 sm:text-6xl">
+        Your <span className="text-ink-subtle">profile</span>
+      </h1>
+      <Suspense fallback={<div className="h-[520px] animate-pulse rounded-2xl bg-surface" aria-hidden />}>
+        <Profile />
+      </Suspense>
+    </>
+  );
+}
+
+async function Profile() {
+  const [ready, profile, { today, logs }, unit] = await Promise.all([trainerReady(), getProfile(), getWeights(30), getUnit()]);
+  if (!ready) return <NotReady />;
+  return <ProfileForm profile={profile} latestKg={logs[0]?.kg ?? null} today={today} unit={unit} />;
+}

@@ -1,9 +1,9 @@
 import "server-only";
 import { isoDate, toUTC } from "../progress";
 import type { ParsedLog } from "./parse";
+import { groqJSON } from "../groq";
 
-// Small, fast model on Groq; it reasons briefly, so leave room in max_tokens.
-const MODEL = "openai/gpt-oss-20b";
+// Small, fast model on Groq (see ../groq); it reasons briefly, so leave room in max_tokens.
 const TIMEOUT_MS = 6_000;
 
 /**
@@ -45,40 +45,18 @@ const validDate = (d: unknown): d is string => typeof d === "string" && /^\d{4}-
 
 /** Returns null when Groq isn't configured or fails (the bot then shows its menu). */
 export async function interpretMessage(text: string, today: string): Promise<Intent | null> {
-  const key = process.env.GROQ_API_KEY;
-  if (!key) return null;
+  if (!process.env.GROQ_API_KEY) return null;
   if (text.length > 500) return { kind: "off_topic" };
 
-  try {
-    const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${key}`, "Content-Type": "application/json" },
-      signal: AbortSignal.timeout(TIMEOUT_MS),
-      body: JSON.stringify({
-        model: MODEL,
-        temperature: 0,
-        max_tokens: 500,
-        reasoning_effort: "low",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: SYSTEM(today) },
-          { role: "user", content: text },
-        ],
-      }),
-    });
-    if (!res.ok) return null;
-    const json = (await res.json()) as { choices?: { message?: { content?: string } }[] };
-    const out = JSON.parse(json.choices?.[0]?.message?.content ?? "{}") as Record<string, unknown>;
-    const intent = typeof out.intent === "string" && INTENTS.has(out.intent) ? out.intent : "off_topic";
+  const out = await groqJSON({ system: SYSTEM(today), user: text, maxTokens: 500, timeoutMs: TIMEOUT_MS });
+  if (!out) return null; // timeout, network or bad JSON
+  const intent = typeof out.intent === "string" && INTENTS.has(out.intent) ? out.intent : "off_topic";
 
-    if (intent === "log") {
-      const value = typeof out.value === "number" && Number.isSafeInteger(out.value) && out.value > 0 ? out.value : null;
-      if (!value) return { kind: "off_topic" };
-      return { kind: "log", log: { date: validDate(out.date) ? out.date : today, kind: out.kind === "gain" ? "gain" : "total", value } };
-    }
-    if (intent === "target") return validDate(out.date) ? { kind: "target", date: out.date } : { kind: "eta" };
-    return { kind: intent } as Intent;
-  } catch {
-    return null; // timeout, network or bad JSON
+  if (intent === "log") {
+    const value = typeof out.value === "number" && Number.isSafeInteger(out.value) && out.value > 0 ? out.value : null;
+    if (!value) return { kind: "off_topic" };
+    return { kind: "log", log: { date: validDate(out.date) ? out.date : today, kind: out.kind === "gain" ? "gain" : "total", value } };
   }
+  if (intent === "target") return validDate(out.date) ? { kind: "target", date: out.date } : { kind: "eta" };
+  return { kind: intent } as Intent;
 }
