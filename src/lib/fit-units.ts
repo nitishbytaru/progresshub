@@ -33,3 +33,13 @@ export const MUSCLES = ["chest", "back", "shoulders", "biceps", "triceps", "legs
 export type Muscle = (typeof MUSCLES)[number];
 export const isMuscle = (v: unknown): v is Muscle => MUSCLES.includes(v as Muscle);
 export const muscleLabel = (m: Muscle) => m.charAt(0).toUpperCase() + m.slice(1);
+
+/** Each muscle group's bumper-plate colour (CSS var from fit.css) and the ink that reads on it. */
+export const PLATE: Record<Muscle, { fill: string; ink: string }> = {
+  chest: { fill: "var(--plate-chest)", ink: "#ffffff" },
+  back: { fill: "var(--plate-back)", ink: "#ffffff" },
+  legs: { fill: "var(--plate-legs)", ink: "#141414" },
+  shoulders: { fill: "var(--plate-shoulders)", ink: "#141414" },
+  biceps: { fill: "var(--plate-biceps)", ink: "#141414" },
+  triceps: { fill: "var(--plate-triceps)", ink: "#141414" },
+};

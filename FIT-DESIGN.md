@@ -1,65 +1,376 @@
 ---
-name: Carbon Ice
-scope: fit.progresshub.space only (src/app/(fit), src/components/fit). Never mix with Midnight Lime.
+name: Bumper Plates
+description: progresshub fit (fit.progresshub.space). Body weight, gym days and muscle groups, read as a loaded barbell on a gym-floor black.
+scope: fit.progresshub.space only (src/app/(fit), src/components/fit, src/lib/fit-units.ts). Its own document and stylesheet; never mixes with Midnight Lime.
 colors:
-  # Carbon family (~50%)
-  canvas: '#0e0d10'
-  surface: '#0e0d10'
-  surface-container-lowest: '#0a090c'
-  surface-container-low: '#121115'
-  surface-container: '#16151a'
-  surface-container-high: '#1f1e24'
-  surface-container-highest: '#29272f'
-  track: '#2b2930'
-  hover: '#f5f5f70d'
-  pressed: '#f5f5f714'
-  on-surface: '#f5f5f7'
-  on-surface-variant: '#f5f5f7b3'
-  on-surface-subtle: '#f5f5f77a'
-  outline: '#f5f5f729'
-  outline-variant: '#f5f5f714'
-  # Chalk family (~40%: text, icons, chips)
-  inverse-surface: '#f5f5f7'
-  inverse-surface-dim: '#e9e9ec'
-  inverse-surface-variant: '#dcdce0'
-  on-inverse-surface: '#0e0d10'
-  on-inverse-surface-variant: '#0e0d10a6'
-  inverse-outline: '#0e0d101f'
-  # Ice blue accent (~10%: CTAs, active, progress, PRs, focus)
-  primary: '#5b9dff'
-  on-primary: '#0e0d10'   # 7.1:1. Chalk on ice blue is 2.8:1 and fails AA
-  primary-hover: '#7aafff'
-  primary-pressed: '#4688f0'
-  primary-soft: '#5b9dff1f'
-  primary-track: '#5b9dff33'
-  primary-glow: '#5b9dff66'
-  focus-ring: '#5b9dff'
-typography: same scale as DESIGN.md (Plus Jakarta Sans + JetBrains Mono), plus
-  metric-hero: { fontFamily: JetBrains Mono, fontSize: 4.5rem, fontWeight: '600', lineHeight: 4.5rem, letterSpacing: -0.05em }
-rounded: same as DESIGN.md (sm .25rem, DEFAULT .5rem, md .75rem, lg 1rem, xl 1.5rem, full)
-spacing: { gutter: 1.5rem, gutter-sm: 1rem, tap-min: 3rem }
+  # Rubber family (~50%): gym-floor ground and lifted panels
+  rubber: '#141414'
+  panel: '#1b1b1b'
+  panel-high: '#242424'
+  track: '#2e2e2e'
+  hover: '#f4f4f20f'
+  outline: '#f4f4f229'
+  outline-variant: '#f4f4f214'
+  steel: '#9aa3ad'
+  # Chalk family (~40%): ink, and the action colour
+  chalk: '#f4f4f2'
+  chalk-variant: '#f4f4f2b8'
+  chalk-subtle: '#f4f4f285'
+  chalk-soft: '#f4f4f21a'
+  primary: '#f4f4f2'
+  on-primary: '#141414'
+  primary-hover: '#ffffff'
+  primary-pressed: '#d9d9d5'
+  focus-ring: '#f4f4f2'
+  # IWF bumper plates (~10%): data only, one per muscle group
+  plate-chest: '#d7262e'
+  plate-back: '#1e5bc6'
+  plate-legs: '#f2c230'
+  plate-shoulders: '#2f8f4e'
+  plate-biceps: '#f4f4f2'
+  plate-triceps: '#9aa3ad'
+  plate-ink-light: '#ffffff'
+  plate-ink-dark: '#141414'
+typography:
+  display-hero:
+    fontFamily: Barlow Condensed, Archivo, sans-serif
+    fontSize: 5.5rem
+    fontWeight: 700
+    lineHeight: 0.85
+    letterSpacing: -0.02em
+    fontFeature: '"tnum"'
+  display-hero-wide:
+    fontFamily: Barlow Condensed, Archivo, sans-serif
+    fontSize: 6rem
+    fontWeight: 700
+    lineHeight: 0.85
+    letterSpacing: -0.02em
+    fontFeature: '"tnum"'
+  display-input:
+    fontFamily: Barlow Condensed, Archivo, sans-serif
+    fontSize: 3.75rem
+    fontWeight: 700
+    lineHeight: 1
+    letterSpacing: -0.01em
+    fontFeature: '"tnum"'
+  headline-stamp:
+    fontFamily: Barlow Condensed, Archivo, sans-serif
+    fontSize: 3rem
+    fontWeight: 700
+    lineHeight: 0.9
+    letterSpacing: -0.01em
+  headline-stamp-wide:
+    fontFamily: Barlow Condensed, Archivo, sans-serif
+    fontSize: 3.75rem
+    fontWeight: 700
+    lineHeight: 0.9
+    letterSpacing: -0.01em
+  title-stamp:
+    fontFamily: Barlow Condensed, Archivo, sans-serif
+    fontSize: 2.25rem
+    fontWeight: 700
+    lineHeight: 1.1
+    letterSpacing: -0.01em
+  numeral-lg:
+    fontFamily: Barlow Condensed, Archivo, sans-serif
+    fontSize: 1.875rem
+    fontWeight: 700
+    lineHeight: 1
+    fontFeature: '"tnum"'
+  numeral-md:
+    fontFamily: Barlow Condensed, Archivo, sans-serif
+    fontSize: 1.5rem
+    fontWeight: 700
+    lineHeight: 2rem
+    fontFeature: '"tnum"'
+  numeral-sm:
+    fontFamily: Barlow Condensed, Archivo, sans-serif
+    fontSize: 1.25rem
+    fontWeight: 700
+    lineHeight: 1.75rem
+    fontFeature: '"tnum"'
+  body:
+    fontFamily: Archivo, system-ui, sans-serif
+    fontSize: 1rem
+    fontWeight: 400
+    lineHeight: 1.5rem
+  body-sm:
+    fontFamily: Archivo, system-ui, sans-serif
+    fontSize: 0.875rem
+    fontWeight: 600
+    lineHeight: 1.25rem
+  label-rim:
+    fontFamily: Archivo, system-ui, sans-serif
+    fontSize: 0.75rem
+    fontWeight: 700
+    lineHeight: 1rem
+    letterSpacing: 0.14em
+  caption:
+    fontFamily: Archivo, system-ui, sans-serif
+    fontSize: 0.75rem
+    fontWeight: 400
+    lineHeight: 1rem
+  micro:
+    fontFamily: Archivo, system-ui, sans-serif
+    fontSize: 0.6875rem
+    fontWeight: 700
+    lineHeight: 1rem
+rounded:
+  plate-sm: 2px
+  plate: 3px
+  sm: 4px
+  md: 6px
+  lg: 8px
+  xl: 12px
+  2xl: 16px
+  full: 9999px
+spacing:
+  hairline-gap: 3px
+  xs: 4px
+  sm: 8px
+  md: 12px
+  lg: 16px
+  xl: 20px
+  2xl: 24px
+  header: 64px
+  container: 640px
+components:
+  button-primary:
+    backgroundColor: '{colors.primary}'
+    textColor: '{colors.on-primary}'
+    typography: '{typography.body}'
+    rounded: '{rounded.full}'
+    padding: 0 24px
+    height: 48px
+  button-primary-hover:
+    backgroundColor: '{colors.primary-hover}'
+    textColor: '{colors.on-primary}'
+  button-primary-pressed:
+    backgroundColor: '{colors.primary-pressed}'
+    textColor: '{colors.on-primary}'
+  button-submit:
+    backgroundColor: '{colors.primary}'
+    textColor: '{colors.on-primary}'
+    rounded: '{rounded.full}'
+    height: 56px
+    width: 100%
+  button-outline:
+    backgroundColor: transparent
+    textColor: '{colors.chalk-variant}'
+    typography: '{typography.body-sm}'
+    rounded: '{rounded.full}'
+    padding: 0 24px
+    height: 48px
+  button-outline-hover:
+    backgroundColor: '{colors.hover}'
+    textColor: '{colors.chalk}'
+  chip:
+    backgroundColor: transparent
+    textColor: '{colors.chalk-variant}'
+    typography: '{typography.body-sm}'
+    rounded: '{rounded.full}'
+    padding: 0 16px
+    height: 40px
+  chip-active:
+    backgroundColor: '{colors.chalk-soft}'
+    textColor: '{colors.chalk}'
+  chip-due:
+    backgroundColor: '{colors.chalk-soft}'
+    textColor: '{colors.chalk}'
+    typography: '{typography.micro}'
+    rounded: '{rounded.full}'
+    padding: 2px 8px
+  nav-tabs:
+    backgroundColor: transparent
+    rounded: '{rounded.full}'
+    padding: 4px
+  nav-tab:
+    textColor: '{colors.chalk-variant}'
+    typography: '{typography.body-sm}'
+    rounded: '{rounded.full}'
+    padding: 0 14px
+    height: 36px
+  nav-tab-active:
+    backgroundColor: '{colors.primary}'
+    textColor: '{colors.on-primary}'
+  card:
+    backgroundColor: '{colors.panel}'
+    textColor: '{colors.chalk}'
+    rounded: '{rounded.2xl}'
+    padding: 16px
+  popover:
+    backgroundColor: '{colors.panel-high}'
+    textColor: '{colors.chalk}'
+    rounded: '{rounded.lg}'
+    padding: 12px
+  input-weight:
+    backgroundColor: '{colors.rubber}'
+    textColor: '{colors.chalk}'
+    typography: '{typography.display-input}'
+    rounded: '{rounded.2xl}'
+    padding: 0 20px
+    height: 80px
+  muscle-toggle:
+    backgroundColor: transparent
+    textColor: '{colors.chalk-variant}'
+    typography: '{typography.body-sm}'
+    rounded: '{rounded.xl}'
+    padding: 0 10px
+    height: 48px
+  plate-tile:
+    typography: '{typography.numeral-md}'
+    rounded: '{rounded.full}'
+    size: 48px
+  unit-toggle-active:
+    backgroundColor: '{colors.primary}'
+    textColor: '{colors.on-primary}'
+    typography: '{typography.micro}'
+    rounded: '{rounded.full}'
+    height: 28px
 ---
 
-# Carbon Ice
+# Design System: Bumper Plates
 
-The Fitness sister app to progresshub. It shares the family structure (type, radii, spacing, "label + big mono number + tiny visual") and has a warm carbon + ice blue palette, so it never reads as the lime analytics app.
+## Overview
 
-## Rules
-- 50 / 40 / 10: carbon surfaces, chalk ink, ice blue accent. Use no other hues, including no red or green for trends: show ▲/▼ in chalk.
-- Lifted surfaces are allowed (`#16151a` cards, `#1f1e24` active or raised), separated by `outline-variant` hairlines.
-- Ice blue is only for primary CTAs, active state, progress, PR badges, timers and focus. Never fill a whole card with it.
-- Text on ice blue is always carbon `#0e0d10`.
-- Tap targets are at least 48px, because people use it mid-workout.
+**Creative North Star: "The Loaded Bar"**
+
+Training is load. The fit app is a gym floor at night: black rubber matting with a faint EPDM speckle, a steel barbell across the top of Home, and coloured bumper plates sliding onto its sleeves, one plate per gym day, coloured by the muscle trained. Body weight is stamped beneath it in big condensed numerals, the way a plate is stamped with its kilos. It refuses the fitness category's white-card dashboard with a blue line chart.
+
+The composition is a single narrow column (640px) read top to bottom: the week as a bar, today's weight, the 30-day split as six plate faces, the weeks as stacked plates, the 90-day trend, and the weigh-in tally. Ink is chalk: the only bright neutral, and also the action colour, like chalked hands on a black bar. Colour belongs to the plates, and the plates belong to the data.
+
+This system is a sister to progresshub's Midnight Lime, not a theme of it. It ships its own root layout, its own stylesheet (`src/app/(fit)/fit/fit.css`, which never imports `globals.css`) and its own fonts. Shared shadcn primitives read the same semantic variable names, so they render as Bumper Plates here with no code changes.
+
+**Key Characteristics:**
+- Rubber black ground with a speckle texture; panels lifted by one tonal step and a hairline, never by shadow.
+- Chalk is both ink and the single action colour; there is no accent hue.
+- Six IWF bumper-plate colours, one per muscle group, used only to encode muscle data.
+- Barlow Condensed stamped numerals over Archivo UI; uppercase tracked rim labels as section titles.
+- The barbell is the signature object; plates load with an overshoot (the clank).
+
+## Colors
+
+A near-monochrome rubber-and-chalk field (~90%) with six saturated plate colours (~10%) that only ever mean a muscle group.
+
+### Primary
+- **Chalk** (`chalk` / `primary`): all ink, the filled action pill, the active nav tab, the active unit toggle, the gym-on toggle, the 7-day average line on the trend, selection background and the focus outline. Hover lifts to **Bare White** (`primary-hover`); press settles to **Worn Chalk** (`primary-pressed`). Text on chalk is rubber (`on-primary`).
+- **Chalk Dust** (`chalk-soft`): the active chip fill and the "due" tag behind chalk text.
+
+### Tertiary (data: the plates)
+- **Chest Red** (`plate-chest`), **Back Blue** (`plate-back`), **Legs Yellow** (`plate-legs`), **Shoulders Green** (`plate-shoulders`), **Biceps Chalk** (`plate-biceps`), **Triceps Steel** (`plate-triceps`): one per muscle group, in the order of the IWF plate set. Exposed in code as `PLATE[muscle].fill` in `src/lib/fit-units.ts` and `bg-plate-*` utilities. Each carries a fixed ink: Bare White (`plate-ink-light`) on chest and back, Rubber (`plate-ink-dark`) on legs, shoulders, biceps and triceps; every pairing clears 4.5:1.
+
+### Neutral
+- **Gym-Floor Rubber** (`rubber`): page ground and the weight input well; also `themeColor`.
+- **Lifted Panel** (`panel`): every card (split, trend, log form, week list) and the loading skeletons.
+- **Panel High** (`panel-high`): popovers (plate detail, date picker).
+- **Track** (`track`): unfilled bars, missed tally marks, empty day squares, scrollbar thumb.
+- **Hover Wash** (`hover`): hover fill on outline buttons, chips and list rows.
+- **Outline** (`outline`) and **Hairline** (`outline-variant`): control borders, and card borders, dividers and gridlines respectively.
+- **Bar Steel** (`steel`): the barbell shaft, collars and sleeves, the rim of an untagged gym-day plate, and the floor rule under the weekly stacks.
+- **Chalk Variant / Chalk Subtle** (`chalk-variant`, `chalk-subtle`): secondary text and tertiary text (units, dates, tags).
+
+### Named Rules
+**The Plates Are Data Rule.** A plate colour appears only where it encodes a muscle group: a plate face, a split tile, a trained-muscle toggle, a muscle chip, a gym-day tick on the trend floor. Never on chrome, buttons, headings, borders or state.
+
+**The Chalk Hand Rule.** Chalk is the one action colour. Primary buttons, active tabs, active toggles and focus are chalk on rubber; there is no accent hue to reach for.
+
+**The Separate Gym Rule.** Bumper Plates never mixes with Midnight Lime. Progresshub lime (#c8f432) never appears in fit, and no fit token is imported into the main app.
+
+## Typography
+
+**Display Font:** Barlow Condensed (with Archivo, sans-serif), weights 500 to 800, via `next/font` as `--font-barlow`
+**Body Font:** Archivo (with system-ui, sans-serif), weights 400 to 800, via `next/font` as `--font-archivo`
+
+**Character:** Barlow Condensed is the stamp on the plate: tall, tight, tabular numerals for every weight, count and heading. Archivo is the plain gym-floor signage around it.
+
+### Hierarchy
+- **Display Hero** (`display-hero`, `display-hero-wide` from 640px): today's weight on Home, with the unit at 1.75rem to 2.25rem in Chalk Subtle. Also the 404 numeral at the wide size.
+- **Display Input** (`display-input`): the typed weight in the log well.
+- **Headline Stamp** (`headline-stamp`, `headline-stamp-wide`): uppercase page headlines ("Weigh in. / Load the bar."), with the second line in Chalk Subtle.
+- **Title Stamp** (`title-stamp`): uppercase empty-state and 404 titles (2.25rem and 1.875rem).
+- **Numerals** (`numeral-lg`, `numeral-md`, `numeral-sm`): trend readout, stat values and split-tile counts, section counts ("3 / 7 loaded"). The trailing unit or denominator is set smaller in Chalk Subtle.
+- **Body** (`body`, `body-sm`): explanatory lines capped at 34ch; buttons, chips, tabs and row labels at 0.875rem semibold.
+- **Label Rim** (`label-rim`): uppercase, 0.14em tracking, Chalk Variant. These are the section titles themselves ("This week", "Split · 30 days", "Trend · 90 days"), like the lettering on a plate rim, and the "Trained" legend.
+- **Caption / Micro** (`caption`, `micro`): stat labels, dates, day initials (M T W T F S S) and week tags.
+
+### Named Rules
+**The Stamped Number Rule.** Every weight, count and streak is Barlow Condensed bold with tabular numerals; Archivo never sets a metric value.
+
+**The Rim Label Rule.** A section's title is a single uppercase tracked rim label on the left, with its headline number in condensed numerals on the right, sharing one baseline. No second heading line above or below it.
+
+## Layout
+
+One centred column, max 640px, with 16px side padding (24px from 640px) and 48px bottom padding. The header is 64px: glyph and wordmark left, Home | Log tabs centre, a back-to-progresshub pill right (wordmark and pill label hide below 640px).
+
+Home stacks its blocks with a 20px gap. Blocks alternate between open sections on the rubber (the bar, the weight, the weeks) and lifted panels (the split, the trend), so the page reads as floor and equipment rather than a card grid. Panels pad 16px, 20px from 640px. Stat rows are three equal cells between hairlines with vertical hairline dividers. Day strips are 7-column grids; weekly stacks an 8-column grid on a shared scale. The muscle grid is 3 columns (2 below 400px on Log).
+
+## Elevation & Depth
+
+Flat. There are no box shadows anywhere in the fit app. Depth is tonal: Rubber ground, Lifted Panel cards, Panel High popovers, each step bordered by a hairline. The only texture is the floor itself, a two-layer radial speckle (7px and 11px tiles) on the body. Plate tiles carry a 4px inset ring of 30% black to read as a moulded rim, not as elevation.
+
+### Named Rules
+**The Tonal Lift Rule.** A surface rises by one tonal step plus a hairline, never by a shadow or glow.
+
+## Shapes
+
+Two families. Controls are pills: every button, chip, tab group, unit toggle and tag is fully rounded. Containers are soft rectangles: cards and the weight well at 16px, muscle toggles, split tiles and list rows at 12px, day squares at 8px. Plates are the exception and keep near-square corners (3px faces, 2px in stacks and mini bars) because they are moulded rubber seen edge-on. Split tiles are full circles, the plate seen face-on. Base radius is 0.5rem; the scale derives from it.
 
 ## Components
-- **Primary button:** ice blue fill, carbon text, weight 700, `rounded-full`, at least 48px tall. Hover is primary-hover; pressed is primary-pressed plus scale .98.
-- **Secondary button:** transparent, 1px outline, chalk text, hover fill.
-- **Metric card:** surface-container, hairline border, `rounded-lg`, a mono label on the left and a big mono number on the right (ice blue only for the key one).
-- **Active card:** surface-container-high plus a 1px ice blue left edge.
-- **Timer:** metric-hero digits; 6px track ring with an ice blue arc, plus primary-glow in the final 10 seconds.
-- **Progress bar:** 6px, track background, ice blue fill, rounded, with a tiny mono tag.
-- **PR badge:** primary-soft fill, ice blue mono "PR", rounded-full.
-- **Weight logger:** big decimal input with a "kg" suffix, ice blue focus border, full-width primary button, and a 7-day square strip (ice blue = logged, track = missed, today ringed).
 
-## Logo: "Ascent"
-A 24-unit grid with 3-unit round strokes: top chevron `M5 15 12 8 19 15`, lower chevron `M5 20 12 13 19 20` at 45% opacity, and the axiom dot at (12, 3.5) r1.75. App icon: the grid ×32 (768px) centred on a 1024 squircle (rx 228), ice blue on carbon. Files: `src/app/(fit)/fit/icon.svg` and `src/components/fit/fit-glyph.tsx`.
+### Buttons
+- **Shape:** pill (`rounded.full`).
+- **Primary:** Chalk fill, Rubber text, bold, 48px tall with 24px padding (`button-primary`); the log form's submit is full width and 56px (`button-submit`) and scales to 98% when pressed. Hover goes to Bare White, press to Worn Chalk.
+- **Saving:** the submit keeps its label and shows "Saving…" beside a mini bar where three plate slivers keep sliding on (`plate-loop`).
+- **Outline:** transparent with an Outline border, Chalk Variant text; hover adds the Hover Wash and Chalk text (`button-outline`). Used for secondary routes and the back-to-progresshub pill (40px).
+
+### Chips
+- **Style:** 40px pill, Outline border, Chalk Variant text (`chip`): the day pickers (Today, Yesterday, Pick date).
+- **State:** active is a Chalk border with Chalk Dust fill and Chalk text (`chip-active`). The "due" tag on a split tile is a Chalk Dust micro pill (`chip-due`). Muscle chips in the plate popover take the plate fill and its ink.
+
+### Cards / Containers
+- **Corner Style:** 16px.
+- **Background:** Lifted Panel; popovers Panel High.
+- **Shadow Strategy:** none (see Elevation & Depth).
+- **Border:** one Hairline.
+- **Internal Padding:** 16px, 20px from 640px; the week list uses 20px/24px with hairline dividers between its parts.
+
+### Inputs / Fields
+- **Style:** the weight well is an 80px Rubber field inside the Lifted Panel, 16px radius, Outline border, Display Input numerals, unit in condensed Chalk Subtle on the right with a micro "last 72.4" hint. Spin buttons are removed; the caret is chalk.
+- **Focus:** the well's border turns Chalk on focus-within; elsewhere the global focus is a 2px Chalk outline offset 2px.
+- **Error / Disabled:** errors are a plain caption line under the submit in Chalk Variant, announced politely. While saving, the well dims to 70% with a 60% Chalk border.
+
+### Navigation
+- **Style:** a pill-outlined tab group with 4px inset holding Home and Log (36px tabs, icon plus label, semibold). Active is a filled Chalk pill with Rubber text; inactive is Chalk Variant, Chalk on hover. The same treatment serves the kg | lb radio group at 28px.
+
+### Muscle Toggle and Plate Tile
+- **Muscle toggle** (`muscle-toggle`): 48px, 12px radius, Outline border with a small plate-coloured dot; when on, the whole toggle takes the plate fill and ink and the dot flips to the ink.
+- **Plate tile** (`plate-tile`): a 48px plate-coloured circle holding the 30-day count in condensed numerals, a 30% black inset rim, then the group name and "3d ago". Zero counts fade to 35%. Tapping one sets a shared highlight: that tile gets a 2px Chalk outline, the others fade to 45%, and every plate that did not train that group fades to 20% across the bar and the weekly stacks.
+
+### Barbell (signature)
+A steel bar across the full width: a 10px shaft (6px in the mini bar), an 18% knurled centre, end caps, inner collars, and two sleeves loaded symmetrically, one plate per gym day, collar-outward in day order. Each plate is a vertical stack of one band per muscle trained, in plate colours; a gym day with no muscles tagged is a steel-rimmed training plate. On Home each plate is a button that opens a Panel High popover with the day, its muscle chips and the weight. An empty bar is the empty state and the 404, with the next action set over it. The mini bar (56px plates) sits under the log form and updates live as muscles are picked.
+
+### Weekly Stacks and Tally
+- **Weekly stacks:** eight columns of 15px plate faces on a 4px Steel floor rule, same scale every week, with the count above each column and "now" under the current week.
+- **Weigh-in tally:** 30 rounded strokes, 24px tall, Chalk Variant when logged and Track when missed, a gap after every seventh, today ringed in Chalk.
+- **Trend:** each weigh-in a 6px Chalk Subtle dot, the 7-day average a 2.5px Chalk line, gym days as plate-coloured ticks on the chart floor; drag or hover to scrub, with the readout in `numeral-lg`.
+
+### Motion
+Colour-free motion is shared from `src/app/motion.css` (`card-in` section entrance staggered by `--card-i`, `chart-reveal`, `chart-grow`, `chart-pop`). Fit's own grammar is plate loading: `plate-load` slides each plate down its sleeve from the outside over 0.7s on `cubic-bezier(0.2, 0.9, 0.25, 1)`, overshoots 6% and settles (the clank), staggered 110ms in load order after a 0.25s delay; it replays on a successful save, alongside an 18ms vibration where supported. All of it is removed under reduced motion.
+
+## Do's and Don'ts
+
+### Do:
+- **Do** encode every muscle group with its plate colour and its fixed ink from `PLATE` in `src/lib/fit-units.ts`; add new data views by reusing PlateFace rather than inventing a swatch.
+- **Do** use Chalk for every action and active state: filled Chalk pill with Rubber text for primary, Outline pill for secondary.
+- **Do** set every metric in Barlow Condensed bold with tabular numerals, the unit or denominator smaller in Chalk Subtle.
+- **Do** title sections with one uppercase rim label (0.75rem, 700, 0.14em) left and the headline number right on one baseline.
+- **Do** lift surfaces by tone and a hairline: Rubber, then Lifted Panel, then Panel High.
+- **Do** keep the barbell as the empty state and let plates clank on after a save; respect reduced motion.
+
+### Don't:
+- **Don't** use a plate colour for chrome, buttons, headings, borders, focus or status.
+- **Don't** use progresshub lime (#c8f432) or any Midnight Lime token in fit, and don't import `globals.css` into the fit tree.
+- **Don't** add box shadows or glows; the system is flat.
+- **Don't** set a weight or count in Archivo, or a page headline in anything but uppercase Barlow Condensed.
+- **Don't** stack a second small label above a rim-label title.
+- **Don't** colour direction: weight change is ▲ or ▼ in chalk, never red or green.

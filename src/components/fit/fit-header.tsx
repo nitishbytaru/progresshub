@@ -10,8 +10,8 @@ export function FitHeader() {
     <header className="flex h-16 items-center justify-between gap-3">
       <span className="flex items-center gap-2 text-primary">
         <FitGlyph className="size-6" />
-        <span className="hidden text-base font-bold tracking-[-0.015em] text-ink sm:inline">
-          progresshub <span className="text-primary">fit</span>
+        <span className="hidden items-baseline gap-1 text-base font-bold tracking-[-0.015em] text-ink sm:flex">
+          progresshub <span className="font-display text-xl tracking-[0.04em] uppercase">fit</span>
         </span>
       </span>
       <FitNav />

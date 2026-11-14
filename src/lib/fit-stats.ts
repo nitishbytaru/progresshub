@@ -31,12 +31,12 @@ export type FitStats = {
   /** Days logged in the last 30. */
   logged30: number;
   /** Mon → Sun of this week: null = future day. */
-  gymWeek: { day: string; gym: boolean | null }[];
+  gymWeek: { day: string; gym: boolean | null; muscles: Muscle[]; kg: number | null }[];
   gymWeekCount: number;
   gymThisMonth: number;
   gymTotal: number;
   /** Gym days per week for the last 8 weeks, oldest first. */
-  gymWeeks: { start: string; count: number }[];
+  gymWeeks: { start: string; count: number; days: { day: string; muscles: Muscle[] }[] }[];
   avgPerWeek: number;
   /** Consecutive weeks (ending this week or last) with at least one gym day. */
   weekStreak: number;
@@ -68,10 +68,11 @@ export function analyze(logs: FitLog[], today: string, gymBefore = 0): FitStats 
   const logged30 = asc.filter((l) => l.day > cut30).length;
 
   const gymSet = new Set(asc.filter((l) => l.gym).map((l) => l.day));
+  const byDay = new Map(asc.map((l) => [l.day, l]));
   const mon = weekStart(today);
   const gymWeek = Array.from({ length: 7 }, (_, i) => {
     const day = addDays(mon, i);
-    return { day, gym: day > today ? null : gymSet.has(day) };
+    return { day, gym: day > today ? null : gymSet.has(day), muscles: byDay.get(day)?.muscles ?? [], kg: byDay.get(day)?.kg ?? null };
   });
   const monthStart = `${today.slice(0, 8)}01`;
   const gymThisMonth = [...gymSet].filter((d) => d >= monthStart && d <= today).length;
@@ -79,7 +80,11 @@ export function analyze(logs: FitLog[], today: string, gymBefore = 0): FitStats 
   const gymWeeks = Array.from({ length: 8 }, (_, i) => {
     const start = addDays(mon, -7 * (7 - i));
     const end = addDays(start, 6);
-    return { start, count: [...gymSet].filter((d) => d >= start && d <= end).length };
+    const days = [...gymSet]
+      .filter((d) => d >= start && d <= end)
+      .sort()
+      .map((d) => ({ day: d, muscles: byDay.get(d)?.muscles ?? [] }));
+    return { start, count: days.length, days };
   });
   const last4 = gymWeeks.slice(-4);
   const avgPerWeek = last4.reduce((a, w) => a + w.count, 0) / 4;

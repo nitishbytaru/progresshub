@@ -1,22 +1,22 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
-import { EmptyHome, GymCard, LoggedCard, MusclesCard, TrendCard, WeightCard } from "@/components/fit/home-cards";
+import { EmptyHome, LoggedCard, WeightBlock } from "@/components/fit/home-cards";
+import { TrainingBoard } from "@/components/fit/training-board";
+import { TrendChart } from "@/components/fit/trend-chart";
 import { getWeights } from "@/lib/fit";
 import { analyze } from "@/lib/fit-stats";
 import { UNIT_COOKIE, isUnit } from "@/lib/fit-units";
 
-/** Home: the analysis of everything logged (weight, gym, muscles, consistency). */
+/** Home: the week as a loaded bar, then weight, split, weekly load, trend and consistency. */
 export default function FitHome() {
   return (
     <>
-      <h1 className="pt-6 pb-5 text-[2rem] leading-[2.5rem] font-bold tracking-[-0.03em] sm:pt-10 sm:text-[2.5rem] sm:leading-[3rem]">
-        Your <span className="text-primary">progress</span>
-      </h1>
+      <h1 className="sr-only">Your training</h1>
       <Suspense
         fallback={
-          <div className="flex flex-col gap-4" aria-hidden>
-            {["h-[260px]", "h-[300px]", "h-[380px]"].map((h) => (
-              <div key={h} className={`${h} animate-pulse rounded-3xl bg-surface`} />
+          <div className="flex flex-col gap-5 pt-4" aria-hidden>
+            {["h-[190px]", "h-[180px]", "h-[300px]"].map((h) => (
+              <div key={h} className={`${h} animate-pulse rounded-2xl bg-surface`} />
             ))}
           </div>
         }
@@ -34,11 +34,9 @@ async function Analysis() {
   const unit = isUnit(saved) ? saved : "kg";
   const s = analyze(logs, today, gymBefore);
   return (
-    <div className="flex flex-col gap-4">
-      <WeightCard s={s} unit={unit} />
-      <TrendCard s={s} unit={unit} />
-      <GymCard s={s} today={today} />
-      <MusclesCard s={s} />
+    <div className="grid grid-cols-1 gap-5 pt-4 md:grid-cols-12 md:gap-6 lg:gap-x-10 lg:gap-y-8 lg:pt-8">
+      <TrainingBoard s={s} unit={unit} today={today} weight={<WeightBlock s={s} unit={unit} />} />
+      <TrendChart points={s.trend} gym={logs.filter((l) => l.gym).map((l) => ({ day: l.day, muscles: l.muscles }))} unit={unit} />
       <LoggedCard s={s} today={today} loggedDays={new Set(logs.map((l) => l.day))} />
     </div>
   );

@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FitGlyph } from "@/components/fit/fit-glyph";
+import { Barbell } from "@/components/fit/barbell";
 
 export const metadata: Metadata = { title: "Page not found" };
 
-/** Fit 404: Carbon Ice, inside the fit header, pointing back to Home and Log. */
+/** Fit 404: an unloaded bar inside the fit header, pointing back to Home and Log. */
 export default function FitNotFound() {
   return (
-    <section aria-labelledby="fit-404" className="card-in flex flex-col items-center gap-6 py-16 text-center sm:py-24">
-      <span className="relative grid size-24 place-items-center rounded-[28px] border border-outline-variant bg-surface">
-        <FitGlyph className="fit-ascent size-12 text-primary" />
-      </span>
+    <section aria-labelledby="fit-404" className="card-in flex flex-col items-center gap-8 py-14 text-center sm:py-20">
+      <div className="w-full max-w-md">
+        <Barbell days={[]} unit="kg" animate={false} />
+      </div>
       <div className="flex flex-col items-center gap-2">
-        <span className="font-mono text-6xl font-semibold tracking-[-0.05em] text-primary sm:text-7xl">404</span>
-        <h1 id="fit-404" className="text-2xl font-bold tracking-[-0.02em]">
-          Missed rep.
+        <p className="font-display text-8xl leading-none font-bold tracking-[-0.02em]">404</p>
+        <h1 id="fit-404" className="font-display text-3xl font-bold uppercase">
+          Missed rep
         </h1>
-        <p className="max-w-[32ch] text-base text-ink-variant">This page doesn&apos;t exist. Your logs are safe.</p>
+        <p className="max-w-[34ch] text-ink-variant">There&apos;s no page here. Your logs are safe.</p>
       </div>
       <div className="flex flex-wrap justify-center gap-3">
         <Link

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { MAX_BACKFILL_DAYS, getWeights, lastDays } from "@/lib/fit";
+import { addDays, weekStart } from "@/lib/fit-stats";
 import { UNIT_COOKIE, isUnit } from "@/lib/fit-units";
 import { WeightLogger } from "../weight-logger";
 
@@ -10,12 +11,14 @@ export const metadata: Metadata = { title: "Log" };
 export default function FitLog() {
   return (
     <>
-      <section className="pt-6 pb-6 sm:pt-10">
-        <h1 className="text-[2rem] leading-[2.5rem] font-bold tracking-[-0.03em] sm:text-[2.5rem] sm:leading-[3rem]">
-          Weigh in. <span className="text-primary">Every day.</span>
+      <section className="pt-6 pb-6 sm:pt-10 lg:pb-8">
+        <h1 className="font-display text-5xl leading-[0.9] font-bold tracking-[-0.01em] uppercase sm:text-6xl">
+          Weigh in.
+          <br />
+          <span className="text-ink-subtle">Load the bar.</span>
         </h1>
       </section>
-      <Suspense fallback={<div className="h-[420px] animate-pulse rounded-3xl bg-surface" aria-hidden />}>
+      <Suspense fallback={<div className="h-[420px] animate-pulse rounded-2xl bg-surface" aria-hidden />}>
         <Logger />
       </Suspense>
     </>
@@ -32,7 +35,7 @@ async function Logger() {
       minDay={lastDays(today, MAX_BACKFILL_DAYS + 1)[0]}
       logs={logs}
       gymBefore={gymBefore}
-      week={lastDays(today, 7)}
+      week={Array.from({ length: 7 }, (_, i) => addDays(weekStart(today), i))}
     />
   );
 }
