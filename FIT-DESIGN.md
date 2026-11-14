@@ -357,6 +357,15 @@ A steel bar across the full width: a 10px shaft (6px in the mini bar), an 18% kn
 ### Motion
 Colour-free motion is shared from `src/app/motion.css` (`card-in` section entrance staggered by `--card-i`, `chart-reveal`, `chart-grow`, `chart-pop`). Fit's own grammar is plate loading: `plate-load` slides each plate down its sleeve from the outside over 0.7s on `cubic-bezier(0.2, 0.9, 0.25, 1)`, overshoots 6% and settles (the clank), staggered 110ms in load order after a 0.25s delay; it replays on a successful save, alongside an 18ms vibration where supported. All of it is removed under reduced motion.
 
+### Dumbo (mascot) and the load-the-bar flow
+
+- **Dumbo the dumbbell** (`src/components/fit/dumbo.tsx`) is the app's one character: a steel capsule handle (the body, with the face) between two bumper-plate "arms". Inline SVG driven by `motion`, as a single state machine with one `mood` prop: idle, curious, thinking, happy, proud, flex, sad, sore, sleepy, shocked. Plates swing around their own centres; the body bobs, droops or bounces; he blinks every ~4 s.
+- **Plate-tint rule:** Dumbo's plates take the colour of the muscle being talked about (the same IWF plate colours), steel otherwise. His face and effects stay in chalk/rubber; no other hues (tears, sweat, sparkles and blush are chalk).
+- **Mood follows the goal**, never the raw direction: weight moving toward the goal (from the profile, else the flow's `fit_goal` cookie, else Maintain shown selected) is happy/flex; away is sad with an encouraging line; ±0.1 kg is flat; >2 kg is shocked ("double-check that?"). Logic and copy live in `src/lib/fit-mascot.ts`.
+- **The flow** (`src/components/fit/log-flow.tsx`): full screen on phones, a 560px rubber-floor panel on md+. One question per step (When → Weight → Gym → Muscles → Bar loaded), shared-axis slide + blur between steps, Dumbo and a speech bubble (tail pointing at him) above each question. Opened by the **+ LOG** button (`log-fab.tsx`, chalk pill bottom-right, above the phone tab bar) or any `OpenLogButton`.
+- **Drop-in alerts** (muscle trained yesterday, twice/three times this week) land under the speech bubble with a plate-colour dot, never over Dumbo; he winces (sore) while it shows.
+- **Motion:** `clank-shake` (a plate landing), chalk-confetti bursts on a good weigh-in and the finale, per-muscle tile moves (chest puff, back spread, shoulders press, biceps curl, triceps push-down, legs squat), the finale's full-size barbell with `plate-load`. `MotionConfig reducedMotion="user"` and `useReducedMotion` keep every step working as static poses when motion is reduced.
+
 ## Do's and Don'ts
 
 ### Do:

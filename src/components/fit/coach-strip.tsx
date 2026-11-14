@@ -5,6 +5,7 @@ import type { Targets, Totals } from "@/lib/fit-nutrition";
 import { PLATE, muscleLabel, type Muscle } from "@/lib/fit-units";
 import { PlateFace } from "./barbell";
 import { KcalRing } from "./kcal-ring";
+import { OpenLogButton } from "./open-log-button";
 
 const card = "card-in group flex flex-col gap-3 rounded-2xl border border-outline-variant bg-surface p-4 transition-colors hover:border-outline sm:p-5";
 const head = (label: string) => (
@@ -53,9 +54,15 @@ export function CoachStrip({
           )}
         </div>
         {tip && <p className="text-sm text-ink-variant">{tip.text}</p>}
-        <Link href="/log" className="mt-auto inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover">
-          <Plus className="size-4" aria-hidden /> {trainedToday ? "Log sets" : "Log today"}
-        </Link>
+        {trainedToday ? (
+          <Link href="/log#sets" className="mt-auto inline-flex h-11 items-center justify-center gap-1.5 rounded-full border border-outline text-sm font-bold text-ink-variant transition-colors hover:bg-hover hover:text-ink">
+            <Plus className="size-4" aria-hidden /> Log sets
+          </Link>
+        ) : (
+          <OpenLogButton className="mt-auto inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-primary text-sm font-bold text-primary-foreground transition-colors hover:bg-primary-hover">
+            <Plus className="size-4" aria-hidden /> Log today
+          </OpenLogButton>
+        )}
       </section>
 
       <Link href="/coach" className={card} style={{ ["--card-i" as string]: 3 }}>

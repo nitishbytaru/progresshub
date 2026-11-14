@@ -103,6 +103,15 @@ body {
   font-family: var(--font-archivo), system-ui, sans-serif;
 }
 
+/* The rubber-floor speckle, for full-screen layers that sit above the body (the log flow). */
+.fit-floor {
+  background-image:
+    radial-gradient(#ffffff0a 0.6px, transparent 0.8px),
+    radial-gradient(#ffffff06 0.5px, transparent 0.7px);
+  background-size: 7px 7px, 11px 11px;
+  background-position: 0 0, 3px 5px;
+}
+
 .font-display {
   font-family: var(--font-barlow), var(--font-archivo), sans-serif;
   font-variant-numeric: tabular-nums;
@@ -148,6 +157,15 @@ input[type="number"] {
 .plate-load {
   animation: plate-load 0.7s cubic-bezier(0.2, 0.9, 0.25, 1) backwards;
   animation-delay: calc(0.25s + var(--i, 0) * 110ms);
+}
+
+/* A plate dropping into its slot: one hard shake, like iron landing on iron. */
+@keyframes clank-shake {
+  0% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-1px); }
+  100% { transform: translateX(0); }
 }
 
 /* Saving: a plate keeps sliding onto a mini bar while the request runs. */

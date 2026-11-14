@@ -102,7 +102,7 @@ export function SetLogger({
   const stepBtn = "grid size-11 shrink-0 place-items-center rounded-full text-ink-variant hover:bg-hover hover:text-ink";
 
   return (
-    <section aria-label="Sets and recovery" className="card-in flex flex-col gap-5 rounded-2xl border border-outline-variant bg-surface p-4 sm:p-5">
+    <section id="sets" aria-label="Sets and recovery" className="scroll-mt-6 card-in flex flex-col gap-5 rounded-2xl border border-outline-variant bg-surface p-4 sm:p-5">
       <div className="flex items-baseline justify-between">
         <h2 className="font-display text-3xl font-bold uppercase">Sets</h2>
         <span className="text-xs text-ink-subtle">{visible.length} today</span>
