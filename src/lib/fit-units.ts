@@ -41,5 +41,5 @@ export const PLATE: Record<Muscle, { fill: string; ink: string }> = {
   legs: { fill: "var(--plate-legs)", ink: "#141414" },
   shoulders: { fill: "var(--plate-shoulders)", ink: "#141414" },
   biceps: { fill: "var(--plate-biceps)", ink: "#141414" },
-  triceps: { fill: "var(--plate-triceps)", ink: "#141414" },
+  triceps: { fill: "var(--plate-triceps)", ink: "#ffffff" },
 };

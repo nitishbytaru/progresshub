@@ -1,7 +1,15 @@
 /** Exercise library for set logging, mapped to the six muscle groups. Client-safe. */
 import type { Muscle } from "./fit-units";
 
-export type Exercise = { key: string; name: string; muscle: Muscle; kind: "compound" | "isolation"; bodyweight?: boolean };
+export type Exercise = {
+  key: string;
+  name: string;
+  muscle: Muscle;
+  kind: "compound" | "isolation";
+  bodyweight?: boolean;
+  /** This exercise's own bright colour (unique per exercise; see exerciseColor). */
+  color: string;
+};
 
 // prettier-ignore
 const ROWS: [string, string, Muscle, Exercise["kind"], boolean?][] = [
@@ -35,8 +43,29 @@ const ROWS: [string, string, Muscle, Exercise["kind"], boolean?][] = [
   ["goblet-squat", "Goblet squat", "legs", "compound"], ["hack-squat", "Hack squat", "legs", "compound"],
 ];
 
-export const EXERCISES: Exercise[] = ROWS.map(([key, name, muscle, kind, bodyweight]) => ({ key, name, muscle, kind, bodyweight }));
+/**
+ * A bright, unique colour per exercise. Hues step by the golden angle (137.5°), so exercises listed
+ * next to each other (the same muscle group) land far apart on the wheel, and lightness cycles
+ * through three steps so near-hue neighbours still differ in brightness. All read as neon on the
+ * rubber ground and take rubber ink (#141414) on top.
+ */
+const LIGHTNESS = [0.82, 0.72, 0.9];
+export const exerciseColor = (i: number) =>
+  `oklch(${LIGHTNESS[i % 3]} 0.17 ${((i * 137.508 + 25) % 360).toFixed(1)})`;
+export const EXERCISE_INK = "#141414";
+
+export const EXERCISES: Exercise[] = ROWS.map(
+  ([key, name, muscle, kind, bodyweight], i) => ({
+    key,
+    name,
+    muscle,
+    kind,
+    bodyweight,
+    color: exerciseColor(i),
+  }),
+);
 export const EXERCISE_BY_KEY = new Map(EXERCISES.map((e) => [e.key, e]));
 
 /** Epley estimated one-rep max. */
-export const e1rm = (kg: number, reps: number) => (reps <= 1 ? kg : Math.round(kg * (1 + reps / 30) * 10) / 10);
+export const e1rm = (kg: number, reps: number) =>
+  reps <= 1 ? kg : Math.round(kg * (1 + reps / 30) * 10) / 10;

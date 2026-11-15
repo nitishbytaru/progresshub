@@ -4,8 +4,21 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { Footprints, Minus, Moon, Plus, Repeat2, Trash2 } from "lucide-react";
 import { addSet, deleteSet, setExtras } from "@/app/(fit)/fit/log/set-actions";
 import type { WorkoutSet } from "@/lib/fit";
-import { EXERCISES, EXERCISE_BY_KEY, e1rm } from "@/lib/fit-exercises";
-import { MUSCLES, PLATE, fmtWeight, fromKg, muscleLabel, type Muscle, type Unit } from "@/lib/fit-units";
+import {
+  EXERCISES,
+  EXERCISE_BY_KEY,
+  EXERCISE_INK,
+  e1rm,
+} from "@/lib/fit-exercises";
+import {
+  MUSCLES,
+  PLATE,
+  fmtWeight,
+  fromKg,
+  muscleLabel,
+  type Muscle,
+  type Unit,
+} from "@/lib/fit-units";
 
 type Last = Record<string, { reps: number; weight_kg: number }>;
 
@@ -37,7 +50,10 @@ export function SetLogger({
   const firstEx = EXERCISES.find((e) => e.muscle === firstMuscle)!.key;
   const startFor = (key: string) => {
     const l = last[key];
-    return { reps: String(l?.reps ?? 8), weight: l && l.weight_kg ? fmtWeight(l.weight_kg, unit) : "" };
+    return {
+      reps: String(l?.reps ?? 8),
+      weight: l && l.weight_kg ? fmtWeight(l.weight_kg, unit) : "",
+    };
   };
 
   const [muscle, setMuscle] = useState<Muscle>(firstMuscle);
@@ -54,13 +70,20 @@ export function SetLogger({
   const ex = EXERCISE_BY_KEY.get(exercise)!;
   const step = unit === "lb" ? 5 : 2.5;
   const visible = sets.filter((s) => s.id !== hidden);
-  const list = useMemo(() => EXERCISES.filter((e) => e.muscle === muscle), [muscle]);
+  const list = useMemo(
+    () => EXERCISES.filter((e) => e.muscle === muscle),
+    [muscle],
+  );
   const grouped = useMemo(() => {
     const g = new Map<string, WorkoutSet[]>();
-    visible.forEach((s) => g.set(s.exercise_key, [...(g.get(s.exercise_key) ?? []), s]));
+    visible.forEach((s) =>
+      g.set(s.exercise_key, [...(g.get(s.exercise_key) ?? []), s]),
+    );
     return [...g];
   }, [visible]);
-  const lastToday = [...visible].reverse().find((s) => s.exercise_key === exercise);
+  const lastToday = [...visible]
+    .reverse()
+    .find((s) => s.exercise_key === exercise);
 
   const setExercise = (key: string) => {
     setExerciseState(key);
@@ -72,7 +95,8 @@ export function SetLogger({
 
   const submit = (r = Number(reps), w = Number(weight || 0)) => {
     if (!(r >= 1)) return setMsg("Enter how many reps.");
-    if (!ex.bodyweight && !(w > 0)) return setMsg(`Enter the weight for ${ex.name}.`);
+    if (!ex.bodyweight && !(w > 0))
+      return setMsg(`Enter the weight for ${ex.name}.`);
     start(async () => {
       const res = await addSet({ day, exercise, reps: r, weight: w, unit });
       setMsg(res.error ?? null);
@@ -98,29 +122,64 @@ export function SetLogger({
     setHidden(null);
   };
 
-  const field = "h-12 w-full min-w-0 bg-transparent text-center font-display text-2xl font-bold outline-none";
-  const stepBtn = "grid size-11 shrink-0 place-items-center rounded-full text-ink-variant hover:bg-hover hover:text-ink";
+  const field =
+    "h-12 w-full min-w-0 bg-transparent text-center font-display text-2xl font-bold outline-none";
+  const stepBtn =
+    "grid size-11 shrink-0 place-items-center rounded-full text-ink-variant hover:bg-hover hover:text-ink";
 
   return (
-    <section id="sets" aria-label="Sets and recovery" className="scroll-mt-6 card-in flex flex-col gap-5 rounded-2xl border border-outline-variant bg-surface p-4 sm:p-5">
+    <section
+      id="sets"
+      aria-label="Sets and recovery"
+      className="scroll-mt-6 card-in flex flex-col gap-5 rounded-2xl border border-outline-variant bg-surface p-4 sm:p-5"
+    >
       <div className="flex items-baseline justify-between">
         <h2 className="font-display text-3xl font-bold uppercase">Sets</h2>
         <span className="text-xs text-ink-subtle">{visible.length} today</span>
       </div>
 
       {/* Today's sets as plates on a sleeve: each new set clanks on. */}
-      <div className="relative flex h-12 items-center rounded-xl bg-background px-2" role="img" aria-label={`${visible.length} sets logged today`}>
-        <span className="absolute inset-x-2 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-steel/70" aria-hidden />
-        <span className="relative mr-1 h-6 w-1.5 rounded-sm bg-steel" aria-hidden />
+      <div
+        className="relative flex h-12 items-center rounded-xl bg-background px-2"
+        role="img"
+        aria-label={`${visible.length} sets logged today`}
+      >
+        <span
+          className="absolute inset-x-2 top-1/2 h-1.5 -translate-y-1/2 rounded-full bg-steel/70"
+          aria-hidden
+        />
+        <span
+          className="relative mr-1 h-6 w-1.5 rounded-sm bg-steel"
+          aria-hidden
+        />
         <span className="relative flex items-center gap-[2px]">
           {visible.map((s) => (
-            <span key={s.id} className="plate-load h-9 w-2 rounded-[2px]" style={{ background: PLATE[s.muscle].fill, ["--from" as string]: 1, ["--i" as string]: 0 }} />
+            <span
+              key={s.id}
+              title={EXERCISE_BY_KEY.get(s.exercise_key)?.name}
+              className="plate-load h-9 w-2 rounded-[2px]"
+              style={{
+                background:
+                  EXERCISE_BY_KEY.get(s.exercise_key)?.color ??
+                  PLATE[s.muscle].fill,
+                ["--from" as string]: 1,
+                ["--i" as string]: 0,
+              }}
+            />
           ))}
         </span>
-        {!visible.length && <span className="relative ml-2 text-xs text-ink-subtle">Empty bar: add your first set</span>}
+        {!visible.length && (
+          <span className="relative ml-2 text-xs text-ink-subtle">
+            Empty bar: add your first set
+          </span>
+        )}
       </div>
 
-      <div className="flex flex-wrap gap-2" role="radiogroup" aria-label="Muscle group">
+      <div
+        className="flex flex-wrap gap-2"
+        role="radiogroup"
+        aria-label="Muscle group"
+      >
         {MUSCLES.map((m) => (
           <button
             key={m}
@@ -132,10 +191,16 @@ export function SetLogger({
               setExercise(EXERCISES.find((e) => e.muscle === m)!.key);
             }}
             className={`inline-flex h-11 items-center gap-2 rounded-full border px-3.5 text-sm font-semibold transition-colors ${
-              muscle === m ? "border-ink bg-primary text-primary-foreground" : "border-outline text-ink-variant hover:bg-hover"
+              muscle === m
+                ? "border-ink bg-primary text-primary-foreground"
+                : "border-outline text-ink-variant hover:bg-hover"
             }`}
           >
-            <span className="size-2.5 rounded-full ring-1 ring-black/30" style={{ background: PLATE[m].fill }} aria-hidden />
+            <span
+              className="size-2.5 rounded-full ring-1 ring-black/30"
+              style={{ background: PLATE[m].fill }}
+              aria-hidden
+            />
             {muscleLabel(m)}
           </button>
         ))}
@@ -149,38 +214,101 @@ export function SetLogger({
         className="flex flex-col gap-4"
       >
         <label className="flex flex-col gap-1.5">
-          <span className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">Exercise</span>
-          <select value={exercise} onChange={(e) => setExercise(e.target.value)} className="h-12 rounded-xl border border-outline bg-background px-3 text-base font-semibold outline-none focus:border-ink">
-            {list.map((e) => (
-              <option key={e.key} value={e.key}>
-                {e.name}
-                {last[e.key] ? ` · last ${last[e.key].weight_kg ? fmtWeight(last[e.key].weight_kg, unit) : "BW"}×${last[e.key].reps}` : ""}
-              </option>
-            ))}
-          </select>
+          <span className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">
+            Exercise
+          </span>
+          <span className="relative flex">
+            <span
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 rounded-full transition-colors"
+              style={{ background: ex.color }}
+              aria-hidden
+            />
+            <select
+              value={exercise}
+              onChange={(e) => setExercise(e.target.value)}
+              className="h-12 w-full rounded-xl border border-outline bg-background pr-3 pl-10 text-base font-semibold outline-none focus:border-ink"
+            >
+              {list.map((e) => (
+                <option key={e.key} value={e.key}>
+                  {e.name}
+                  {last[e.key]
+                    ? ` · last ${last[e.key].weight_kg ? fmtWeight(last[e.key].weight_kg, unit) : "BW"}×${last[e.key].reps}`
+                    : ""}
+                </option>
+              ))}
+            </select>
+          </span>
         </label>
 
         <div className="grid grid-cols-2 gap-3">
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">Reps</span>
+            <span className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">
+              Reps
+            </span>
             <div className="flex items-center rounded-xl border border-outline bg-background focus-within:border-ink">
-              <button type="button" aria-label="One rep fewer" onClick={() => setReps(String(Math.max(1, Number(reps || 1) - 1)))} className={stepBtn}>
+              <button
+                type="button"
+                aria-label="One rep fewer"
+                onClick={() =>
+                  setReps(String(Math.max(1, Number(reps || 1) - 1)))
+                }
+                className={stepBtn}
+              >
                 <Minus className="size-4" aria-hidden />
               </button>
-              <input aria-label="Reps" inputMode="numeric" value={reps} onChange={(e) => setReps(e.target.value.replace(/\D/g, "").slice(0, 3))} className={field} />
-              <button type="button" aria-label="One rep more" onClick={() => setReps(String(Math.min(100, Number(reps || 0) + 1)))} className={stepBtn}>
+              <input
+                aria-label="Reps"
+                inputMode="numeric"
+                value={reps}
+                onChange={(e) =>
+                  setReps(e.target.value.replace(/\D/g, "").slice(0, 3))
+                }
+                className={field}
+              />
+              <button
+                type="button"
+                aria-label="One rep more"
+                onClick={() =>
+                  setReps(String(Math.min(100, Number(reps || 0) + 1)))
+                }
+                className={stepBtn}
+              >
                 <Plus className="size-4" aria-hidden />
               </button>
             </div>
           </div>
           <div className="flex flex-col gap-1.5">
-            <span className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">{ex.bodyweight ? `Added ${unit}` : `Weight ${unit}`}</span>
-            <div className={`flex items-center rounded-xl border bg-background focus-within:border-ink ${msg && needsWeight ? "border-ink" : "border-outline"}`}>
-              <button type="button" aria-label={`${step} ${unit} lighter`} onClick={() => setWeight(String(Math.max(0, Number(weight || 0) - step)))} className={stepBtn}>
+            <span className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">
+              {ex.bodyweight ? `Added ${unit}` : `Weight ${unit}`}
+            </span>
+            <div
+              className={`flex items-center rounded-xl border bg-background focus-within:border-ink ${msg && needsWeight ? "border-ink" : "border-outline"}`}
+            >
+              <button
+                type="button"
+                aria-label={`${step} ${unit} lighter`}
+                onClick={() =>
+                  setWeight(String(Math.max(0, Number(weight || 0) - step)))
+                }
+                className={stepBtn}
+              >
                 <Minus className="size-4" aria-hidden />
               </button>
-              <input aria-label={`Weight in ${unit}`} aria-invalid={Boolean(msg && needsWeight)} inputMode="decimal" value={weight} onChange={(e) => setWeight(e.target.value)} placeholder={ex.bodyweight ? "0" : "—"} className={`${field} placeholder:text-ink-subtle`} />
-              <button type="button" aria-label={`${step} ${unit} heavier`} onClick={() => setWeight(String(Number(weight || 0) + step))} className={stepBtn}>
+              <input
+                aria-label={`Weight in ${unit}`}
+                aria-invalid={Boolean(msg && needsWeight)}
+                inputMode="decimal"
+                value={weight}
+                onChange={(e) => setWeight(e.target.value)}
+                placeholder={ex.bodyweight ? "0" : "—"}
+                className={`${field} placeholder:text-ink-subtle`}
+              />
+              <button
+                type="button"
+                aria-label={`${step} ${unit} heavier`}
+                onClick={() => setWeight(String(Number(weight || 0) + step))}
+                className={stepBtn}
+              >
                 <Plus className="size-4" aria-hidden />
               </button>
             </div>
@@ -188,14 +316,25 @@ export function SetLogger({
         </div>
 
         <div className="flex gap-2">
-          <button type="submit" disabled={pending} className="h-12 flex-1 rounded-full bg-primary font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={pending}
+            className="h-12 flex-1 rounded-full bg-primary font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+          >
             Add set
           </button>
           {lastToday && (
             <button
               type="button"
               disabled={pending}
-              onClick={() => submit(lastToday.reps, lastToday.weight_kg ? Number(fromKg(lastToday.weight_kg, unit).toFixed(1)) : 0)}
+              onClick={() =>
+                submit(
+                  lastToday.reps,
+                  lastToday.weight_kg
+                    ? Number(fromKg(lastToday.weight_kg, unit).toFixed(1))
+                    : 0,
+                )
+              }
               className="inline-flex h-12 items-center gap-1.5 rounded-full border border-outline px-4 text-sm font-bold text-ink-variant hover:bg-hover hover:text-ink"
             >
               <Repeat2 className="size-4" aria-hidden /> Same again
@@ -210,22 +349,51 @@ export function SetLogger({
             const e = EXERCISE_BY_KEY.get(key);
             return (
               <li key={key} className="py-3">
-                <p className="flex items-center gap-2 font-semibold">
-                  <span className="size-2.5 rounded-full" style={{ background: e ? PLATE[e.muscle].fill : "var(--steel)" }} aria-hidden />
-                  {e?.name ?? key}
+                <p className="flex">
+                  <span
+                    className="rounded-full px-3 py-1 text-sm font-bold"
+                    style={{
+                      background: e?.color ?? "var(--steel)",
+                      color: EXERCISE_INK,
+                    }}
+                  >
+                    {e?.name ?? key}
+                  </span>
                 </p>
                 <ol className="mt-2 flex flex-wrap gap-2">
                   {ss.map((s) => {
                     const est = e1rm(s.weight_kg, s.reps);
                     const pr = (bests[key] ?? 0) > 0 && est > bests[key];
                     return (
-                      <li key={s.id} className="inline-flex items-center gap-2 rounded-full border border-outline py-1 pr-1 pl-3">
+                      <li
+                        key={s.id}
+                        className="inline-flex items-center gap-2 rounded-full border border-outline py-1 pr-1 pl-2.5"
+                      >
+                        <span
+                          className="size-2.5 shrink-0 rounded-full"
+                          style={{ background: e?.color ?? "var(--steel)" }}
+                          aria-hidden
+                        />
                         <span className="font-display text-lg font-bold">
-                          {s.weight_kg ? fmtWeight(s.weight_kg, unit) : "Bodyweight"}
-                          <span className="text-sm text-ink-subtle"> × {s.reps}</span>
+                          {s.weight_kg
+                            ? fmtWeight(s.weight_kg, unit)
+                            : "Bodyweight"}
+                          <span className="text-sm text-ink-subtle">
+                            {" "}
+                            × {s.reps}
+                          </span>
                         </span>
-                        {pr && <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] font-bold text-primary-foreground">PR</span>}
-                        <button type="button" aria-label={`Delete set ${s.set_no} of ${e?.name ?? key}`} onClick={() => remove(s.id)} className="grid size-9 place-items-center rounded-full text-ink-subtle hover:bg-hover hover:text-ink">
+                        {pr && (
+                          <span className="rounded-full bg-primary px-1.5 text-[0.6875rem] font-bold text-primary-foreground">
+                            PR
+                          </span>
+                        )}
+                        <button
+                          type="button"
+                          aria-label={`Delete set ${s.set_no} of ${e?.name ?? key}`}
+                          onClick={() => remove(s.id)}
+                          className="grid size-9 place-items-center rounded-full text-ink-subtle hover:bg-hover hover:text-ink"
+                        >
                           <Trash2 className="size-4" aria-hidden />
                         </button>
                       </li>
@@ -239,9 +407,16 @@ export function SetLogger({
       )}
 
       {hidden && (
-        <div className="flex items-center justify-between rounded-xl border border-outline bg-surface-high px-4 py-2" role="status">
+        <div
+          className="flex items-center justify-between rounded-xl border border-outline bg-surface-high px-4 py-2"
+          role="status"
+        >
           <span className="text-sm">Set removed</span>
-          <button type="button" onClick={undo} className="h-9 rounded-full px-3 text-sm font-bold underline-offset-4 hover:underline">
+          <button
+            type="button"
+            onClick={undo}
+            className="h-9 rounded-full px-3 text-sm font-bold underline-offset-4 hover:underline"
+          >
             Undo
           </button>
         </div>
@@ -252,7 +427,10 @@ export function SetLogger({
         onSubmit={(e) => {
           e.preventDefault();
           start(async () => {
-            const r = await setExtras(day, { sleep_h: sleepH ? Number(sleepH) : null, steps: stepsN ? Number(stepsN) : null });
+            const r = await setExtras(day, {
+              sleep_h: sleepH ? Number(sleepH) : null,
+              steps: stepsN ? Number(stepsN) : null,
+            });
             setMsg(r.error ?? "Recovery saved.");
           });
         }}
@@ -262,15 +440,31 @@ export function SetLogger({
           <span className="flex items-center gap-1 text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">
             <Moon className="size-3.5" aria-hidden /> Sleep h
           </span>
-          <input inputMode="decimal" value={sleepH} onChange={(e) => setSleepH(e.target.value)} className="h-12 rounded-xl border border-outline bg-background px-3 font-display text-2xl font-bold outline-none focus:border-ink" />
+          <input
+            inputMode="decimal"
+            value={sleepH}
+            onChange={(e) => setSleepH(e.target.value)}
+            className="h-12 rounded-xl border border-outline bg-background px-3 font-display text-2xl font-bold outline-none focus:border-ink"
+          />
         </label>
         <label className="flex flex-col gap-1.5">
           <span className="flex items-center gap-1 text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">
             <Footprints className="size-3.5" aria-hidden /> Steps
           </span>
-          <input inputMode="numeric" value={stepsN} onChange={(e) => setStepsN(e.target.value.replace(/\D/g, "").slice(0, 6))} className="h-12 rounded-xl border border-outline bg-background px-3 font-display text-2xl font-bold outline-none focus:border-ink" />
+          <input
+            inputMode="numeric"
+            value={stepsN}
+            onChange={(e) =>
+              setStepsN(e.target.value.replace(/\D/g, "").slice(0, 6))
+            }
+            className="h-12 rounded-xl border border-outline bg-background px-3 font-display text-2xl font-bold outline-none focus:border-ink"
+          />
         </label>
-        <button type="submit" disabled={pending} className="h-12 rounded-full border border-outline px-5 font-bold text-ink-variant transition-colors hover:bg-hover hover:text-ink">
+        <button
+          type="submit"
+          disabled={pending}
+          className="h-12 rounded-full border border-outline px-5 font-bold text-ink-variant transition-colors hover:bg-hover hover:text-ink"
+        >
           Save
         </button>
       </form>

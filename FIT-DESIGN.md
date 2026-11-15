@@ -27,8 +27,8 @@ colors:
   plate-back: '#1e5bc6'
   plate-legs: '#f2c230'
   plate-shoulders: '#2f8f4e'
-  plate-biceps: '#f4f4f2'
-  plate-triceps: '#9aa3ad'
+  plate-biceps: '#f2711c'
+  plate-triceps: '#8b4fd8'
   plate-ink-light: '#ffffff'
   plate-ink-dark: '#141414'
 typography:
@@ -257,7 +257,7 @@ A near-monochrome rubber-and-chalk field (~90%) with six saturated plate colours
 - **Chalk Dust** (`chalk-soft`): the active chip fill and the "due" tag behind chalk text.
 
 ### Tertiary (data: the plates)
-- **Chest Red** (`plate-chest`), **Back Blue** (`plate-back`), **Legs Yellow** (`plate-legs`), **Shoulders Green** (`plate-shoulders`), **Biceps Chalk** (`plate-biceps`), **Triceps Steel** (`plate-triceps`): one per muscle group, in the order of the IWF plate set. Exposed in code as `PLATE[muscle].fill` in `src/lib/fit-units.ts` and `bg-plate-*` utilities. Each carries a fixed ink: Bare White (`plate-ink-light`) on chest and back, Rubber (`plate-ink-dark`) on legs, shoulders, biceps and triceps; every pairing clears 4.5:1.
+- **Chest Red** (`plate-chest`), **Back Blue** (`plate-back`), **Legs Yellow** (`plate-legs`), **Shoulders Green** (`plate-shoulders`), **Biceps Orange** (`plate-biceps`), **Triceps Violet** (`plate-triceps`): one per muscle group. The first four follow the IWF plate set; biceps and triceps were chalk-white and steel, which read as nearly the same pale neutral, so they were changed to orange and violet (user-approved, 2026-11-15). Exposed in code as `PLATE[muscle].fill` in `src/lib/fit-units.ts` and `bg-plate-*` utilities. Each carries a fixed ink: Bare White (`plate-ink-light`) on chest, back and triceps, Rubber (`plate-ink-dark`) on legs, shoulders and biceps; every pairing clears 4.5:1.
 
 ### Neutral
 - **Gym-Floor Rubber** (`rubber`): page ground and the weight input well; also `themeColor`.
@@ -269,8 +269,11 @@ A near-monochrome rubber-and-chalk field (~90%) with six saturated plate colours
 - **Bar Steel** (`steel`): the barbell shaft, collars and sleeves, the rim of an untagged gym-day plate, and the floor rule under the weekly stacks.
 - **Chalk Variant / Chalk Subtle** (`chalk-variant`, `chalk-subtle`): secondary text and tertiary text (units, dates, tags).
 
+### Exercise colours (data: a single exercise)
+Every exercise in `src/lib/fit-exercises.ts` carries its own bright colour (`Exercise.color`, from `exerciseColor(i)`): OKLCH chroma 0.17, hue stepping by the golden angle (137.5°) and lightness cycling 0.82 / 0.72 / 0.9, so exercises of the same muscle group sit far apart and are easy to tell apart (user-approved, 2026-11-15). Text on an exercise colour is always Rubber (`EXERCISE_INK`). Use exercise colours only where one specific exercise is shown (set plates on the Log sleeve, the exercise picker swatch, exercise name chips, set chips). Anything about a muscle group keeps its plate colour.
+
 ### Named Rules
-**The Plates Are Data Rule.** A plate colour appears only where it encodes a muscle group: a plate face, a split tile, a trained-muscle toggle, a muscle chip, a gym-day tick on the trend floor. Never on chrome, buttons, headings, borders or state.
+**The Plates Are Data Rule.** A plate colour appears only where it encodes a muscle group: a plate face, a split tile, a trained-muscle toggle, a muscle chip, a gym-day tick on the trend floor. Never on chrome, buttons, headings, borders or state. Exercise colours follow the same rule, at the level of one exercise.
 
 **The Chalk Hand Rule.** Chalk is the one action colour. Primary buttons, active tabs, active toggles and focus are chalk on rubber; there is no accent hue to reach for.
 
