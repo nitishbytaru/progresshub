@@ -3,7 +3,7 @@
  * protein targets, filtered by diet type. Deterministic for a seed, so a plan is stable for the day
  * and a "swap" only changes the one slot asked for. Pure; no I/O.
  */
-import { FOODS, allowedDiets, type Diet, type Food, type Meal } from "./fit-foods";
+import { FOODS, allowedDiets, isCountable, isLiquid, type Diet, type Food, type Meal } from "./fit-foods";
 
 export type PlanItem = { slot: string; food: Food; servings: number; kcal: number; protein: number; carbs: number; fat: number };
 export type PlanMeal = { meal: Meal; items: PlanItem[]; kcal: number; protein: number };
@@ -45,11 +45,13 @@ function rng(seed: string) {
   };
 }
 
-/** Countable servings ("1 piece", "1 medium", "1 slice") step by 1; others by 0.5. */
-const countable = (f: Food) => /^1 (piece|medium|large|slice|egg|omelette|bar|wrap|sandwich)/.test(f.serving);
+/** Countable servings (1 pc, 1 slice…) step by 1; others by 0.5. */
+const countable = (f: Food) => isCountable(f.serving);
+/** Most pieces to plan: 4 of a full item (roti, egg), more of small ones (almonds) up to ~300 kcal. */
+const maxPieces = (f: Food) => Math.max(4, Math.min(20, Math.floor(300 / Math.max(1, f.kcal))));
 const roundServ = (f: Food, s: number) => {
   const step = countable(f) ? 1 : 0.5;
-  return Math.min(countable(f) ? 4 : 3, Math.max(step, Math.round(s / step) * step));
+  return Math.min(countable(f) ? maxPieces(f) : isLiquid(f.serving) ? 5 : 3, Math.max(step, Math.round(s / step) * step));
 };
 
 const item = (slot: string, food: Food, servings: number): PlanItem => ({
@@ -95,7 +97,7 @@ export function planDay(opts: { kcal: number; protein: number; diet: Diet; seed:
     let k = 0;
     let p = 0;
     for (const c of chosen.filter((c) => c.slot !== "main")) {
-      let s = 1;
+      let s = c.food.portion;
       if (c.slot === "protein" || c.slot === "snack") {
         const need = Math.max(0, pBudget - p) * (meal === "snack" ? 1 : 0.75);
         s = c.food.protein > 0 ? need / c.food.protein : 1;
@@ -128,7 +130,7 @@ export function planDay(opts: { kcal: number; protein: number; diet: Diet; seed:
       m.items.forEach((it, ii) => {
         const step = countable(it.food) ? 1 : 0.5;
         const s2 = it.servings + (diff > 0 ? -step : step);
-        if (s2 < step || s2 > (countable(it.food) ? 5 : 3.5)) return;
+        if (s2 < step || s2 > (countable(it.food) ? maxPieces(it.food) + 1 : isLiquid(it.food.serving) ? 5 : 3.5)) return;
         const next = item(it.slot, it.food, s2);
         if (diff > 0 && prot() - it.protein + next.protein < opts.protein * 0.95 && it.protein > 0) return;
         const gain = Math.abs(diff) - Math.abs(diff - it.kcal + next.kcal);

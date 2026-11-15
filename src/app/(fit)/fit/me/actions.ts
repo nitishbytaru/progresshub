@@ -31,7 +31,6 @@ export async function saveProfile(_: ProfileState, formData: FormData): Promise<
   const target = rawTarget ? n("target") * (unit === "lb" ? KG_PER_LB : 1) : null;
   const rate = n("weekly_rate_kg");
   const gymDays = n("gym_days_target");
-  const water = n("water_target_l") * 1000;
 
   if (!SEX.includes(sex)) return { error: "Pick male or female (used for the calorie formula)." };
   if (!Number.isInteger(birth) || birth < year - 100 || birth > year - 12) return { error: `Enter a birth year between ${year - 100} and ${year - 12}.` };
@@ -42,7 +41,6 @@ export async function saveProfile(_: ProfileState, formData: FormData): Promise<
   if (!(rate >= 0 && rate <= 1.5)) return { error: "Weekly rate must be between 0 and 1.5 kg." };
   if (!DIET.includes(diet)) return { error: "Pick a diet type." };
   if (!Number.isInteger(gymDays) || gymDays < 0 || gymDays > 7) return { error: "Gym days per week must be 0–7." };
-  if (!(water >= 500 && water <= 8000)) return { error: "Water target must be 0.5–8 L." };
 
   const supabase = await createClient();
   const {
@@ -61,7 +59,6 @@ export async function saveProfile(_: ProfileState, formData: FormData): Promise<
     weekly_rate_kg: goal === "maintain" ? 0 : rate,
     diet,
     gym_days_target: gymDays,
-    water_target_ml: Math.round(water),
     updated_at: new Date().toISOString(),
   });
   if (error) {

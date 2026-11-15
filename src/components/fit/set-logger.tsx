@@ -4,6 +4,8 @@ import { useMemo, useRef, useState, useTransition } from "react";
 import { Footprints, Minus, Moon, Plus, Repeat2, Trash2 } from "lucide-react";
 import { addSet, deleteSet, setExtras } from "@/app/(fit)/fit/log/set-actions";
 import type { WorkoutSet } from "@/lib/fit";
+import { PlateLoader } from "./plate-loader";
+import { fitBusy, fitError, fitToast } from "./fit-toast";
 import {
   EXERCISES,
   EXERCISE_BY_KEY,
@@ -14,6 +16,7 @@ import {
   MUSCLES,
   PLATE,
   fmtWeight,
+  KG_PER_LB,
   fromKg,
   muscleLabel,
   type Muscle,
@@ -66,6 +69,9 @@ export function SetLogger({
   const [hidden, setHidden] = useState<string | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [pending, start] = useTransition();
+  // Which button started the running action, so only that one shows the loader.
+  const [op, setOp] = useState<"add" | "extras" | null>(null);
+  const busyOp = pending ? op : null;
 
   const ex = EXERCISE_BY_KEY.get(exercise)!;
   const step = unit === "lb" ? 5 : 2.5;
@@ -97,9 +103,23 @@ export function SetLogger({
     if (!(r >= 1)) return setMsg("Enter how many reps.");
     if (!ex.bodyweight && !(w > 0))
       return setMsg(`Enter the weight for ${ex.name}.`);
+    setOp("add");
     start(async () => {
+      fitBusy("Logging set…");
       const res = await addSet({ day, exercise, reps: r, weight: w, unit });
       setMsg(res.error ?? null);
+      if (res.error) return void fitError(res.error, "Set not saved");
+      const kg = unit === "lb" ? w * KG_PER_LB : w;
+      const pr =
+        !ex.bodyweight &&
+        (bests[exercise] ?? 0) > 0 &&
+        e1rm(kg, r) > bests[exercise];
+      fitToast({
+        title: pr ? `New PR on ${ex.name}!` : `Set logged: ${ex.name}`,
+        detail: `${w ? `${w} ${unit}` : "Bodyweight"} × ${r}`,
+        mood: pr ? "shocked" : "flex",
+        tint: ex.color,
+      });
     });
   };
 
@@ -109,10 +129,23 @@ export function SetLogger({
     setMsg(null);
     undoTimer.current = setTimeout(() => {
       start(async () => {
+        fitBusy("Removing set…");
         const r = await deleteSet(id);
         if (r.error) {
           setHidden(null);
           setMsg(r.error);
+          fitError(r.error, "Couldn't remove that set");
+        } else {
+          const gone = sets.find((x) => x.id === id);
+          const goneEx = gone
+            ? EXERCISE_BY_KEY.get(gone.exercise_key)
+            : undefined;
+          fitToast({
+            title: "Set removed",
+            detail: goneEx?.name,
+            mood: "sad",
+            tint: goneEx?.color,
+          });
         }
       });
     }, 5000);
@@ -319,9 +352,16 @@ export function SetLogger({
           <button
             type="submit"
             disabled={pending}
-            className="h-12 flex-1 rounded-full bg-primary font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+            aria-busy={busyOp === "add"}
+            className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
           >
-            Add set
+            {busyOp === "add" ? (
+              <>
+                <PlateLoader size="sm" /> Logging…
+              </>
+            ) : (
+              "Add set"
+            )}
           </button>
           {lastToday && (
             <button
@@ -426,12 +466,27 @@ export function SetLogger({
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          setOp("extras");
           start(async () => {
+            fitBusy("Saving recovery…");
             const r = await setExtras(day, {
               sleep_h: sleepH ? Number(sleepH) : null,
               steps: stepsN ? Number(stepsN) : null,
             });
             setMsg(r.error ?? "Recovery saved.");
+            if (r.error) fitError(r.error);
+            else
+              fitToast({
+                title: "Recovery saved",
+                detail:
+                  [
+                    sleepH && `${sleepH} h sleep`,
+                    stepsN && `${Number(stepsN).toLocaleString()} steps`,
+                  ]
+                    .filter(Boolean)
+                    .join(" · ") || undefined,
+                mood: sleepH && Number(sleepH) < 6 ? "sleepy" : "happy",
+              });
           });
         }}
         className="grid grid-cols-[1fr_1fr_auto] items-end gap-3 border-t border-outline-variant pt-4"
@@ -463,9 +518,11 @@ export function SetLogger({
         <button
           type="submit"
           disabled={pending}
-          className="h-12 rounded-full border border-outline px-5 font-bold text-ink-variant transition-colors hover:bg-hover hover:text-ink"
+          aria-busy={busyOp === "extras"}
+          className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-outline px-5 font-bold text-ink-variant transition-colors hover:bg-hover hover:text-ink"
         >
-          Save
+          {busyOp === "extras" ? <PlateLoader size="sm" /> : null}
+          {busyOp === "extras" ? "Saving…" : "Save"}
         </button>
       </form>
       <p aria-live="polite" className="-mt-2 min-h-5 text-sm text-ink-variant">

@@ -32,8 +32,8 @@ export const NotReady = ({ feature }: { feature: "food" | "profile" }) => (
           Coach
         </Link>{" "}
         and{" "}
-        <Link href="/insights" className="font-semibold text-ink underline underline-offset-4">
-          Insights
+        <Link href="/" className="font-semibold text-ink underline underline-offset-4">
+          Home
         </Link>
         .
       </>

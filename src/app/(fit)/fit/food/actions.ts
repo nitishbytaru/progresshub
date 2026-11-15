@@ -72,18 +72,44 @@ export async function addFood(input: { day: string; meal: Meal; key?: string; cu
   return done(error);
 }
 
-/** Change servings on an entry, scaling its stored nutrition. */
-export async function updateServings(id: string, servings: number): Promise<FoodResult> {
-  if (!(servings > 0 && servings <= 20)) return { error: "Servings must be between 0.25 and 20." };
+/**
+ * Edit a logged entry: rename it, move it to another meal, change servings, or correct its
+ * nutrition. Nutrition comes in per serving and is stored as totals (per serving × servings).
+ */
+export async function updateFood(
+  id: string,
+  input: { name: string; meal: Meal; servings: number; kcal: number; protein: number; carbs: number; fat: number },
+): Promise<FoodResult> {
+  const name = String(input.name ?? "").trim().slice(0, 80);
+  if (!name) return { error: "Give the food a name." };
+  if (!MEALS.includes(input.meal)) return { error: "Pick a meal." };
+  const servings = Number(input.servings);
+  if (!(servings >= 0.25 && servings <= 20)) return { error: "Servings must be between 0.25 and 20." };
+  const per = { kcal: Number(input.kcal), p: Number(input.protein), c: Number(input.carbs), f: Number(input.fat) };
+  if (!(per.kcal >= 0 && per.kcal <= 5000)) return { error: "Calories per serving must be between 0 and 5000." };
+  if (![per.p, per.c, per.f].every((g) => g >= 0 && g <= 500)) return { error: "Protein, carbs and fat must be between 0 and 500 g." };
+
   const supabase = await createClient();
-  const { data, error } = await supabase.from("food_logs").select("servings, kcal, protein_g, carbs_g, fat_g").eq("id", id).maybeSingle();
-  if (error || !data) return done(error ?? { code: "x" });
-  const k = servings / Number(data.servings);
-  const { error: e2 } = await supabase
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired. Sign in again." };
+  const { data, error } = await supabase
     .from("food_logs")
-    .update({ servings, kcal: r1(Number(data.kcal) * k), protein_g: r1(Number(data.protein_g) * k), carbs_g: r1(Number(data.carbs_g) * k), fat_g: r1(Number(data.fat_g) * k) })
-    .eq("id", id);
-  return done(e2);
+    .update({
+      name,
+      meal: input.meal,
+      servings,
+      kcal: r1(per.kcal * servings),
+      protein_g: r1(per.p * servings),
+      carbs_g: r1(per.c * servings),
+      fat_g: r1(per.f * servings),
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .select("id");
+  if (!error && !data?.length) return { error: "That entry no longer exists. Refresh and try again." };
+  return done(error);
 }
 
 export async function deleteFood(id: string): Promise<FoodResult> {
@@ -129,17 +155,6 @@ export async function addCustomFood(input: { name: string; serving_label: string
     fat_g: r1(input.fat),
     diet: input.diet,
   });
-  return done(error);
-}
-
-/** Set the day's water to an absolute amount in ml. */
-export async function setWater(day: string, ml: number): Promise<FoodResult> {
-  const amount = Math.round(Number(ml));
-  if (!(amount >= 0 && amount <= 15000)) return { error: "Water must be 0–15 L." };
-  const { supabase, user, dayError } = await session(day);
-  if (!user) return { error: "Your session expired. Sign in again." };
-  if (dayError) return { error: dayError };
-  const { error } = await supabase.from("fit_days").upsert({ user_id: user.id, day, water_ml: amount, updated_at: new Date().toISOString() }, { onConflict: "user_id,day" });
   return done(error);
 }
 

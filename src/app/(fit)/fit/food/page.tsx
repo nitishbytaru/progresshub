@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { FoodDiary } from "@/components/fit/food-diary";
 import { NotReady } from "@/components/fit/setup-notice";
-import { getCustomFoods, getFitDays, getFoodRange, getProfile, getWeights, trainerReady, validateDay } from "@/lib/fit";
+import { getCustomFoods, getFoodRange, getProfile, getWeights, trainerReady, validateDay } from "@/lib/fit";
 import { FOOD_BY_KEY, type Food, type Meal } from "@/lib/fit-foods";
 import { adaptiveTdee, targets } from "@/lib/fit-nutrition";
 import { addDays } from "@/lib/fit-stats";
@@ -28,12 +28,7 @@ async function Diary({ searchParams }: { searchParams: Promise<Record<string, st
   const asked = typeof query.day === "string" ? query.day : today;
   const day = validateDay(asked, today) ? today : asked;
 
-  const [entries, history, custom, days] = await Promise.all([
-    getFoodRange(day, day),
-    getFoodRange(addDays(today, -28), today),
-    getCustomFoods(),
-    getFitDays(day, day),
-  ]);
+  const [entries, history, custom] = await Promise.all([getFoodRange(day, day), getFoodRange(addDays(today, -28), today), getCustomFoods()]);
 
   // Targets: formula until there's enough intake + weight data for the adaptive (observed) burn.
   const kg = logs[0]?.kg ?? null;
@@ -64,8 +59,6 @@ async function Diary({ searchParams }: { searchParams: Promise<Record<string, st
       entries={entries}
       custom={custom}
       targets={t}
-      water={days[0]?.water_ml ?? 0}
-      waterTarget={profile?.water_target_ml ?? 3000}
       recent={recent}
       diet={profile?.diet ?? null}
       yesterdayMeals={yesterdayMeals}

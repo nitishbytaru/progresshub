@@ -48,7 +48,7 @@ export async function deleteSet(id: string): Promise<SetResult> {
   return { ok: true };
 }
 
-/** Sleep hours and steps for a day (water lives on the Food page). */
+/** Sleep hours and steps for a day. */
 export async function setExtras(day: string, extras: { sleep_h: number | null; steps: number | null }): Promise<SetResult> {
   const sleep = extras.sleep_h === null ? null : Math.round(Number(extras.sleep_h) * 10) / 10;
   const steps = extras.steps === null ? null : Math.round(Number(extras.steps));

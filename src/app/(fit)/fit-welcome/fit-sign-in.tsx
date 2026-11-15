@@ -4,6 +4,12 @@ import { useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { GoogleLogo } from "@/components/auth/google-logo";
 import { createClient } from "@/lib/supabase/client";
+import {
+  clearQueuedFitToast,
+  fitError,
+  queueFitToast,
+} from "@/components/fit/fit-toast";
+import { PlateLoader } from "@/components/fit/plate-loader";
 
 /** Google sign-in for fit. Same account as progresshub; lands on /auth/callback on this host. */
 export function FitSignIn() {
@@ -16,14 +22,24 @@ export function FitSignIn() {
   const google = async () => {
     setPending(true);
     setError(null);
+    queueFitToast({
+      title: "You're signed in",
+      detail: "Let's get to work",
+      mood: "happy",
+    });
     document.cookie = `auth_next=${encodeURIComponent(next)}; path=/; max-age=600; samesite=lax`;
     const { error } = await createClient().auth.signInWithOAuth({
       provider: "google",
-      options: { redirectTo: `${window.location.origin}/auth/callback`, queryParams: { prompt: "select_account" } },
+      options: {
+        redirectTo: `${window.location.origin}/auth/callback`,
+        queryParams: { prompt: "select_account" },
+      },
     });
     if (error) {
+      clearQueuedFitToast();
       setPending(false);
       setError(error.message);
+      fitError(error.message, "Sign-in didn't start");
     }
   };
 
@@ -36,7 +52,13 @@ export function FitSignIn() {
         className="inline-flex h-12 items-center justify-center gap-2.5 rounded-full bg-primary px-6 text-base font-bold text-primary-foreground transition-colors hover:bg-primary-hover active:bg-primary-pressed disabled:opacity-60"
       >
         <GoogleLogo />
-        {pending ? "Opening Google…" : "Continue with Google"}
+        {pending ? (
+          <>
+            <PlateLoader size="sm" /> Opening Google…
+          </>
+        ) : (
+          "Continue with Google"
+        )}
       </button>
       {(error || linkError) && (
         <p role="alert" className="text-sm text-ink-variant">

@@ -1,6 +1,6 @@
 import "server-only";
 import { groqJSON } from "./groq";
-import { FOODS, type Food } from "./fit-foods";
+import { FOODS, servingStep, type Food } from "./fit-foods";
 
 /**
  * AI helpers for the fit coach, on the shared Groq key. The model only (1) splits a typed meal into
@@ -63,7 +63,12 @@ export async function parseMeal(text: string): Promise<ParsedFood[] | null> {
     if (!name) return [];
     const match = matchFood(name);
     if (match) {
-      return [{ name: match.name, servings, serving_label: match.serving, kcal: match.kcal * servings, protein: match.protein * servings, carbs: match.carbs * servings, fat: match.fat * servings, key: match.key }];
+      // Map the AI's amount onto our serving: by its calorie estimate when that's meaningful, else by the usual portion.
+      const step = servingStep(match.serving);
+      const aiKcal = num(raw.kcal, 5000);
+      const rawS = aiKcal > 0 && match.kcal >= 5 ? aiKcal / match.kcal : servings * match.portion;
+      const servings2 = Math.max(step, Math.min(20, Math.round(rawS / step) * step));
+      return [{ name: match.name, servings: servings2, serving_label: match.serving, kcal: match.kcal * servings2, protein: match.protein * servings2, carbs: match.carbs * servings2, fat: match.fat * servings2, key: match.key }];
     }
     return [{
       name,

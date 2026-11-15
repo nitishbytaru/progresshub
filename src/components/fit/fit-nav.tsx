@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Apple, ChartNoAxesColumn, Dumbbell, ScanLine, SquarePen } from "lucide-react";
+import { Apple, ChartNoAxesColumn, Dumbbell, SquarePen } from "lucide-react";
 
 /** On fit.progresshub.space "/x" is rewritten to /fit/x, so match both spellings. */
 const at = (path: string, href: string) => {
@@ -15,7 +15,6 @@ export const FIT_TABS = [
   { href: "/log", label: "Log", icon: SquarePen },
   { href: "/food", label: "Food", icon: Apple },
   { href: "/coach", label: "Coach", icon: Dumbbell },
-  { href: "/insights", label: "Insights", icon: ScanLine },
 ] as const;
 
 /** md+: pill tabs in the header. */
@@ -51,7 +50,7 @@ export function BottomNav() {
       aria-label="Fitness"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-outline-variant bg-background/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-md md:hidden"
     >
-      <ul className="mx-auto grid max-w-[640px] grid-cols-5">
+      <ul className="mx-auto grid max-w-[640px] grid-cols-4">
         {FIT_TABS.map(({ href, label, icon: Icon }) => {
           const active = at(path, href);
           return (

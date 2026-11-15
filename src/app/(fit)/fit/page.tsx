@@ -1,16 +1,20 @@
 import { Suspense } from "react";
 import { cookies } from "next/headers";
 import { EmptyHome, WeightBlock } from "@/components/fit/home-cards";
+import { BalanceCard, WeekdayCard } from "@/components/fit/insight-cards";
+import { MuscleMatrix } from "@/components/fit/muscle-matrix";
+import { TrendChart } from "@/components/fit/trend-chart";
 import { TrainingBoard } from "@/components/fit/training-board";
 import { getFoodRange, getProfile, getWeights, trainerReady } from "@/lib/fit";
 import { CoachStrip } from "@/components/fit/coach-strip";
 import { coachTips, nextWeekPlan, pace, weightTrend } from "@/lib/fit-coach";
 import { adaptiveTdee, sum, targets } from "@/lib/fit-nutrition";
 import { addDays } from "@/lib/fit-stats";
+import { balance, muscleMatrix, weekdayHabits } from "@/lib/fit-insights";
 import { analyze } from "@/lib/fit-stats";
 import { UNIT_COOKIE, isUnit } from "@/lib/fit-units";
 
-/** Home: the week as a loaded bar, then weight, split, weekly load, trend and consistency. */
+/** Home: the week as a loaded bar, weight, coach strip and split, then the deeper reads (trend, frequency, balance, weekdays). */
 export default function FitHome() {
   return (
     <>
@@ -50,6 +54,7 @@ async function Analysis() {
   const longest = Math.max(...s.muscles.map((m) => m.daysAgo ?? -1));
   const due = (never.length ? never : s.muscles.filter((m) => m.daysAgo === longest && longest >= 0)).map((m) => m.muscle);
   const todayLog = logs.find((l) => l.day === today && l.gym);
+  const matrix = muscleMatrix(logs, today);
   const strip = (
     <CoachStrip
       ready={ready}
@@ -64,6 +69,23 @@ async function Analysis() {
   return (
     <div className="grid grid-cols-1 gap-5 pt-4 md:grid-cols-12 md:gap-6 lg:gap-x-10 lg:gap-y-8 lg:pt-8">
       <TrainingBoard s={s} unit={unit} today={today} weight={<WeightBlock s={s} unit={unit} />} after={strip} />
+
+      {/* Insights (formerly their own tab): weight over time, then what you train and when. */}
+      <TrendChart
+        points={s.trend}
+        gym={logs.filter((l) => l.gym).map((l) => ({ day: l.day, muscles: l.muscles }))}
+        unit={unit}
+        target={profile?.goal === "maintain" ? null : (profile?.target_kg ?? null)}
+      />
+      <div className="min-w-0 md:col-span-12">
+        <MuscleMatrix weeks={matrix.weeks} rows={matrix.rows} />
+      </div>
+      <div className="flex md:col-span-6 [&>section]:flex-1">
+        <BalanceCard {...balance(logs, today)} />
+      </div>
+      <div className="flex md:col-span-6 [&>section]:flex-1">
+        <WeekdayCard days={weekdayHabits(logs, today)} />
+      </div>
     </div>
   );
 }
