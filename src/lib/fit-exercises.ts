@@ -9,6 +9,11 @@ export type Exercise = {
   bodyweight?: boolean;
   /** This exercise's own bright colour (unique per exercise; see exerciseColor). */
   color: string;
+  /**
+   * Photo base path (frames `${image}-0.webp` start, `${image}-1.webp` end), from the public-domain
+   * free-exercise-db (Unlicense). Own exercises have none.
+   */
+  image?: string;
 };
 
 // prettier-ignore
@@ -62,6 +67,7 @@ export const EXERCISES: Exercise[] = ROWS.map(
     kind,
     bodyweight,
     color: exerciseColor(i),
+    image: `/fit/exercises/${key}`,
   }),
 );
 export const EXERCISE_BY_KEY = new Map(EXERCISES.map((e) => [e.key, e]));
@@ -69,3 +75,19 @@ export const EXERCISE_BY_KEY = new Map(EXERCISES.map((e) => [e.key, e]));
 /** Epley estimated one-rep max. */
 export const e1rm = (kg: number, reps: number) =>
   reps <= 1 ? kg : Math.round(kg * (1 + reps / 30) * 10) / 10;
+
+/** A user's own exercise as stored (custom_exercises). Sets reference it as `c:<id>`. */
+export type CustomExerciseRow = { id: string; name: string; muscle: Muscle; bodyweight: boolean };
+export const customKey = (id: string) => `c:${id}`;
+export const isCustomKey = (key: string) => key.startsWith("c:");
+
+/** Turn your own exercises into library entries, each with its own colour after the built-in ones. */
+export const toExercises = (rows: CustomExerciseRow[]): Exercise[] =>
+  rows.map((r, i) => ({
+    key: customKey(r.id),
+    name: r.name,
+    muscle: r.muscle,
+    kind: "isolation",
+    bodyweight: r.bodyweight,
+    color: exerciseColor(EXERCISES.length + i),
+  }));

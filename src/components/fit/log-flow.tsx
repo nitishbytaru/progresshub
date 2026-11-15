@@ -20,6 +20,7 @@ import {
   ArrowLeft,
   CalendarDays,
   Check,
+  ChevronDown,
   Minus,
   Moon,
   Plus,
@@ -56,6 +57,7 @@ import {
 } from "@/lib/fit-units";
 import { Barbell } from "./barbell";
 import { Dumbo } from "./dumbo";
+import { showSets } from "./log-stage";
 import { fitError, fitToast } from "./fit-toast";
 
 export type FlowData = {
@@ -68,6 +70,9 @@ export type FlowData = {
 };
 
 const GOAL_COOKIE = "fit_goal";
+/** Event the Log page's history list fires to load a day into the inline flow. */
+export const LOG_DAY_EVENT = "fit:log-day";
+export const editDayInFlow = (day: string) => window.dispatchEvent(new CustomEvent(LOG_DAY_EVENT, { detail: day }));
 /** Remember a choice for a year (module-level so React's render purity rules don't flag it). */
 function writeCookie(name: string, value: string) {
   document.cookie = `${name}=${value}; path=/; max-age=31536000; samesite=lax`;
@@ -101,13 +106,16 @@ const MUSCLE_MOVE: Record<Muscle, Record<string, number[]>> = {
  * Dumbo reacting to every answer. Saves through the same logWeight action as the Log form.
  */
 export function LogFlow({
-  open,
-  onOpenChange,
+  open = true,
+  onOpenChange = () => {},
   data,
+  inline = false,
 }: {
-  open: boolean;
-  onOpenChange: (o: boolean) => void;
+  open?: boolean;
+  onOpenChange?: (o: boolean) => void;
   data: FlowData;
+  /** Render in the page (the Log page) instead of as a full-screen dialog. */
+  inline?: boolean;
 }) {
   const router = useRouter();
   const reduce = useReducedMotion();
@@ -142,10 +150,13 @@ export function LogFlow({
   const [done, setDone] = useState<"no" | "saving" | "saved" | "error">("no");
   const [err, setErr] = useState<string | null>(null);
   const [calOpen, setCalOpen] = useState(false);
+  // The two-week grid on the When step: null = automatic (open only when the picked day is in it).
+  const [showDays, setShowDays] = useState<boolean | null>(null);
   const [confirmLeave, setConfirmLeave] = useState(false);
   const [pending, start] = useTransition();
   const dirty = useRef(false);
   const shown = useRef<HTMLSpanElement>(null);
+  const section = useRef<HTMLElement>(null);
 
   // Blink every few seconds (a living mascot, not a sticker).
   useEffect(() => {
@@ -183,6 +194,7 @@ export function LogFlow({
 
   const reset = () => {
     setStep(0);
+    setShowDays(null);
     setDay(today);
     setKg(byDay.get(today)?.kg ?? prevFor(today)?.kg ?? 70);
     setRevealed(false);
@@ -232,6 +244,27 @@ export function LogFlow({
         : say("date", d, { date: label }),
     );
   };
+
+  // Inline: a day tapped in the history list opens here at the weight step.
+  const pickRef = useRef(pickDay);
+  useEffect(() => {
+    pickRef.current = pickDay;
+  });
+  useEffect(() => {
+    if (!inline) return;
+    const onPick = (e: Event) => {
+      const d = (e as CustomEvent<string>).detail;
+      if (typeof d !== "string") return;
+      setDone("no");
+      setErr(null);
+      pickRef.current(d);
+      setDir(1);
+      setStep(1);
+      section.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    window.addEventListener(LOG_DAY_EVENT, onPick);
+    return () => window.removeEventListener(LOG_DAY_EVENT, onPick);
+  }, [inline]);
 
   // ---- Step 2: weight
   const step01 = unit === "lb" ? 0.1 * KG_PER_LB : 0.1;
@@ -355,6 +388,7 @@ export function LogFlow({
       }
       setDone("saved");
       setMood("proud");
+      if (inline) router.refresh();
       fitToast({
         title: `Logged ${fmtWeight(kg, unit)} ${unit}`,
         detail: gym
@@ -394,7 +428,9 @@ export function LogFlow({
     return l?.gym ? [{ day: d, muscles: l.muscles, kg: l.kg }] : [];
   });
 
-  const strip = Array.from({ length: 14 }, (_, i) => addDays(today, -i));
+  // Last week + this week, Monday first (future days show but are disabled).
+  const fortnight = Array.from({ length: 14 }, (_, i) => addDays(weekStart(today), i - 7));
+  const gridOpen = showDays ?? (day !== today && day !== addDays(today, -1) && day >= fortnight[0]);
   const canNext =
     step === 0 ? true : step === 1 ? true : step === 2 ? gym !== null : true;
   const primaryLabel =
@@ -440,17 +476,11 @@ export function LogFlow({
       reduce ? { opacity: 0 } : { x: d * -60, opacity: 0, filter: "blur(6px)" },
   };
 
-  return (
-    <D.Root
-      open={open}
-      onOpenChange={(o) => (o ? onOpenChange(true) : close())}
-    >
-      <D.Portal>
-        <D.Backdrop className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" />
-        <D.Popup className="fit-floor fixed inset-0 z-50 flex flex-col overflow-y-auto bg-background outline-none md:inset-y-6 md:left-1/2 md:w-[560px] md:-translate-x-1/2 md:rounded-3xl md:border md:border-outline-variant">
+  const content = (
+    <>
           {/* In-flow leave confirm (no browser dialog). */}
           <AnimatePresence>
-            {confirmLeave && (
+            {!inline && confirmLeave && (
               <motion.div
                 role="alertdialog"
                 aria-label="Leave without logging?"
@@ -491,7 +521,7 @@ export function LogFlow({
           </AnimatePresence>
 
           {/* Top bar: back, progress plates, close */}
-          <div className="sticky top-0 z-10 flex items-center gap-3 bg-background/90 px-4 pt-[max(1rem,env(safe-area-inset-top))] pb-3 backdrop-blur-md">
+          <div className={`z-10 flex items-center gap-3 px-4 pb-3 ${inline ? "pt-4" : "sticky top-0 bg-background/90 pt-[max(1rem,env(safe-area-inset-top))] backdrop-blur-md"}`}>
             <button
               type="button"
               aria-label="Back"
@@ -538,16 +568,20 @@ export function LogFlow({
                 </li>
               ))}
             </ol>
+            {inline ? (
+              <span className="size-11" aria-hidden />
+            ) : (
             <D.Close
-              aria-label="Close"
-              onClick={(e) => {
-                e.preventDefault();
-                close();
-              }}
-              className="grid size-11 place-items-center rounded-full text-ink-variant hover:bg-hover hover:text-ink"
-            >
-              <X className="size-5" aria-hidden />
-            </D.Close>
+                aria-label="Close"
+                onClick={(e) => {
+                  e.preventDefault();
+                  close();
+                }}
+                className="grid size-11 place-items-center rounded-full text-ink-variant hover:bg-hover hover:text-ink"
+              >
+                <X className="size-5" aria-hidden />
+              </D.Close>
+            )}
           </div>
 
           {/* Dumbo + speech */}
@@ -619,91 +653,146 @@ export function LogFlow({
                     <h2 className="font-display text-4xl font-bold uppercase">
                       When was this?
                     </h2>
-                    <div
-                      className="-mx-5 flex snap-x gap-2 overflow-x-auto px-5 pb-2"
-                      role="radiogroup"
-                      aria-label="Pick a day"
-                    >
-                      {strip.map((d) => {
+                    {/* Quick picks: today and yesterday, with what's already logged. */}
+                    <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Quick pick">
+                      {[today, addDays(today, -1)].map((d) => {
                         const on = d === day;
-                        const logged = byDay.get(d);
+                        const l = byDay.get(d);
                         return (
                           <motion.button
-                            key={on ? `${d}-${flipKey}` : d}
+                            key={d}
                             type="button"
                             role="radio"
                             aria-checked={on}
                             onClick={() => pickDay(d)}
-                            initial={
-                              on && !reduce && flipKey
-                                ? { rotateY: -180, y: -18 }
-                                : false
-                            }
-                            animate={{ rotateY: 0, y: 0 }}
-                            transition={{
-                              type: "spring",
-                              stiffness: 300,
-                              damping: 15,
-                            }}
-                            style={
-                              { transformPerspective: 600 } as CSSProperties
-                            }
-                            className={`flex h-24 w-16 shrink-0 snap-start flex-col items-center justify-center gap-0.5 rounded-2xl border transition-colors ${
-                              on
-                                ? "border-ink bg-primary text-primary-foreground"
-                                : "border-outline text-ink-variant hover:bg-hover"
+                            whileTap={reduce ? undefined : { scale: 0.97 }}
+                            className={`flex flex-col items-start gap-1 rounded-2xl border px-4 py-3 text-left transition-colors ${
+                              on ? "border-ink bg-primary text-primary-foreground" : "border-outline text-ink hover:bg-hover"
                             }`}
                           >
-                            <span className="text-[0.6875rem] font-bold uppercase">
-                              {d === today ? "Today" : dWeek.format(utc(d))}
+                            <span className="font-display text-2xl leading-none font-bold uppercase">{d === today ? "Today" : "Yesterday"}</span>
+                            <span className={`text-xs font-semibold ${on ? "opacity-70" : "text-ink-subtle"}`}>
+                              {dWeek.format(utc(d))} {dShort.format(utc(d))} · {l ? `${fmtWeight(l.kg, unit)} ${unit} logged` : "not logged"}
                             </span>
-                            <span className="font-display text-3xl leading-none font-bold">
-                              {utc(d).getUTCDate()}
-                            </span>
-                            <span
-                              className={`size-1.5 rounded-full ${logged ? (on ? "bg-primary-foreground" : "bg-ink") : "bg-transparent"}`}
-                              aria-hidden
-                            />
                           </motion.button>
                         );
                       })}
                     </div>
-                    <Popover open={calOpen} onOpenChange={setCalOpen}>
-                      <PopoverTrigger className="inline-flex h-11 w-fit items-center gap-2 rounded-full border border-outline px-4 text-sm font-bold text-ink-variant hover:bg-hover hover:text-ink">
-                        <CalendarDays className="size-4" aria-hidden /> Older
-                        date
-                      </PopoverTrigger>
-                      <PopoverContent
-                        align="start"
-                        className="z-[70] w-auto p-1"
+
+                    {/* More days stay folded away until asked for. */}
+                    <div className="flex flex-wrap items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowDays(!gridOpen)}
+                        aria-expanded={gridOpen}
+                        aria-controls="flow-days"
+                        className={`inline-flex h-11 items-center gap-2 rounded-full border px-4 text-sm font-bold transition-colors ${
+                          gridOpen ? "border-ink text-ink" : "border-outline text-ink-variant hover:bg-hover hover:text-ink"
+                        }`}
                       >
-                        <Calendar
-                          mode="single"
-                          required
-                          weekStartsOn={1}
-                          today={toLocalDate(today)}
-                          selected={toLocalDate(day)}
-                          defaultMonth={toLocalDate(day)}
-                          disabled={[
-                            { after: toLocalDate(today) },
-                            { before: toLocalDate(addDays(today, -365)) },
-                          ]}
-                          modifiers={{
-                            logged: logs.map((l) => toLocalDate(l.day)),
-                          }}
-                          modifiersClassNames={{
-                            logged:
-                              "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-current",
-                          }}
-                          className="bg-transparent [--cell-size:--spacing(10)]"
-                          onSelect={(d) => {
-                            if (!d) return;
-                            pickDay(fromLocalDate(d));
-                            setCalOpen(false);
-                          }}
-                        />
-                      </PopoverContent>
-                    </Popover>
+                        {gridOpen ? "Hide days" : "Pick another day"}
+                        <ChevronDown className={`size-4 transition-transform duration-300 ${gridOpen ? "rotate-180" : ""}`} aria-hidden />
+                      </button>
+                      <Popover open={calOpen} onOpenChange={setCalOpen}>
+                        <PopoverTrigger
+                          className={`inline-flex h-11 w-fit items-center gap-2 rounded-full border px-4 text-sm font-bold transition-colors ${
+                            day < fortnight[0] ? "border-ink bg-primary text-primary-foreground" : "border-outline text-ink-variant hover:bg-hover hover:text-ink"
+                          }`}
+                        >
+                          <CalendarDays className="size-4" aria-hidden />
+                          {day < fortnight[0] ? `${dWeek.format(utc(day))} ${dShort.format(utc(day))}` : "Older date"}
+                        </PopoverTrigger>
+                        <PopoverContent
+                          align="start"
+                          className="z-[70] w-auto p-1"
+                        >
+                          <Calendar
+                            mode="single"
+                            required
+                            weekStartsOn={1}
+                            today={toLocalDate(today)}
+                            selected={toLocalDate(day)}
+                            defaultMonth={toLocalDate(day)}
+                            disabled={[
+                              { after: toLocalDate(today) },
+                              { before: toLocalDate(addDays(today, -365)) },
+                            ]}
+                            modifiers={{
+                              logged: logs.map((l) => toLocalDate(l.day)),
+                            }}
+                            modifiersClassNames={{
+                              logged:
+                                "[&>button]:after:absolute [&>button]:after:bottom-1 [&>button]:after:size-1 [&>button]:after:rounded-full [&>button]:after:bg-current",
+                            }}
+                            className="bg-transparent [--cell-size:--spacing(10)]"
+                            onSelect={(d) => {
+                              if (!d) return;
+                              pickDay(fromLocalDate(d));
+                              setCalOpen(false);
+                            }}
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <AnimatePresence initial={false}>
+                      {gridOpen && (
+                        <motion.div
+                          key="flow-days"
+                          id="flow-days"
+                          className="overflow-hidden"
+                          initial={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                          animate={reduce ? { opacity: 1 } : { height: "auto", opacity: 1 }}
+                          exit={reduce ? { opacity: 0 } : { height: 0, opacity: 0 }}
+                          transition={{ duration: 0.3, ease: [0.2, 0.9, 0.25, 1] }}
+                        >
+                          {/* Last week and this week as a Mon–Sun calendar: no sideways scrolling. */}
+                          <div className="flex flex-col gap-1.5" role="radiogroup" aria-label="Pick a day">
+                            <div className="grid grid-cols-7 gap-1.5" aria-hidden>
+                              {["M", "T", "W", "T", "F", "S", "S"].map((w, i) => (
+                                <span key={i} className="text-center text-[0.6875rem] font-bold text-ink-subtle">
+                                  {w}
+                                </span>
+                              ))}
+                            </div>
+                            <div className="grid grid-cols-7 gap-1.5">
+                              {fortnight.map((d) => {
+                                const on = d === day;
+                                const future = d > today;
+                                const logged = byDay.get(d);
+                                return (
+                                  <motion.button
+                                    key={on ? `${d}-${flipKey}` : d}
+                                    type="button"
+                                    role="radio"
+                                    aria-checked={on}
+                                    disabled={future}
+                                    aria-label={`${dWeek.format(utc(d))} ${dShort.format(utc(d))}${logged ? `, ${fmtWeight(logged.kg, unit)} ${unit} logged` : ""}`}
+                                    onClick={() => pickDay(d)}
+                                    initial={on && !reduce && flipKey ? { rotateY: -180, y: -10 } : false}
+                                    animate={{ rotateY: 0, y: 0 }}
+                                    transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                                    style={{ transformPerspective: 600 } as CSSProperties}
+                                    className={`flex h-12 flex-col items-center justify-center gap-1 rounded-xl border transition-colors disabled:cursor-default disabled:opacity-30 sm:h-14 ${
+                                      on
+                                        ? "border-ink bg-primary text-primary-foreground"
+                                        : d === today
+                                          ? "border-ink text-ink hover:bg-hover"
+                                          : "border-outline-variant text-ink-variant hover:bg-hover"
+                                    }`}
+                                  >
+                                    <span className="font-display text-lg leading-none font-bold tabular-nums sm:text-xl">{utc(d).getUTCDate()}</span>
+                                    <span
+                                      className={`size-1 rounded-full ${logged ? (on ? "bg-primary-foreground" : "bg-ink") : "bg-transparent"}`}
+                                      aria-hidden
+                                    />
+                                  </motion.button>
+                                );
+                              })}
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </>
                 )}
 
@@ -1086,7 +1175,7 @@ export function LogFlow({
           </div>
 
           {/* Primary action */}
-          <div className="sticky bottom-0 bg-background/95 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md">
+          <div className={inline ? "px-5 pt-3 pb-5" : "sticky bottom-0 bg-background/95 px-5 pt-3 pb-[max(1rem,env(safe-area-inset-bottom))] backdrop-blur-md"}>
             {step < 4 ? (
               <motion.button
                 type="button"
@@ -1099,19 +1188,27 @@ export function LogFlow({
               </motion.button>
             ) : done === "saved" ? (
               <div className="flex gap-2">
-                <a
-                  href="/log#sets"
-                  className="inline-flex h-14 flex-1 items-center justify-center rounded-full border border-outline font-bold text-ink-variant hover:bg-hover hover:text-ink"
-                  onClick={() => close(true)}
-                >
-                  Log sets
-                </a>
+                {/* Sets are logged for today, and only on a gym day. */}
+                {gym && day === today && (
+                  <a
+                    href="/log#sets"
+                    className="inline-flex h-14 flex-1 items-center justify-center rounded-full border border-outline font-bold text-ink-variant hover:bg-hover hover:text-ink"
+                    onClick={(e) => {
+                      if (!inline) return close(true);
+                      // Inline on the Log page: slide the sets pane in instead of jumping.
+                      e.preventDefault();
+                      showSets();
+                    }}
+                  >
+                    Log sets
+                  </a>
+                )}
                 <button
                   type="button"
-                  onClick={() => close(true)}
+                  onClick={() => (inline ? reset() : close(true))}
                   className="h-14 flex-1 rounded-full bg-primary text-lg font-bold text-primary-foreground hover:bg-primary-hover"
                 >
-                  Done
+                  {inline ? "Log another day" : "Done"}
                 </button>
               </div>
             ) : done === "error" ? (
@@ -1126,6 +1223,27 @@ export function LogFlow({
               <div className="h-14" />
             )}
           </div>
+    </>
+  );
+
+  if (inline) {
+    return (
+      <section
+        ref={section}
+        aria-label="Log your day"
+        className="card-in fit-floor relative flex scroll-mt-20 flex-col overflow-hidden rounded-3xl border border-outline-variant bg-background"
+      >
+        {content}
+      </section>
+    );
+  }
+
+  return (
+    <D.Root open={open} onOpenChange={(o) => (o ? onOpenChange(true) : close())}>
+      <D.Portal>
+        <D.Backdrop className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm" />
+        <D.Popup className="fit-floor fixed inset-0 z-50 flex flex-col overflow-y-auto bg-background outline-none md:inset-y-6 md:left-1/2 md:w-[560px] md:-translate-x-1/2 md:rounded-3xl md:border md:border-outline-variant">
+          {content}
         </D.Popup>
       </D.Portal>
     </D.Root>

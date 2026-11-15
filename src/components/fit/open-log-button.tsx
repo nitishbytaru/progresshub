@@ -1,14 +1,11 @@
-"use client";
-
+import Link from "next/link";
 import type { ReactNode } from "react";
 
-/** Opens the load-the-bar flow (the + LOG button listens for this event), so every "log" entry point is the same flow. */
-export const OPEN_LOG_EVENT = "fit:open-log";
-
+/** Every "log" entry point goes to the Log page, where the load-the-bar flow lives inline. */
 export function OpenLogButton({ className, children }: { className?: string; children: ReactNode }) {
   return (
-    <button type="button" className={className} onClick={() => window.dispatchEvent(new Event(OPEN_LOG_EVENT))}>
+    <Link href="/log" className={className}>
       {children}
-    </button>
+    </Link>
   );
 }

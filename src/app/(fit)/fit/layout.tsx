@@ -4,9 +4,7 @@ import { SiteAnalytics } from "@/components/site-analytics";
 import { TimezoneCookie } from "@/components/shell/timezone-cookie";
 import { FitHeader } from "@/components/fit/fit-header";
 import { BottomNav } from "@/components/fit/fit-nav";
-import { LogFabLoader } from "@/components/fit/log-fab-loader";
 import { FitToaster } from "@/components/fit/fit-toast";
-import { Suspense } from "react";
 import "./fit.css";
 
 const archivo = Archivo({
@@ -43,9 +41,6 @@ export default function FitLayout({ children }: { children: React.ReactNode }) {
           <main className="flex flex-col">{children}</main>
         </div>
         <BottomNav />
-        <Suspense fallback={null}>
-          <LogFabLoader />
-        </Suspense>
         <FitToaster />
         <TimezoneCookie />
         <SiteAnalytics />

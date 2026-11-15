@@ -219,6 +219,16 @@ input[type="number"] {
 .plate-loop > :nth-child(2) { animation-delay: 0.14s; }
 .plate-loop > :nth-child(3) { animation-delay: 0.28s; }
 
+/* Exercise photo: the end frame fades in and out over the start frame, so the photo shows the movement. */
+@keyframes ex-move {
+  0%, 35% { opacity: 0; }
+  50%, 85% { opacity: 1; }
+  100% { opacity: 0; }
+}
+.ex-move {
+  animation: ex-move 2.4s ease-in-out infinite;
+}
+
 /* A food just added: a brief chalk wash that fades, so the eye finds the new row. */
 @keyframes food-flash {
   0%, 30% { background-color: var(--chalk-soft); }
@@ -231,7 +241,8 @@ input[type="number"] {
 @media (prefers-reduced-motion: reduce) {
   .plate-load,
   .plate-loop > *,
-  .food-flash {
+  .food-flash,
+  .ex-move {
     animation: none;
   }
 }

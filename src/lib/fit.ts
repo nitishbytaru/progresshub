@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { createClient } from "./supabase/server";
 import { getToday } from "./data";
 import { UNIT_COOKIE, isMuscle, isUnit, type Muscle, type Unit } from "./fit-units";
+import type { CustomExerciseRow } from "./fit-exercises";
 import type { Diet, Meal } from "./fit-foods";
 import type { FitProfile } from "./fit-nutrition";
 
@@ -161,6 +162,17 @@ export async function getFitDays(from: string, to: string): Promise<FitDay[]> {
     throw error;
   }
   return (data ?? []).map((r) => ({ day: r.day, water_ml: r.water_ml, sleep_h: r.sleep_h === null ? null : Number(r.sleep_h), steps: r.steps, note: r.note }));
+}
+
+/** Your own exercises, oldest first (so each keeps its colour). Empty until the table exists. */
+export async function getCustomExercises(): Promise<CustomExerciseRow[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("custom_exercises").select("id, name, muscle, bodyweight").order("created_at");
+  if (error) {
+    if (missingTable(error)) return [];
+    throw error;
+  }
+  return (data ?? []).filter((r) => isMuscle(r.muscle)).map((r) => ({ id: r.id, name: r.name, muscle: r.muscle, bodyweight: Boolean(r.bodyweight) }));
 }
 
 export type WorkoutSet = { id: string; day: string; exercise_key: string; muscle: Muscle; set_no: number; reps: number; weight_kg: number };
