@@ -4,6 +4,7 @@ import { LogOut } from "lucide-react";
 import { signOut } from "@/app/(main)/auth/actions";
 import { NotReady } from "@/components/fit/setup-notice";
 import { getProfile, getUnit, getWeights, trainerReady } from "@/lib/fit";
+import { ClearFitData } from "./clear-data";
 import { ProfileForm } from "./profile-form";
 
 export const metadata: Metadata = { title: "Me" };
@@ -17,7 +18,10 @@ export default function MePage() {
       <Suspense fallback={<div className="h-[520px] animate-pulse rounded-2xl bg-surface" aria-hidden />}>
         <Profile />
       </Suspense>
-      <form action={signOut} className="mt-10 flex border-t border-outline-variant pt-6">
+      <section aria-label="Fit data" className="mt-10 flex flex-col gap-3 border-t border-outline-variant pt-6">
+        <ClearFitData />
+      </section>
+      <form action={signOut} className="mt-6 flex border-t border-outline-variant pt-6">
         <button
           type="submit"
           className="inline-flex h-12 items-center gap-2 rounded-full border border-outline px-6 text-base font-semibold text-ink-variant transition-colors hover:bg-hover hover:text-ink"

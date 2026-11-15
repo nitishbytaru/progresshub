@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getToday } from "@/lib/data";
 import { KG_PER_LB, isUnit } from "@/lib/fit-units";
 import { createClient } from "@/lib/supabase/server";
+import { FIT_CLEAR_CONFIRM_WORD } from "@/lib/validation";
 
 export type ProfileState = { error?: string; saved?: boolean } | null;
 
@@ -69,4 +70,31 @@ export async function saveProfile(_: ProfileState, formData: FormData): Promise<
   }
   revalidatePath("/fit", "layout");
   return { saved: true };
+}
+
+export type ClearState = { error?: string; cleared?: boolean } | null;
+
+/**
+ * Deletes the signed-in user's fit logs: weigh-ins, sets, food diary, daily extras and custom foods.
+ * Keeps the fit profile (settings) and ai_usage (daily AI caps). Never touches progresshub X data.
+ */
+export async function clearFitData(_: ClearState, formData: FormData): Promise<ClearState> {
+  if (String(formData.get("confirm") ?? "").trim().toLowerCase() !== FIT_CLEAR_CONFIRM_WORD) {
+    return { error: `Type ${FIT_CLEAR_CONFIRM_WORD} to confirm.` };
+  }
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return { error: "Your session expired. Sign in again." };
+
+  for (const table of ["workout_sets", "food_logs", "fit_days", "weight_logs", "custom_foods"]) {
+    const { error } = await supabase.from(table).delete().eq("user_id", user.id);
+    if (error && error.code !== "42P01" && error.code !== "PGRST205") {
+      revalidatePath("/fit", "layout");
+      return { error: "Couldn't clear everything. Some data may remain; try again." };
+    }
+  }
+  revalidatePath("/fit", "layout");
+  return { cleared: true };
 }

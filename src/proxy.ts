@@ -60,10 +60,12 @@ export async function proxy(request: NextRequest) {
       return res;
     };
     if ((path === "/login" || path === "/welcome") && claims) return redirectTo("/");
-    // Signed out: /, /login and /welcome show the fit landing page (with Google sign-in), URL unchanged.
-    if (!claims && ["/", "/login", "/welcome"].includes(path)) return rewriteTo("/fit-welcome");
+    // Signed out: / and /welcome show the fit landing page, /login the fit sign-in page (URLs unchanged).
+    if (!claims && (path === "/" || path === "/welcome")) return rewriteTo("/fit-welcome");
+    if (!claims && path === "/login") return rewriteTo("/fit-welcome/login");
     if (isPublic(path) || path.startsWith("/api/")) return response;
-    if (!claims) return redirectTo("/login", true);
+    // Any other page while signed out: landing first, then back here after sign-in.
+    if (!claims) return redirectTo("/", true);
     const url = request.nextUrl.clone();
     url.pathname = path === "/" ? "/fit" : `/fit${path}`;
     const res = NextResponse.rewrite(url);
@@ -71,7 +73,7 @@ export async function proxy(request: NextRequest) {
     return res;
   }
   // The Fitness routes only exist on their own subdomain.
-  if (path === "/fit" || path.startsWith("/fit/") || path === "/fit-welcome") {
+  if (path === "/fit" || path.startsWith("/fit/") || path === "/fit-welcome" || path.startsWith("/fit-welcome/")) {
     return NextResponse.rewrite(new URL("/404-no-route", request.url));
   }
 

@@ -56,6 +56,7 @@
   --color-surface-low: var(--panel);
   --color-surface-highest: var(--track);
   --color-destructive: var(--plate-chest);
+  --color-destructive-foreground: #ffffff;
 
   --radius-sm: calc(var(--radius) * 0.5);
   --radius-md: calc(var(--radius) * 0.75);

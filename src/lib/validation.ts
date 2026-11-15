@@ -113,3 +113,5 @@ export function validateDisplayName(raw: string): { name: string; error: string 
 
 /** The word a creator types to confirm deleting their account. Checked by the dialog and the server action. */
 export const DELETE_CONFIRM_WORD = "delete";
+/** Typed to confirm clearing all fit logs on fit → Me. */
+export const FIT_CLEAR_CONFIRM_WORD = "clear";
