@@ -52,7 +52,16 @@ export async function proxy(request: NextRequest) {
   // Sign-in reuses the main /login and /auth pages on this host; everything else is served from /fit.
   const host = (request.headers.get("host") ?? "").toLowerCase();
   if (host.startsWith("fit.")) {
-    if (path === "/login" && claims) return redirectTo("/");
+    const rewriteTo = (to: string) => {
+      const url = request.nextUrl.clone();
+      url.pathname = to;
+      const res = NextResponse.rewrite(url);
+      response.cookies.getAll().forEach((c) => res.cookies.set(c));
+      return res;
+    };
+    if ((path === "/login" || path === "/welcome") && claims) return redirectTo("/");
+    // Signed out: /, /login and /welcome show the fit landing page (with Google sign-in), URL unchanged.
+    if (!claims && ["/", "/login", "/welcome"].includes(path)) return rewriteTo("/fit-welcome");
     if (isPublic(path) || path.startsWith("/api/")) return response;
     if (!claims) return redirectTo("/login", true);
     const url = request.nextUrl.clone();
@@ -62,7 +71,7 @@ export async function proxy(request: NextRequest) {
     return res;
   }
   // The Fitness routes only exist on their own subdomain.
-  if (path === "/fit" || path.startsWith("/fit/")) {
+  if (path === "/fit" || path.startsWith("/fit/") || path === "/fit-welcome") {
     return NextResponse.rewrite(new URL("/404-no-route", request.url));
   }
 
