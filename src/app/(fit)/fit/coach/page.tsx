@@ -223,7 +223,7 @@ async function Coach() {
               {[
                 ["Protein", t.protein],
                 ["Carbs", t.carbs],
-                ["Fat", t.fat],
+                ["Fiber", t.fiber],
               ].map(([l, v]) => (
                 <div key={l} className="py-3">
                   <dt className="text-xs text-ink-subtle">{l}</dt>

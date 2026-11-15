@@ -54,7 +54,7 @@ export async function askCoachAction(question: string): Promise<{ error?: string
     },
     weight_kg_latest: kg,
     weight_trend_kg_per_week: trend?.perWeek ?? null,
-    daily_targets: t && { kcal: t.kcal, protein_g: t.protein, carbs_g: t.carbs, fat_g: t.fat, tdee: t.tdee },
+    daily_targets: t && { kcal: t.kcal, protein_g: t.protein, carbs_g: t.carbs, fiber_g: t.fiber, tdee: t.tdee },
     last_7_days_food: [...perDay].map(([day, v]) => ({ day, kcal: Math.round(v.kcal), protein_g: Math.round(v.protein) })),
     gym_pace: p,
     days_since_trained: Object.fromEntries(
@@ -83,7 +83,7 @@ export async function logPlannedMeal(meal: Meal, items: { key: string; servings:
     const f = FOOD_BY_KEY.get(i.key);
     const s = Number(i.servings);
     if (!f || !(s > 0 && s <= 20)) return [];
-    return [{ user_id: user.id, day: today, meal, source: "builtin", food_key: f.key, name: f.name, serving_label: f.serving, servings: s, kcal: r1(f.kcal * s), protein_g: r1(f.protein * s), carbs_g: r1(f.carbs * s), fat_g: r1(f.fat * s) }];
+    return [{ user_id: user.id, day: today, meal, source: "builtin", food_key: f.key, name: f.name, serving_label: f.serving, servings: s, kcal: r1(f.kcal * s), protein_g: r1(f.protein * s), carbs_g: r1(f.carbs * s), fat_g: r1(f.fat * s), fiber_g: r1(f.fiber * s) }];
   });
   if (!rows.length) return { error: "Nothing to log." };
   const { error } = await supabase.from("food_logs").insert(rows);

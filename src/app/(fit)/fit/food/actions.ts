@@ -9,7 +9,7 @@ import { createClient } from "@/lib/supabase/server";
 
 export type FoodResult = { error?: string; ok?: true };
 
-const MEALS: Meal[] = ["breakfast", "lunch", "dinner", "snack"];
+const MEALS: Meal[] = ["breakfast", "lunch", "dinner", "snack", "custom"];
 const DIETS: Diet[] = ["vegan", "veg", "egg", "nonveg"];
 const MEAL_AI_CAP = 40;
 const r1 = (n: number) => Math.round(n * 10) / 10;
@@ -42,15 +42,15 @@ export async function addFood(input: { day: string; meal: Meal; key?: string; cu
   if (!user) return { error: "Your session expired. Sign in again." };
   if (dayError) return { error: dayError };
 
-  let row: { source: "builtin" | "custom"; food_key: string | null; name: string; serving_label: string; kcal: number; p: number; c: number; f: number };
+  let row: { source: "builtin" | "custom"; food_key: string | null; name: string; serving_label: string; kcal: number; p: number; c: number; f: number; fi: number };
   if (input.key) {
     const food = FOOD_BY_KEY.get(input.key);
     if (!food) return { error: "That food isn't in the list." };
-    row = { source: "builtin", food_key: food.key, name: food.name, serving_label: food.serving, kcal: food.kcal, p: food.protein, c: food.carbs, f: food.fat };
+    row = { source: "builtin", food_key: food.key, name: food.name, serving_label: food.serving, kcal: food.kcal, p: food.protein, c: food.carbs, f: food.fat, fi: food.fiber };
   } else if (input.customId) {
     const { data, error } = await supabase.from("custom_foods").select("*").eq("id", input.customId).maybeSingle();
     if (error || !data) return done(error ?? { code: "x" });
-    row = { source: "custom", food_key: data.id, name: data.name, serving_label: data.serving_label, kcal: Number(data.kcal), p: Number(data.protein_g), c: Number(data.carbs_g), f: Number(data.fat_g) };
+    row = { source: "custom", food_key: data.id, name: data.name, serving_label: data.serving_label, kcal: Number(data.kcal), p: Number(data.protein_g), c: Number(data.carbs_g), f: Number(data.fat_g), fi: Number(data.fiber_g ?? 0) };
   } else {
     return { error: "Pick a food." };
   }
@@ -68,6 +68,7 @@ export async function addFood(input: { day: string; meal: Meal; key?: string; cu
     protein_g: r1(row.p * servings),
     carbs_g: r1(row.c * servings),
     fat_g: r1(row.f * servings),
+    fiber_g: r1(row.fi * servings),
   });
   return done(error);
 }
@@ -78,16 +79,16 @@ export async function addFood(input: { day: string; meal: Meal; key?: string; cu
  */
 export async function updateFood(
   id: string,
-  input: { name: string; meal: Meal; servings: number; kcal: number; protein: number; carbs: number; fat: number },
+  input: { name: string; meal: Meal; servings: number; kcal: number; protein: number; carbs: number; fat: number; fiber: number },
 ): Promise<FoodResult> {
   const name = String(input.name ?? "").trim().slice(0, 80);
   if (!name) return { error: "Give the food a name." };
   if (!MEALS.includes(input.meal)) return { error: "Pick a meal." };
   const servings = Number(input.servings);
   if (!(servings >= 0.25 && servings <= 20)) return { error: "Servings must be between 0.25 and 20." };
-  const per = { kcal: Number(input.kcal), p: Number(input.protein), c: Number(input.carbs), f: Number(input.fat) };
+  const per = { kcal: Number(input.kcal), p: Number(input.protein), c: Number(input.carbs), f: Number(input.fat), fi: Number(input.fiber) };
   if (!(per.kcal >= 0 && per.kcal <= 5000)) return { error: "Calories per serving must be between 0 and 5000." };
-  if (![per.p, per.c, per.f].every((g) => g >= 0 && g <= 500)) return { error: "Protein, carbs and fat must be between 0 and 500 g." };
+  if (![per.p, per.c, per.f, per.fi].every((g) => g >= 0 && g <= 500)) return { error: "Protein, carbs and fiber must be between 0 and 500 g." };
 
   const supabase = await createClient();
   const {
@@ -104,6 +105,7 @@ export async function updateFood(
       protein_g: r1(per.p * servings),
       carbs_g: r1(per.c * servings),
       fat_g: r1(per.f * servings),
+      fiber_g: r1(per.fi * servings),
     })
     .eq("id", id)
     .eq("user_id", user.id)
@@ -124,19 +126,19 @@ export async function copyMeal(fromDay: string, toDay: string, meal: Meal): Prom
   const { supabase, user, dayError } = await session(toDay);
   if (!user) return { error: "Your session expired. Sign in again." };
   if (dayError) return { error: dayError };
-  const { data, error } = await supabase.from("food_logs").select("source, food_key, name, serving_label, servings, kcal, protein_g, carbs_g, fat_g").eq("day", fromDay).eq("meal", meal);
+  const { data, error } = await supabase.from("food_logs").select("source, food_key, name, serving_label, servings, kcal, protein_g, carbs_g, fat_g, fiber_g").eq("day", fromDay).eq("meal", meal);
   if (error) return done(error);
   if (!data?.length) return { error: "Nothing logged for that meal to copy." };
   const { error: e2 } = await supabase.from("food_logs").insert(data.map((r) => ({ ...r, user_id: user.id, day: toDay, meal })));
   return done(e2);
 }
 
-export async function addCustomFood(input: { name: string; serving_label: string; kcal: number; protein: number; carbs: number; fat: number; diet: Diet }): Promise<FoodResult> {
+export async function addCustomFood(input: { name: string; serving_label: string; kcal: number; protein: number; carbs: number; fat?: number; fiber: number; diet: Diet }): Promise<FoodResult> {
   const name = input.name.trim().slice(0, 80);
   const serving = input.serving_label.trim().slice(0, 40) || "1 serving";
   if (!name) return { error: "Give the food a name." };
   if (!(input.kcal >= 0 && input.kcal <= 5000)) return { error: "Calories must be 0–5000." };
-  for (const [l, v, max] of [["Protein", input.protein, 500], ["Carbs", input.carbs, 1000], ["Fat", input.fat, 500]] as const) {
+  for (const [l, v, max] of [["Protein", input.protein, 500], ["Carbs", input.carbs, 1000], ["Fiber", input.fiber, 200], ["Fat", input.fat ?? 0, 500]] as const) {
     if (!(v >= 0 && v <= max)) return { error: `${l} must be 0–${max} g.` };
   }
   if (!DIETS.includes(input.diet)) return { error: "Pick a diet type." };
@@ -152,7 +154,8 @@ export async function addCustomFood(input: { name: string; serving_label: string
     kcal: r1(input.kcal),
     protein_g: r1(input.protein),
     carbs_g: r1(input.carbs),
-    fat_g: r1(input.fat),
+    fat_g: r1(input.fat ?? 0),
+    fiber_g: r1(input.fiber),
     diet: input.diet,
   });
   return done(error);
@@ -185,7 +188,7 @@ export async function addParsed(day: string, meal: Meal, items: ParsedFood[]): P
     const servings = Math.min(20, Math.max(0.25, clamp(i.servings, 20) || 1));
     const food = i.key ? FOOD_BY_KEY.get(i.key) : undefined;
     if (food) {
-      return { source: "builtin", food_key: food.key, name: food.name, serving_label: food.serving, servings, kcal: r1(food.kcal * servings), protein_g: r1(food.protein * servings), carbs_g: r1(food.carbs * servings), fat_g: r1(food.fat * servings) };
+      return { source: "builtin", food_key: food.key, name: food.name, serving_label: food.serving, servings, kcal: r1(food.kcal * servings), protein_g: r1(food.protein * servings), carbs_g: r1(food.carbs * servings), fat_g: r1(food.fat * servings), fiber_g: r1(food.fiber * servings) };
     }
     return {
       source: "ai",
@@ -197,6 +200,7 @@ export async function addParsed(day: string, meal: Meal, items: ParsedFood[]): P
       protein_g: r1(clamp(i.protein, 300)),
       carbs_g: r1(clamp(i.carbs, 600)),
       fat_g: r1(clamp(i.fat, 300)),
+      fiber_g: r1(clamp(i.fiber, 200)),
     };
   });
   const { error } = await supabase.from("food_logs").insert(rows.map((r) => ({ ...r, user_id: user.id, day, meal })));

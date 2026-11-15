@@ -95,6 +95,7 @@ export type FoodEntry = {
   protein: number;
   carbs: number;
   fat: number;
+  fiber: number;
 };
 
 /** Food diary entries between two days (inclusive), oldest first. */
@@ -102,7 +103,7 @@ export async function getFoodRange(from: string, to: string): Promise<FoodEntry[
   const supabase = await createClient();
   const { data, error } = await supabase
     .from("food_logs")
-    .select("id, day, meal, source, food_key, name, serving_label, servings, kcal, protein_g, carbs_g, fat_g")
+    .select("id, day, meal, source, food_key, name, serving_label, servings, kcal, protein_g, carbs_g, fat_g, fiber_g")
     .gte("day", from)
     .lte("day", to)
     .order("day")
@@ -124,10 +125,11 @@ export async function getFoodRange(from: string, to: string): Promise<FoodEntry[
     protein: Number(r.protein_g),
     carbs: Number(r.carbs_g),
     fat: Number(r.fat_g),
+    fiber: Number(r.fiber_g ?? 0),
   }));
 }
 
-export type CustomFood = { id: string; name: string; serving_label: string; kcal: number; protein: number; carbs: number; fat: number; diet: Diet };
+export type CustomFood = { id: string; name: string; serving_label: string; kcal: number; protein: number; carbs: number; fat: number; fiber: number; diet: Diet };
 
 export async function getCustomFoods(): Promise<CustomFood[]> {
   const supabase = await createClient();
@@ -144,6 +146,7 @@ export async function getCustomFoods(): Promise<CustomFood[]> {
     protein: Number(r.protein_g),
     carbs: Number(r.carbs_g),
     fat: Number(r.fat_g),
+    fiber: Number(r.fiber_g ?? 0),
     diet: r.diet,
   }));
 }

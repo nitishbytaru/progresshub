@@ -37,6 +37,26 @@
   --color-plate-biceps: var(--plate-biceps);
   --color-plate-triceps: var(--plate-triceps);
 
+  /* Food groups (data only: the disc behind a food icon; rubber ink on top). */
+  --color-food-grains: var(--food-grains);
+  --color-food-dals: var(--food-dals);
+  --color-food-dairy: var(--food-dairy);
+  --color-food-eggs: var(--food-eggs);
+  --color-food-meat: var(--food-meat);
+  --color-food-veg: var(--food-veg);
+  --color-food-fruit: var(--food-fruit);
+  --color-food-nuts: var(--food-nuts);
+  --color-food-snacks: var(--food-snacks);
+  --color-food-protein: var(--food-protein);
+  --color-food-drinks: var(--food-drinks);
+  --color-food-sweets: var(--food-sweets);
+
+  /* Macros (data only: the Food page fuel plate rings and tiles). */
+  --color-macro-kcal: var(--macro-kcal);
+  --color-macro-protein: var(--macro-protein);
+  --color-macro-carbs: var(--macro-carbs);
+  --color-macro-fiber: var(--macro-fiber);
+
   /* Shared shadcn primitives (src/components/ui: calendar, popover, button, input) read these names,
      so they render as Bumper Plates here and Midnight Lime in the main app with no code changes. */
   --color-card: var(--panel);
@@ -90,6 +110,24 @@
   --plate-shoulders: #2f8f4e;
   --plate-biceps: #f2711c;
   --plate-triceps: #8b4fd8;
+  /* Food groups (data, Food page only): muted kitchen tints, all ≥7:1 with rubber ink. */
+  --food-grains: #e8c27a;
+  --food-dals: #d9a05b;
+  --food-dairy: #efe6d2;
+  --food-eggs: #f6dc7a;
+  --food-meat: #e08a6e;
+  --food-veg: #8fcf7a;
+  --food-fruit: #f49a8a;
+  --food-nuts: #c49a74;
+  --food-snacks: #e6b58f;
+  --food-protein: #b9b4f0;
+  --food-drinks: #8ec8e8;
+  --food-sweets: #eda3c5;
+  /* Macros (data, Food page fuel plate): calories in chalk, then one tint per macro. */
+  --macro-kcal: #f4f4f2;
+  --macro-protein: #b3a6ff;
+  --macro-carbs: #ffcf6e;
+  --macro-fiber: #7fe0a8;
 }
 
 body {
@@ -181,9 +219,19 @@ input[type="number"] {
 .plate-loop > :nth-child(2) { animation-delay: 0.14s; }
 .plate-loop > :nth-child(3) { animation-delay: 0.28s; }
 
+/* A food just added: a brief chalk wash that fades, so the eye finds the new row. */
+@keyframes food-flash {
+  0%, 30% { background-color: var(--chalk-soft); }
+  100% { background-color: var(--panel); }
+}
+.food-flash {
+  animation: food-flash 1.4s ease-out both;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .plate-load,
-  .plate-loop > * {
+  .plate-loop > *,
+  .food-flash {
     animation: none;
   }
 }

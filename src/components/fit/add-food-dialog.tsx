@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { AnimatePresence, LayoutGroup, motion } from "motion/react";
 import { Minus, Plus, Search, Sparkles } from "lucide-react";
 import {
   Dialog,
@@ -17,17 +18,20 @@ import {
 import type { CustomFood } from "@/lib/fit";
 import type { ParsedFood } from "@/lib/fit-ai";
 import { fitBusy, fitError, fitToast } from "./fit-toast";
+import { FoodIcon, foodFor } from "./food-icon";
 import {
   DIET_LABEL,
   FOODS,
+  FOOD_GROUPS,
+  GROUP_ORDER,
   allowedDiets,
   formatQty,
   isCountable,
-  isLiquid,
   servingStep,
   mealLabel,
   searchFoods,
   type Diet,
+  type FoodGroup,
   type Food,
   type Meal,
 } from "@/lib/fit-foods";
@@ -85,6 +89,7 @@ export function AddFoodDialog({
   diet,
   custom,
   recent,
+  targets = null,
 }: {
   open: boolean;
   onOpenChange: (o: boolean) => void;
@@ -93,6 +98,8 @@ export function AddFoodDialog({
   diet: Diet | null;
   custom: CustomFood[];
   recent: Food[];
+  /** Daily targets, so the detail view can show how much of the day a food covers. */
+  targets?: { protein: number; carbs: number; fiber: number } | null;
 }) {
   const [tab, setTab] = useState<Tab>("search");
   const [q, setQ] = useState("");
@@ -110,11 +117,14 @@ export function AddFoodDialog({
     kcal: "",
     protein: "",
     carbs: "",
-    fat: "",
+    fiber: "",
     diet: (diet ?? "veg") as Diet,
   });
 
   const ok = useMemo(() => new Set(allowedDiets(diet ?? "nonveg")), [diet]);
+  const [group, setGroup] = useState<FoodGroup | "all">("all");
+  const allowed = useMemo(() => FOODS.filter((f) => ok.has(f.diet)), [ok]);
+  const groups = useMemo(() => GROUP_ORDER.filter((g) => allowed.some((f) => f.group === g)), [allowed]);
   const results = useMemo(() => {
     const builtin = searchFoods(
       q,
@@ -128,6 +138,12 @@ export function AddFoodDialog({
       : [];
     return [...mine, ...builtin];
   }, [q, custom, ok]);
+  // Grid: search results while typing, else the picked group (your own foods lead "All").
+  const tiles = useMemo<Pick[]>(() => {
+    if (q.trim()) return results;
+    const list = group === "all" ? GROUP_ORDER.flatMap((g) => allowed.filter((f) => f.group === g)) : allowed.filter((f) => f.group === group);
+    return [...(group === "all" ? custom.map((food) => ({ kind: "custom" as const, food })) : []), ...list.map((food) => ({ kind: "builtin" as const, food }))];
+  }, [q, results, group, allowed, custom]);
 
   const reset = () => {
     setPick(null);
@@ -142,7 +158,10 @@ export function AddFoodDialog({
     onOpenChange(false);
   };
 
-  const choose = (p: Pick) => {
+  // Which tile was tapped, so its icon grows into the detail view (Recent and the grid share foods).
+  const [lid, setLid] = useState("");
+  const choose = (p: Pick, from = "grid") => {
+    setLid(`${from}-${p.kind === "builtin" ? p.food.key : `c-${p.food.id}`}`);
     setPick(p);
     // Built-in foods open on their usual amount (a glass of milk = 250 ml).
     setServings(p.kind === "builtin" ? p.food.portion : 1);
@@ -227,7 +246,7 @@ export function AddFoodDialog({
         kcal: Number(cf.kcal),
         protein: Number(cf.protein || 0),
         carbs: Number(cf.carbs || 0),
-        fat: Number(cf.fat || 0),
+        fiber: Number(cf.fiber || 0),
         diet: cf.diet,
       });
       if (r.error) {
@@ -250,9 +269,10 @@ export function AddFoodDialog({
         kcal: pick.food.kcal,
         protein: pick.food.protein,
         carbs: pick.food.carbs,
-        fat: pick.food.fat,
+        fiber: pick.food.fiber,
       }
     : null;
+  const pickFood = pick ? (pick.kind === "builtin" ? pick.food : foodFor({ name: pick.food.name })) : null;
   const serving = pick
     ? pick.kind === "builtin"
       ? pick.food.serving
@@ -281,7 +301,7 @@ export function AddFoodDialog({
       open={open}
       onOpenChange={(o) => (o ? onOpenChange(true) : close())}
     >
-      <DialogContent className="max-h-[88dvh] gap-4 overflow-y-auto rounded-2xl border border-outline-variant bg-surface p-5 sm:max-w-lg">
+      <DialogContent className="max-h-[92dvh] gap-4 overflow-x-hidden overflow-y-auto rounded-2xl border border-outline-variant bg-surface p-5 sm:max-w-xl">
         <div>
           <DialogTitle className="font-display text-3xl font-bold uppercase">
             Add to {mealLabel(meal)}
@@ -290,155 +310,207 @@ export function AddFoodDialog({
             Search the list, describe it, or make your own food.
           </DialogDescription>
         </div>
-        <div
-          role="tablist"
-          className="flex rounded-full border border-outline p-1"
-        >
-          {tabBtn(
-            "search",
-            "Search",
-            <Search className="size-4" aria-hidden />,
-          )}
-          {tabBtn(
-            "describe",
-            "Describe",
-            <Sparkles className="size-4" aria-hidden />,
-          )}
+        <div role="tablist" className="relative flex rounded-full border border-outline p-1">
+          {tabBtn("search", "Browse", <Search className="size-4" aria-hidden />)}
+          {tabBtn("describe", "Describe", <Sparkles className="size-4" aria-hidden />)}
           {tabBtn("custom", "Custom")}
         </div>
 
-        {tab === "search" && !pick && (
-          <div className="flex flex-col gap-3">
-            <input
-              autoFocus
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder="Search roti, paneer, eggs…"
-              aria-label="Search foods"
-              className="h-12 rounded-xl border border-outline bg-background px-4 text-base outline-none placeholder:text-ink-subtle focus:border-ink"
-            />
-            {!q.trim() && recent.length > 0 && (
-              <div className="flex flex-col gap-2">
-                <span className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">
-                  Recent
-                </span>
-                <div className="flex flex-wrap gap-2">
-                  {recent.map((f) => (
-                    <button
-                      key={f.key}
-                      type="button"
-                      onClick={() => choose({ kind: "builtin", food: f })}
-                      className="rounded-full border border-outline px-3 py-1.5 text-sm font-semibold text-ink-variant hover:bg-hover hover:text-ink"
-                    >
-                      {f.name}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
-            <ul className="flex max-h-[42dvh] flex-col divide-y divide-outline-variant overflow-y-auto">
-              {results.map((r) => (
-                <li
-                  key={r.kind + (r.kind === "builtin" ? r.food.key : r.food.id)}
-                >
-                  <button
-                    type="button"
-                    onClick={() => choose(r)}
-                    className="flex w-full items-center justify-between gap-3 px-1 py-3 text-left hover:bg-hover"
-                  >
-                    <span className="min-w-0">
-                      <span className="block truncate font-semibold">
-                        {r.food.name}
-                      </span>
-                      <span className="text-xs text-ink-subtle">
-                        {r.kind === "builtin"
-                          ? r.food.serving
-                          : r.food.serving_label}
-                        {r.kind === "custom" && " · your food"}
-                      </span>
-                    </span>
-                    <span className="shrink-0 text-right">
-                      <span className="block font-display text-xl font-bold">
-                        {Math.round(r.food.kcal)}
-                      </span>
-                      <span className="text-xs text-ink-subtle">
-                        {Math.round(r.food.protein)} g protein
-                      </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
-              {q.trim() && !results.length && (
-                <li className="py-4 text-sm text-ink-subtle">
-                  No match. Try Describe, or add it as a Custom food.
-                </li>
-              )}
-            </ul>
-          </div>
-        )}
+        <LayoutGroup>
+          <AnimatePresence mode="popLayout" initial={false}>
+            {tab === "search" && !pick && (
+              <motion.div
+                key="browse"
+                className="flex min-w-0 flex-col gap-3"
+                initial={{ opacity: 0, x: -16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -16 }}
+                transition={{ duration: 0.22 }}
+              >
+                <label className="relative flex items-center">
+                  <Search className="pointer-events-none absolute left-4 size-4 text-ink-subtle" aria-hidden />
+                  <input
+                    autoFocus
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search roti, paneer, eggs…"
+                    aria-label="Search foods"
+                    className="h-12 w-full rounded-xl border border-outline bg-background pr-4 pl-11 text-base outline-none placeholder:text-ink-subtle focus:border-ink"
+                  />
+                </label>
 
-        {tab === "search" && pick && per && (
-          <div className="flex flex-col gap-4">
-            <div>
-              <p className="text-lg font-bold">{pick.food.name}</p>
-              <p className="text-sm text-ink-subtle">
-                <span className="font-semibold text-ink">
-                  {formatQty(servings, serving)}
-                </span>
-                {isCountable(serving) && serving.startsWith("1 pc")
-                  ? ""
-                  : ` · 1 serving = ${serving}`}
-              </p>
-            </div>
-            <div className="flex items-center justify-between gap-3">
-              <Stepper
-                value={servings}
-                onChange={setServings}
-                step={servingStep(serving)}
-                format={isLiquid(serving) ? (v) => formatQty(v, serving) : undefined}
-              />
-              <p className="text-right font-display leading-none">
-                <span className="text-4xl font-bold">
-                  {Math.round(per.kcal * servings)}
-                </span>
-                <span className="ml-1 text-base text-ink-subtle">kcal</span>
-              </p>
-            </div>
-            <dl className="grid grid-cols-3 divide-x divide-outline-variant border-y border-outline-variant text-center">
-              {(["protein", "carbs", "fat"] as const).map((m) => (
-                <div key={m} className="py-2.5">
-                  <dt className="text-xs text-ink-subtle capitalize">{m}</dt>
-                  <dd className="font-display text-xl font-bold">
-                    {Math.round(per[m] * servings * 10) / 10} g
-                  </dd>
-                </div>
-              ))}
-            </dl>
-            <div className="flex gap-2">
-              <button
-                type="button"
-                onClick={() => setPick(null)}
-                className="h-12 rounded-full border border-outline px-5 font-semibold text-ink-variant hover:bg-hover"
-              >
-                Back
-              </button>
-              <button
-                type="button"
-                disabled={pending}
-                onClick={add}
-                className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
-              >
-                {pending ? (
-                  <>
-                    <PlateLoader size="sm" /> Adding…
-                  </>
-                ) : (
-                  `Add to ${mealLabel(meal)}`
+                {/* Food-group filter. */}
+                {!q.trim() && (
+                  <div className="-mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" role="radiogroup" aria-label="Food group">
+                    <div className="flex min-w-max gap-1.5">
+                      {(["all", ...groups] as const).map((g) => {
+                        const on = group === g;
+                        return (
+                          <button
+                            key={g}
+                            type="button"
+                            role="radio"
+                            aria-checked={on}
+                            onClick={() => setGroup(g)}
+                            className={`relative inline-flex h-9 items-center gap-1.5 rounded-full border px-3 text-xs font-bold transition-colors ${on ? "border-ink text-primary-foreground" : "border-outline text-ink-variant hover:text-ink"}`}
+                          >
+                            {on && <motion.span layoutId="group-pill" className="absolute inset-0 rounded-full bg-primary" transition={{ type: "spring", stiffness: 500, damping: 38 }} />}
+                            {g !== "all" && <span className="relative size-2.5 rounded-full" style={{ background: FOOD_GROUPS[g].color }} aria-hidden />}
+                            <span className="relative">{g === "all" ? "All" : FOOD_GROUPS[g].label}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 )}
-              </button>
-            </div>
-          </div>
-        )}
+
+                {!q.trim() && group === "all" && recent.length > 0 && (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">Recent</span>
+                    <div className="-mx-5 overflow-x-auto px-5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                      <div className="flex min-w-max gap-2">
+                        {recent.map((f, i) => (
+                          <motion.button
+                            key={f.key}
+                            type="button"
+                            onClick={() => choose({ kind: "builtin", food: f }, "recent")}
+                            className="flex w-20 flex-col items-center gap-1.5 rounded-xl p-1.5 text-center hover:bg-hover"
+                            initial={{ opacity: 0, y: 8 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: 0.03 * i }}
+                            whileTap={{ scale: 0.94 }}
+                          >
+                            <motion.span layoutId={`recent-${f.key}`}>
+                              <FoodIcon food={f} size={52} />
+                            </motion.span>
+                            <span className="line-clamp-2 text-[0.6875rem] leading-tight font-semibold">{f.name}</span>
+                          </motion.button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <motion.ul layout className="grid max-h-[46dvh] grid-cols-3 gap-2 overflow-y-auto pr-0.5 sm:grid-cols-4">
+                  <AnimatePresence mode="popLayout" initial={false}>
+                    {tiles.map((r, i) => {
+                      const id = r.kind === "builtin" ? r.food.key : `c-${r.food.id}`;
+                      const food = r.kind === "builtin" ? r.food : foodFor({ name: r.food.name });
+                      return (
+                        <motion.li
+                          key={id}
+                          layout
+                          initial={{ opacity: 0, scale: 0.85 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          exit={{ opacity: 0, scale: 0.85 }}
+                          transition={{ duration: 0.2, delay: Math.min(i, 18) * 0.012 }}
+                        >
+                          <motion.button
+                            type="button"
+                            onClick={() => choose(r)}
+                            whileTap={{ scale: 0.95 }}
+                            className="flex h-full w-full flex-col items-center gap-1.5 rounded-xl border border-outline-variant bg-background p-2.5 text-center transition-colors hover:border-outline hover:bg-hover"
+                          >
+                            <motion.span layoutId={`grid-${id}`}>
+                              <FoodIcon food={food} size={44} />
+                            </motion.span>
+                            <span className="line-clamp-2 min-h-[2lh] text-xs leading-tight font-semibold">{r.food.name}</span>
+                            <span className="text-[0.6875rem] text-ink-subtle tabular-nums">
+                              {Math.round(r.food.kcal * (r.kind === "builtin" ? r.food.portion : 1))} kcal
+                              {r.kind === "custom" ? " · yours" : ""}
+                            </span>
+                          </motion.button>
+                        </motion.li>
+                      );
+                    })}
+                  </AnimatePresence>
+                  {q.trim() && !tiles.length && <li className="col-span-full py-4 text-sm text-ink-subtle">No match. Try Describe, or add it as a Custom food.</li>}
+                </motion.ul>
+              </motion.div>
+            )}
+
+            {tab === "search" && pick && per && (
+              <motion.div
+                key="detail"
+                className="flex flex-col gap-4"
+                initial={{ opacity: 0, x: 16 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 16 }}
+                transition={{ duration: 0.22 }}
+              >
+                <div className="flex items-center gap-4">
+                  <motion.span layoutId={lid} transition={{ type: "spring", stiffness: 380, damping: 30 }}>
+                    <FoodIcon food={pickFood} size={76} />
+                  </motion.span>
+                  <div className="min-w-0">
+                    <p className="text-xl leading-tight font-bold">{pick.food.name}</p>
+                    {pickFood && (
+                      <span className="mt-1 inline-flex items-center gap-1.5 text-xs font-semibold text-ink-subtle">
+                        <span className="size-2 rounded-full" style={{ background: FOOD_GROUPS[pickFood.group].color }} aria-hidden />
+                        {FOOD_GROUPS[pickFood.group].label}
+                        {!isCountable(serving) || !serving.startsWith("1 pc") ? ` · 1 serving = ${serving}` : ""}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center justify-between gap-3">
+                  <Stepper value={servings} onChange={setServings} step={servingStep(serving)} format={(v) => formatQty(v, serving)} />
+                  <p className="text-right font-display leading-none">
+                    <motion.span key={Math.round(per.kcal * servings)} className="inline-block text-4xl font-bold tabular-nums" initial={{ y: -6, opacity: 0.4 }} animate={{ y: 0, opacity: 1 }}>
+                      {Math.round(per.kcal * servings)}
+                    </motion.span>
+                    <span className="ml-1 text-base text-ink-subtle">kcal</span>
+                  </p>
+                </div>
+                {/* Protein, carbs, fiber: grams, and (with targets) how much of the day this covers. */}
+                <dl className="grid grid-cols-3 gap-2">
+                  {(["protein", "carbs", "fiber"] as const).map((m) => {
+                    const g = per[m] * servings;
+                    const t = targets?.[m];
+                    const share = t ? g / t : 0;
+                    return (
+                      <div key={m} className="flex flex-col gap-1.5 rounded-xl border border-outline-variant bg-background px-3 py-2.5">
+                        <dt className="flex items-center gap-1.5 text-[0.6875rem] font-bold tracking-[0.1em] text-ink-subtle uppercase">
+                          <span className="size-2 shrink-0 rounded-full" style={{ background: `var(--macro-${m})` }} aria-hidden />
+                          {m}
+                        </dt>
+                        <dd className="font-display text-xl leading-none font-bold tabular-nums">{Math.round(g * 10) / 10} g</dd>
+                        {t ? (
+                          <span className="flex items-center gap-1.5" title={`${Math.round(share * 100)}% of your daily ${m}`}>
+                            <span className="h-1 flex-1 overflow-hidden rounded-full bg-track" aria-hidden>
+                              <motion.span className="block h-full origin-left rounded-full" style={{ background: `var(--macro-${m})` }} initial={{ scaleX: 0 }} animate={{ scaleX: Math.min(1, share) }} transition={{ type: "spring", stiffness: 140, damping: 20 }} />
+                            </span>
+                            <span className="text-[0.625rem] font-bold text-ink-subtle tabular-nums">{Math.round(share * 100)}%</span>
+                          </span>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </dl>
+                <div className="flex gap-2">
+                  <button type="button" onClick={() => setPick(null)} className="h-12 rounded-full border border-outline px-5 font-semibold text-ink-variant hover:bg-hover">
+                    Back
+                  </button>
+                  <motion.button
+                    type="button"
+                    disabled={pending}
+                    onClick={add}
+                    whileTap={{ scale: 0.97 }}
+                    className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
+                  >
+                    {pending ? (
+                      <>
+                        <PlateLoader size="sm" /> Adding…
+                      </>
+                    ) : (
+                      `Add to ${mealLabel(meal)}`
+                    )}
+                  </motion.button>
+                </div>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </LayoutGroup>
 
         {tab === "describe" && (
           <div className="flex flex-col gap-3">
@@ -477,6 +549,7 @@ export function AddFoodDialog({
                 <ul className="flex flex-col divide-y divide-outline-variant">
                   {parsed.map((p, i) => (
                     <li key={i} className="flex items-center gap-3 py-2.5">
+                      <FoodIcon food={p.key ? (FOODS.find((f) => f.key === p.key) ?? null) : foodFor({ name: p.name })} size={34} />
                       <input
                         type="checkbox"
                         checked={p.on}
@@ -571,7 +644,7 @@ export function AddFoodDialog({
               />
             </label>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {(["kcal", "protein", "carbs", "fat"] as const).map((k) => (
+              {(["kcal", "protein", "carbs", "fiber"] as const).map((k) => (
                 <label key={k} className="flex flex-col gap-1.5">
                   <span className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">
                     {k === "kcal" ? "kcal" : `${k} g`}

@@ -3,14 +3,14 @@
  * protein targets, filtered by diet type. Deterministic for a seed, so a plan is stable for the day
  * and a "swap" only changes the one slot asked for. Pure; no I/O.
  */
-import { FOODS, allowedDiets, isCountable, isLiquid, type Diet, type Food, type Meal } from "./fit-foods";
+import { FOODS, allowedDiets, isCountable, isLiquid, type CoreMeal, type Diet, type Food, type Meal } from "./fit-foods";
 
 export type PlanItem = { slot: string; food: Food; servings: number; kcal: number; protein: number; carbs: number; fat: number };
 export type PlanMeal = { meal: Meal; items: PlanItem[]; kcal: number; protein: number };
 export type DayPlan = { meals: PlanMeal[]; kcal: number; protein: number; carbs: number; fat: number };
 
-const SHARE: Record<Meal, number> = { breakfast: 0.25, lunch: 0.35, snack: 0.1, dinner: 0.3 };
-const ORDER: Meal[] = ["breakfast", "lunch", "snack", "dinner"];
+const SHARE: Record<CoreMeal, number> = { breakfast: 0.25, lunch: 0.35, snack: 0.1, dinner: 0.3 };
+const ORDER: CoreMeal[] = ["breakfast", "lunch", "snack", "dinner"];
 
 /** Treats and fried foods are fine to log, but the planner never prescribes them. */
 const NOT_PLANNED = new Set([
@@ -22,7 +22,7 @@ const NOT_PLANNED = new Set([
 ]);
 
 /** Slots per meal: [slot name, roles to draw from]. */
-const TEMPLATE: Record<Meal, [string, Food["role"][]][]> = {
+const TEMPLATE: Record<CoreMeal, [string, Food["role"][]][]> = {
   breakfast: [["main", ["main"]], ["protein", ["protein"]], ["fruit", ["fruit"]]],
   lunch: [["main", ["main"]], ["protein", ["protein"]], ["side", ["side"]]],
   snack: [["snack", ["protein", "snack", "fruit"]]],

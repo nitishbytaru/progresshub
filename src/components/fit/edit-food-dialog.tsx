@@ -10,9 +10,10 @@ import {
 } from "@/components/ui/dialog";
 import { deleteFood, updateFood } from "@/app/(fit)/fit/food/actions";
 import type { FoodEntry } from "@/lib/fit";
-import { MEALS, formatQty, isLiquid, mealLabel, servingStep, type Meal } from "@/lib/fit-foods";
+import { ALL_MEALS, formatQty, mealLabel, servingStep, type Meal } from "@/lib/fit-foods";
 import { Stepper } from "./add-food-dialog";
 import { fitBusy, fitError, fitToast } from "./fit-toast";
+import { FoodIcon, foodFor } from "./food-icon";
 import { PlateLoader } from "@/components/fit/plate-loader";
 
 const r1 = (n: number) => Math.round(n * 10) / 10;
@@ -20,7 +21,7 @@ const MACROS = [
   { k: "kcal", label: "kcal" },
   { k: "protein", label: "Protein g" },
   { k: "carbs", label: "Carbs g" },
-  { k: "fat", label: "Fat g" },
+  { k: "fiber", label: "Fiber g" },
 ] as const;
 type MacroKey = (typeof MACROS)[number]["k"];
 
@@ -57,7 +58,7 @@ function EditForm({
     kcal: per(entry.kcal),
     protein: per(entry.protein),
     carbs: per(entry.carbs),
-    fat: per(entry.fat),
+    fiber: per(entry.fiber),
   });
   const [msg, setMsg] = useState<string | null>(null);
   const [pending, start] = useTransition();
@@ -82,7 +83,9 @@ function EditForm({
         kcal: num("kcal"),
         protein: num("protein"),
         carbs: num("carbs"),
-        fat: num("fat"),
+        // Fat isn't shown any more; keep the stored per-serving value as it was.
+        fat: entry.fat / entry.servings,
+        fiber: num("fiber"),
       });
       if (r.error) {
         setMsg(r.error);
@@ -124,7 +127,9 @@ function EditForm({
         save();
       }}
     >
-      <div className="flex flex-col gap-1">
+      <div className="flex items-center gap-4">
+        <FoodIcon food={foodFor(entry)} size={64} />
+        <div className="flex min-w-0 flex-col gap-1">
         <DialogTitle className="font-display text-3xl font-bold uppercase">
           Edit food
         </DialogTitle>
@@ -133,6 +138,7 @@ function EditForm({
             ? "This was an AI estimate. Correct anything that's off."
             : "Change the amount, move it to another meal, or fix the numbers."}
         </DialogDescription>
+        </div>
       </div>
 
       <label className="flex flex-col gap-1.5">
@@ -152,11 +158,11 @@ function EditForm({
           Meal
         </span>
         <div
-          className="grid grid-cols-2 gap-2 sm:grid-cols-4"
+          className="grid grid-cols-2 gap-2 sm:grid-cols-3"
           role="radiogroup"
           aria-label="Meal"
         >
-          {MEALS.map((m) => (
+          {ALL_MEALS.map((m) => (
             <button
               key={m}
               type="button"
@@ -184,7 +190,7 @@ function EditForm({
           value={servings}
           onChange={(v) => setServings(r1(v))}
           step={servingStep(entry.serving_label)}
-          format={isLiquid(entry.serving_label) ? (v) => formatQty(v, entry.serving_label) : undefined}
+          format={(v) => formatQty(v, entry.serving_label)}
         />
       </div>
 
@@ -223,8 +229,7 @@ function EditForm({
         </div>
         <p className="text-right text-xs text-ink-subtle tabular-nums">
           {r1(num("protein") * servings)} g protein ·{" "}
-          {r1(num("carbs") * servings)} g carbs · {r1(num("fat") * servings)} g
-          fat
+          {r1(num("carbs") * servings)} g carbs · {r1(num("fiber") * servings)} g fiber
         </p>
       </div>
 

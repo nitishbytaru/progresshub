@@ -49,6 +49,8 @@ export type Targets = {
   protein: number;
   carbs: number;
   fat: number;
+  /** Fiber target, g: 14 g per 1,000 kcal (Dietary Guidelines), at least 25 g. */
+  fiber: number;
   /** Daily kcal change applied for the goal (negative = deficit). */
   adjust: number;
   /** True when the requested rate was capped by the safety floor. */
@@ -57,7 +59,8 @@ export type Targets = {
 
 /**
  * Daily targets: TDEE = BMR × activity; goal adds ±(weekly rate × 7700 / 7), floored at a safe
- * minimum. Protein 2.0 g/kg cutting, 1.8 maintaining, 1.8 gaining; fat 25% of kcal; carbs the rest.
+ * minimum. Protein 2.0 g/kg cutting, 1.8 maintaining, 1.8 gaining; fat 25% of kcal; carbs the rest;
+ * fiber 14 g per 1,000 kcal (minimum 25 g).
  * `tdeeOverride` lets the adaptive (observed) TDEE replace the formula once there is enough data.
  */
 export function targets(p: FitProfile, kg: number, today: string, tdeeOverride?: number | null): Targets {
@@ -74,15 +77,16 @@ export function targets(p: FitProfile, kg: number, today: string, tdeeOverride?:
   const protein = Math.round(kg * (p.goal === "lose" ? 2.0 : 1.8));
   const fat = Math.round((kcal * 0.25) / 9);
   const carbs = Math.max(0, Math.round((kcal - protein * 4 - fat * 9) / 4));
-  return { bmr: b, tdee, kcal: Math.round(kcal), protein, carbs, fat, adjust: Math.round(kcal - tdee), floored };
+  const fiber = Math.max(25, Math.round((kcal / 1000) * 14));
+  return { bmr: b, tdee, kcal: Math.round(kcal), protein, carbs, fat, fiber, adjust: Math.round(kcal - tdee), floored };
 }
 
-export type Totals = { kcal: number; protein: number; carbs: number; fat: number };
-export const ZERO: Totals = { kcal: 0, protein: 0, carbs: 0, fat: 0 };
+export type Totals = { kcal: number; protein: number; carbs: number; fat: number; fiber: number };
+export const ZERO: Totals = { kcal: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 };
 
-export function sum(items: { kcal: number; protein: number; carbs: number; fat: number }[]): Totals {
-  return items.reduce(
-    (t, i) => ({ kcal: t.kcal + i.kcal, protein: t.protein + i.protein, carbs: t.carbs + i.carbs, fat: t.fat + i.fat }),
+export function sum(items: { kcal: number; protein: number; carbs: number; fat: number; fiber?: number }[]): Totals {
+  return items.reduce<Totals>(
+    (t, i) => ({ kcal: t.kcal + i.kcal, protein: t.protein + i.protein, carbs: t.carbs + i.carbs, fat: t.fat + i.fat, fiber: t.fiber + (i.fiber ?? 0) }),
     { ...ZERO },
   );
 }

@@ -272,6 +272,15 @@ A near-monochrome rubber-and-chalk field (~90%) with six saturated plate colours
 ### Exercise colours (data: a single exercise)
 Every exercise in `src/lib/fit-exercises.ts` carries its own bright colour (`Exercise.color`, from `exerciseColor(i)`): OKLCH chroma 0.17, hue stepping by the golden angle (137.5°) and lightness cycling 0.82 / 0.72 / 0.9, so exercises of the same muscle group sit far apart and are easy to tell apart (user-approved, 2026-11-15). Text on an exercise colour is always Rubber (`EXERCISE_INK`). Use exercise colours only where one specific exercise is shown (set plates on the Log sleeve, the exercise picker swatch, exercise name chips, set chips). Anything about a muscle group keeps its plate colour.
 
+### Food groups (data: what a food is)
+Twelve muted kitchen tints colour the disc behind a food icon, one per food group: grains `#e8c27a`, dals `#d9a05b`, dairy `#efe6d2`, eggs `#f6dc7a`, meat & fish `#e08a6e`, veg `#8fcf7a`, fruit `#f49a8a`, nuts & seeds `#c49a74`, snacks `#e6b58f`, protein `#b9b4f0`, drinks `#8ec8e8`, sweets `#eda3c5` (`--food-*` in fit.css, `bg-food-*`). All take Rubber ink at ≥6.6:1. Food group colours appear only on food icon discs and the group dots in the Add-food filter (user-approved, 2026-11-15).
+
+### Macro colours (data: the fuel plate)
+The Food page's fuel plate and its tiles use one colour per measure: calories chalk `#f4f4f2`, protein violet `#b3a6ff`, carbs amber `#ffcf6e`, fiber mint `#7fe0a8` (`--macro-*` in fit.css). The app tracks fiber, not fat: fat is still stored per entry but never shown; the fiber target is 14 g per 1,000 kcal, at least 25 g. Each ring is labelled in its own colour along the curve, and the matching tile repeats the colour as a dot and fill bar. Used nowhere else (user-approved, 2026-11-15).
+
+### Food icons
+Every built-in food has an icon (`Food.icon` in `src/lib/fit-foods.ts`, drawn by `FoodIcon` in `src/components/fit/food-icon.tsx`): a lucide line icon, or one of the custom Indian staples (roti, rice, dosa, idli, samosa, shaker, bread, paneer) drawn on the same 24px grid with a 2px round stroke, in Rubber ink on its group-coloured disc. Custom and AI foods borrow the icon of the closest built-in (`guessFood`); unknown foods get a steel disc with a fork and knife.
+
 ### Named Rules
 **The Plates Are Data Rule.** A plate colour appears only where it encodes a muscle group: a plate face, a split tile, a trained-muscle toggle, a muscle chip, a gym-day tick on the trend floor. Never on chrome, buttons, headings, borders or state. Exercise colours follow the same rule, at the level of one exercise.
 
@@ -359,6 +368,9 @@ A steel bar across the full width: a 10px shaft (6px in the mini bar), an 18% kn
 
 ### Motion
 Colour-free motion is shared from `src/app/motion.css` (`card-in` section entrance staggered by `--card-i`, `chart-reveal`, `chart-grow`, `chart-pop`). Fit's own grammar is plate loading: `plate-load` slides each plate down its sleeve from the outside over 0.7s on `cubic-bezier(0.2, 0.9, 0.25, 1)`, overshoots 6% and settles (the clank), staggered 110ms in load order after a 0.25s delay; it replays on a successful save, alongside an 18ms vibration where supported. All of it is removed under reduced motion.
+
+### Food page
+Top to bottom: a **week picker** (a panel with ‹ › week arrows around a date button that opens the calendar, plus a Today chip; below, Mon–Sun as calorie rings that fill toward the target and turn dashed when over, the picked day as a chalk disc that glides between days, today dotted, future days dimmed; swipe the row to change week), the **fuel plate** (a bumper-plate gauge: four labelled rings, calories, protein, carbs and fiber, each in its macro colour and sweeping 300° with its name in the gap; the hub counts kcal left, Dumbo reacts; four matching tiles below), and the **meal timeline** (a steel sleeve with one node per meal; collapsed meals show their foods as overlapping icon discs and a share-of-day bar; rows carry the food icon, swipe left on touch to reveal Delete; a new food drops in with a chalk flash). Add food is a Browse grid of icon tiles with group filter chips and a Recent row; the tapped tile's icon grows into the detail view.
 
 ### Dumbo (mascot) and the load-the-bar flow
 

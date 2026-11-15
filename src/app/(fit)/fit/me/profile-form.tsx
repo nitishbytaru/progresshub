@@ -446,7 +446,7 @@ export function ProfileForm({
               {[
                 ["Protein", preview.protein],
                 ["Carbs", preview.carbs],
-                ["Fat", preview.fat],
+                ["Fiber", preview.fiber],
               ].map(([l, v]) => (
                 <div key={l} className="flex flex-col items-center py-3">
                   <dt className="text-xs text-ink-subtle">{l}</dt>
