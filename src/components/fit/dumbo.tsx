@@ -99,7 +99,22 @@ function Plate({ x, tint }: { x: number; tint: string }) {
   );
 }
 
-export function Dumbo({ mood, tint = "var(--steel)", blink = false, size = 200, className = "" }: { mood: Mood; tint?: string; blink?: boolean; size?: number; className?: string }) {
+export function Dumbo({
+  mood,
+  tint = "var(--steel)",
+  blink = false,
+  size = 200,
+  className = "",
+  outfit,
+}: {
+  mood: Mood;
+  tint?: string;
+  blink?: boolean;
+  size?: number;
+  className?: string;
+  /** "coach": a chalk cap and a whistle on a cord (the Coach page). */
+  outfit?: "coach";
+}) {
   const reduce = useReducedMotion();
   const spring: Transition = reduce ? { duration: 0 } : { type: "spring", stiffness: 240, damping: 15 };
   const pose = POSE[mood];
@@ -148,6 +163,21 @@ export function Dumbo({ mood, tint = "var(--steel)", blink = false, size = 200, 
               <ellipse cx={86} cy={98} rx={6} ry={3.2} fill="var(--chalk)" opacity={0.35} />
               <ellipse cx={134} cy={98} rx={6} ry={3.2} fill="var(--chalk)" opacity={0.35} />
             </>
+          )}
+          {outfit === "coach" && (
+            <g>
+              {/* Coach cap: crown, band and a brim pointing forward. */}
+              <path d="M78 67 C78 36 142 36 142 67 Z" fill="var(--chalk)" stroke="#000" strokeOpacity={0.25} strokeWidth={2} />
+              <path d="M84 50 C96 44 124 44 136 50" fill="none" stroke="#000" strokeOpacity={0.12} strokeWidth={2} />
+              <path d="M136 63 Q168 59 174 68 Q154 72 136 69 Z" fill="var(--chalk)" stroke="#000" strokeOpacity={0.25} strokeWidth={2} />
+              <rect x={78} y={62} width={64} height={6} rx={3} fill="var(--rubber)" opacity={0.85} />
+              <circle cx={110} cy={39} r={3.2} fill="var(--rubber)" opacity={0.85} />
+              {/* Whistle on a cord. */}
+              <path d="M86 108 Q110 128 134 108" fill="none" stroke="var(--chalk)" strokeWidth={2} strokeLinecap="round" opacity={0.9} />
+              <rect x={101} y={117} width={17} height={10} rx={5} fill="var(--chalk)" stroke="#000" strokeOpacity={0.3} strokeWidth={1.5} />
+              <rect x={116} y={119} width={9} height={5} rx={2} fill="var(--chalk)" stroke="#000" strokeOpacity={0.3} strokeWidth={1.5} />
+              <circle cx={107} cy={122} r={2} fill="var(--rubber)" opacity={0.7} />
+            </g>
           )}
         </motion.g>
       </motion.g>

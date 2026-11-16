@@ -1,324 +1,106 @@
 import type { Metadata } from "next";
-import type { CSSProperties } from "react";
 import { Suspense } from "react";
-import Link from "next/link";
-import { Apple, CalendarCheck, Dumbbell, Scale } from "lucide-react";
-import { CoachChat } from "@/components/fit/coach-chat";
-import { MealPlan } from "@/components/fit/meal-plan";
-import { WeekPlan } from "@/components/fit/week-plan";
-import {
-  getFoodRange,
-  getProfile,
-  getUnit,
-  getWeights,
-  trainerReady,
-} from "@/lib/fit";
-import {
-  coachTips,
-  etaToTarget,
-  pace,
-  weightTrend,
-  type Tip,
-} from "@/lib/fit-coach";
-import { adaptiveTdee, targets, sum } from "@/lib/fit-nutrition";
-import { addDays } from "@/lib/fit-stats";
-import { fmtWeight, fromKg } from "@/lib/fit-units";
+import { CoachMeals } from "@/components/fit/coach-meals";
+import { CoachWeek } from "@/components/fit/coach-week";
+import { Dumbo } from "@/components/fit/dumbo";
+import { getFoodRange, getMealPrep, getProfile, getWeekPlan, getWeights } from "@/lib/fit";
+import { mergeWeek, musclesText } from "@/lib/fit-coach-plan";
+import { MEALS, type CoreMeal } from "@/lib/fit-foods";
+import type { Mood } from "@/lib/fit-mascot";
+import { adaptiveTdee, sum, targets } from "@/lib/fit-nutrition";
+import { addDays, weekStart } from "@/lib/fit-stats";
 
 export const metadata: Metadata = { title: "Coach" };
 
-const utc = (d: string) => new Date(`${d}T00:00:00Z`);
-const longDate = new Intl.DateTimeFormat("en", {
-  month: "short",
-  day: "numeric",
-  year: "numeric",
-  timeZone: "UTC",
-});
-const TIP_ICON: Record<Tip["kind"], typeof Dumbbell> = {
-  train: Dumbbell,
-  eat: Apple,
-  weight: Scale,
-  habit: CalendarCheck,
-};
-const card =
-  "card-in rounded-2xl border border-outline-variant bg-surface p-4 sm:p-6";
-
 export default function CoachPage() {
   return (
-    <>
-      <h1 className="pt-6 pb-6 font-display text-5xl leading-[0.9] font-bold uppercase sm:pt-10 sm:text-6xl">
-        Your <span className="text-ink-subtle">coach</span>
-      </h1>
-      <Suspense
-        fallback={
-          <div
-            className="h-[620px] animate-pulse rounded-2xl bg-surface"
-            aria-hidden
-          />
-        }
-      >
-        <Coach />
-      </Suspense>
-    </>
+    <Suspense fallback={<div className="mt-6 h-[620px] animate-pulse rounded-3xl bg-surface" aria-hidden />}>
+      <Coach />
+    </Suspense>
   );
 }
 
 async function Coach() {
-  const [ready, profile, { today, logs }, unit] = await Promise.all([
-    trainerReady(),
-    getProfile(),
-    getWeights(),
-    getUnit(),
-  ]);
-  const food = ready ? await getFoodRange(addDays(today, -28), today) : [];
-  const kg = logs[0]?.kg ?? null;
+  const [profile, { today, logs }] = await Promise.all([getProfile(), getWeights(120)]);
+  const monday = weekStart(today);
+  const [plan, prep, food] = await Promise.all([getWeekPlan(monday), getMealPrep(today), getFoodRange(addDays(today, -28), today)]);
 
-  const byDay = new Map<string, typeof food>();
-  food.forEach((e) => byDay.set(e.day, [...(byDay.get(e.day) ?? []), e]));
-  const foodDays = [...byDay].map(([day, es]) => ({ day, totals: sum(es) }));
-  const observed = adaptiveTdee(
-    foodDays.map((d) => ({ day: d.day, kcal: d.totals.kcal })),
-    logs.map((l) => ({ day: l.day, kg: l.kg })),
-  );
+  // Training: the plan lined up with what was actually logged.
+  const week = mergeWeek(plan, logs, today);
+  const gymTarget = Math.max(0, Math.min(6, profile?.gym_days_target ?? 6));
+
+  // Food: today's targets (same rules as the Food page) and what's been eaten.
+  const kg = logs[0]?.kg ?? null;
+  const perDay = new Map<string, number>();
+  food.forEach((e) => perDay.set(e.day, (perDay.get(e.day) ?? 0) + e.kcal));
+  const observed = adaptiveTdee([...perDay].map(([day, kcal]) => ({ day, kcal })), logs.map((l) => ({ day: l.day, kg: l.kg })));
   const t = profile && kg ? targets(profile, kg, today, observed?.tdee) : null;
-  const p = pace(logs, today);
-  const trend = weightTrend(logs, today);
-  const eta =
-    trend && profile
-      ? etaToTarget(trend.avgNow, trend.perWeek, profile.target_kg, today)
-      : null;
-  const tips = coachTips({
-    logs,
-    today,
-    profile,
-    targets: t,
-    foodDays,
-    trend,
-    pace: p,
-    ready,
+  const todays = food.filter((e) => e.day === today);
+  const eaten = sum(todays);
+  const loggedMeals = MEALS.flatMap((m): { meal: CoreMeal; kcal: number }[] => {
+    const es = todays.filter((e) => e.meal === m);
+    return es.length ? [{ meal: m, kcal: es.reduce((s, e) => s + e.kcal, 0) }] : [];
   });
-  const target = profile?.gym_days_target ?? null;
-  const tipsCard = (span: string) => (
-    <section
-      aria-label="Coach tips"
-      className={`${card} md:self-start ${span}`}
-      style={{ "--card-i": 3 } as CSSProperties}
-    >
-      <h2 className="text-xs font-bold tracking-[0.14em] text-ink-variant uppercase">
-        Coach says
-      </h2>
-      <ul className="mt-3 flex flex-col divide-y divide-outline-variant">
-        {tips.length ? (
-          tips.map((tip, i) => {
-            const Icon = TIP_ICON[tip.kind];
-            return (
-              <li key={i} className="flex gap-3 py-3">
-                <span
-                  className={`grid size-8 shrink-0 place-items-center rounded-full ${tip.strong ? "bg-primary text-primary-foreground" : "border border-outline text-ink-variant"}`}
-                >
-                  <Icon className="size-4" aria-hidden />
-                </span>
-                <p
-                  className={`text-sm ${tip.strong ? "font-semibold text-ink" : "text-ink-variant"}`}
-                >
-                  {tip.text}
-                </p>
-              </li>
-            );
-          })
-        ) : (
-          <li className="py-3 text-sm text-ink-variant">
-            You&apos;re on track. Keep logging.
-          </li>
-        )}
-      </ul>
-    </section>
-  );
+
+  // What the coach says first.
+  const swapped = week.days.find((d) => d.swapped);
+  const todayDay = week.days.find((d) => d.day === today);
+  let mood: Mood = "happy";
+  let line: string;
+  if (!plan) {
+    line = "Let's plan your week. Tap Generate and I'll pick what to train, Monday to Saturday.";
+    mood = "curious";
+  } else if (week.needsUpdate && swapped?.planned) {
+    line = `${swapped.weekday}: you did ${musclesText(swapped.muscles)} instead of ${musclesText(swapped.planned.muscles)}. Tap Update and I'll re-plan the rest around it.`;
+    mood = "thinking";
+  } else if (week.needsUpdate) {
+    line = "You missed a planned session. Tap Update and I'll fit the rest of the week around it.";
+    mood = "thinking";
+  } else if (todayDay?.status === "done") {
+    line = `${musclesText(todayDay.muscles)} done today. Now let's fuel it. What's in your kitchen?`;
+    mood = "proud";
+  } else if (todayDay && !todayDay.rest && todayDay.muscles.length) {
+    line = `Today is ${musclesText(todayDay.muscles)}. Warm up, then go load the bar.`;
+    mood = "flex";
+  } else {
+    line = "Rest day today. Recovery builds the muscle. Let's sort your meals.";
+    mood = "sleepy";
+  }
 
   return (
-    <div className="grid grid-cols-1 gap-5 md:grid-cols-12 md:gap-6 lg:gap-x-10 lg:gap-y-8">
-      {/* Pace: this week and what next week needs. */}
-      <section
-        aria-label="Gym pace"
-        className={`${card} md:col-span-5 md:self-start lg:col-span-4`}
-      >
-        <h2 className="text-xs font-bold tracking-[0.14em] text-ink-variant uppercase">
-          Pace
-        </h2>
-        <div className="mt-3 flex items-baseline justify-between">
-          <span className="text-sm font-semibold text-ink-variant">
-            This week
-          </span>
-          <span className="font-display text-4xl font-bold">
-            {p.thisWeek}
-            <span className="text-lg text-ink-subtle">
-              {" "}
-              / {target ?? p.keepPace}
-            </span>
-          </span>
+    <div className="flex flex-col gap-5 pt-6 pb-6 sm:pt-10 md:gap-6">
+      {/* Coach hero: Dumbo in his cap, saying what's next. */}
+      <section aria-label="Your coach" className="card-in flex flex-col items-center gap-4 sm:flex-row sm:items-end sm:gap-6">
+        <div className="relative shrink-0">
+          <Dumbo mood={mood} outfit="coach" size={190} />
         </div>
-        <p className="mt-1 text-sm text-ink-variant">
-          {p.remainingThisWeek > 0
-            ? `${p.remainingThisWeek} more gym day${p.remainingThisWeek > 1 ? "s" : ""} keeps your pace.`
-            : "On pace this week."}
-        </p>
-        <dl className="mt-4 grid grid-cols-3 divide-x divide-outline-variant border-y border-outline-variant text-center">
-          <div className="py-3">
-            <dt className="text-xs text-ink-subtle">4-wk avg</dt>
-            <dd className="font-display text-2xl font-bold">{p.avgPerWeek}</dd>
-          </div>
-          <div className="py-3">
-            <dt className="text-xs text-ink-subtle">Your usual</dt>
-            <dd className="font-display text-2xl font-bold">
-              {p.keepPace}
-              <span className="text-sm text-ink-subtle"> d</span>
-            </dd>
-          </div>
-          <div className="py-3">
-            <dt className="text-xs text-ink-subtle">Target</dt>
-            <dd className="font-display text-2xl font-bold">
-              {target ?? "—"}
-              {target !== null && (
-                <span className="text-sm text-ink-subtle"> d</span>
-              )}
-            </dd>
-          </div>
-        </dl>
-      </section>
-
-      <div className="md:col-span-7 lg:col-span-8">
-        <WeekPlan
-          logs={logs}
-          today={today}
-          keepPace={p.keepPace}
-          target={target}
-        />
-      </div>
-
-      {/* Targets + projection */}
-      <section
-        aria-label="Daily targets"
-        className={`${card} md:col-span-5 md:self-start lg:col-span-4`}
-        style={{ "--card-i": 1 } as CSSProperties}
-      >
-        <h2 className="text-xs font-bold tracking-[0.14em] text-ink-variant uppercase">
-          Daily targets
-        </h2>
-        {t ? (
-          <>
-            <p className="mt-3 font-display text-5xl leading-none font-bold">
-              {t.kcal}
-              <span className="ml-1 text-lg text-ink-subtle">kcal</span>
-            </p>
-            <p className="mt-1 text-sm text-ink-variant">
-              Burn ≈ {t.tdee}
-              {observed
-                ? ` (measured from ${observed.days} logged days)`
-                : " (estimated)"}{" "}
-              ·{" "}
-              {t.adjust === 0
-                ? "maintenance"
-                : `${t.adjust > 0 ? "+" : ""}${t.adjust}/day`}
-            </p>
-            <dl className="mt-4 grid grid-cols-3 divide-x divide-outline-variant border-y border-outline-variant text-center">
-              {[
-                ["Protein", t.protein],
-                ["Carbs", t.carbs],
-                ["Fiber", t.fiber],
-              ].map(([l, v]) => (
-                <div key={l} className="py-3">
-                  <dt className="text-xs text-ink-subtle">{l}</dt>
-                  <dd className="font-display text-2xl font-bold">
-                    {v}
-                    <span className="text-sm text-ink-subtle">g</span>
-                  </dd>
-                </div>
-              ))}
-            </dl>
-          </>
-        ) : (
-          <p className="mt-3 text-sm text-ink-variant">
-            {!ready ? (
-              "Calorie and macro targets unlock with food tracking, soon."
-            ) : kg ? (
-              <>
-                <Link
-                  href="/me"
-                  className="font-semibold text-ink underline underline-offset-4"
-                >
-                  Set up your profile
-                </Link>{" "}
-                to get calorie and macro targets and a daily meal plan.
-              </>
-            ) : (
-              "Log a weigh-in to get targets."
-            )}
+        <div className="flex min-w-0 flex-col gap-3 pb-2">
+          <h1 className="font-display text-5xl leading-[0.9] font-bold uppercase sm:text-6xl">
+            Coach <span className="text-ink-subtle">Dumbo</span>
+          </h1>
+          <p className="relative max-w-[46ch] rounded-2xl border border-outline-variant bg-surface px-4 py-3 text-base font-semibold" aria-live="polite">
+            <span className="absolute -top-2 left-8 size-4 rotate-45 border-t border-l border-outline-variant bg-surface sm:top-auto sm:-left-2 sm:bottom-5 sm:rotate-[-45deg] sm:border-t sm:border-r-0 sm:border-b-0 sm:border-l" aria-hidden />
+            {line}
           </p>
-        )}
-        <div className="mt-5 border-t border-outline-variant pt-4">
-          <h3 className="text-xs font-bold tracking-[0.14em] text-ink-variant uppercase">
-            Projection
-          </h3>
-          {trend ? (
-            <>
-              <p className="mt-2 font-display text-3xl font-bold">
-                {trend.perWeek > 0 ? "▲" : trend.perWeek < 0 ? "▼" : ""}
-                {Math.abs(fromKg(trend.perWeek, unit)).toFixed(1)}{" "}
-                <span className="text-base text-ink-subtle">{unit}/week</span>
-              </p>
-              <p className="mt-1 text-sm text-ink-variant">
-                {!ready
-                  ? "Your goal-weight date unlocks with your profile."
-                  : profile?.target_kg == null
-                    ? "Set a target weight on Me to see when you'll reach it."
-                    : eta?.reached
-                      ? `You're at your target of ${fmtWeight(profile.target_kg, unit)} ${unit}.`
-                      : eta
-                        ? `${fmtWeight(profile.target_kg, unit)} ${unit} around ${longDate.format(utc(eta.date))} (${eta.weeks} weeks) at this rate.`
-                        : `Moving away from ${fmtWeight(profile.target_kg, unit)} ${unit}. Adjust food or training.`}
-              </p>
-            </>
-          ) : (
-            <p className="mt-2 text-sm text-ink-subtle">
-              Weigh in 4+ times over 3 weeks to see your trend.
-            </p>
-          )}
         </div>
       </section>
 
-      <div className="md:col-span-7 lg:col-span-8">
-        {!ready ? (
-          tipsCard("")
-        ) : t && profile ? (
-          <MealPlan
-            kcal={t.kcal}
-            protein={t.protein}
-            diet={profile.diet}
-            today={today}
-          />
-        ) : (
-          <section
-            aria-label="Meal plan"
-            className={`${card} flex flex-col gap-2`}
-          >
-            <h2 className="font-display text-3xl font-bold uppercase">
-              Eat today
-            </h2>
-            <p className="text-sm text-ink-variant">
-              A full-day meal plan for your diet type appears here once your
-              profile is set.
-            </p>
-          </section>
-        )}
-      </div>
+      <CoachWeek
+        days={week.days}
+        hasPlan={Boolean(plan)}
+        needsUpdate={week.needsUpdate}
+        planKey={plan?.generated_at ?? "none"}
+        gymTarget={gymTarget}
+        completedGym={week.completedGym}
+        today={today}
+      />
 
-      {ready && (
-        <>
-          {tipsCard("md:col-span-5 lg:col-span-4")}
-          <div className="md:col-span-7 lg:col-span-8">
-            <CoachChat />
-          </div>
-        </>
-      )}
+      <CoachMeals
+        prep={prep}
+        targets={t ? { kcal: t.kcal, protein: t.protein, carbs: t.carbs, fiber: t.fiber } : null}
+        eaten={{ kcal: eaten.kcal, protein: eaten.protein, carbs: eaten.carbs, fiber: eaten.fiber }}
+        loggedMeals={loggedMeals}
+      />
     </div>
   );
 }

@@ -4,6 +4,8 @@ import { createClient } from "./supabase/server";
 import { getToday } from "./data";
 import { UNIT_COOKIE, isMuscle, isUnit, type Muscle, type Unit } from "./fit-units";
 import type { CustomExerciseRow } from "./fit-exercises";
+import type { CoachDay, WeekPlanRow } from "./fit-coach-plan";
+import type { MealPrepRow, PrepMeal, PrepWarning } from "./fit-coach-meals";
 import type { Diet, Meal } from "./fit-foods";
 import type { FitProfile } from "./fit-nutrition";
 
@@ -205,4 +207,28 @@ export async function trainerReady(): Promise<boolean> {
 export async function getUnit(): Promise<Unit> {
   const v = (await cookies()).get(UNIT_COOKIE)?.value;
   return isUnit(v) ? v : "kg";
+}
+
+/** This week's coach plan (null until generated, or before the coach tables exist). */
+export async function getWeekPlan(weekStart: string): Promise<WeekPlanRow | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("coach_week_plans").select("week_start, days, generated_at").eq("week_start", weekStart).maybeSingle();
+  if (error) {
+    if (missingTable(error)) return null;
+    throw error;
+  }
+  return data ? { week_start: data.week_start, days: (data.days ?? []) as CoachDay[], generated_at: data.generated_at } : null;
+}
+
+/** Today's meal prep: ingredients and any generated meals (null before first use). */
+export async function getMealPrep(day: string): Promise<MealPrepRow | null> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("coach_meal_preps").select("day, ingredients, meals, warnings, generated_at").eq("day", day).maybeSingle();
+  if (error) {
+    if (missingTable(error)) return null;
+    throw error;
+  }
+  return data
+    ? { day: data.day, ingredients: (data.ingredients ?? []) as string[], meals: (data.meals ?? []) as PrepMeal[], warnings: (data.warnings ?? []) as PrepWarning[], generated_at: data.generated_at }
+    : null;
 }

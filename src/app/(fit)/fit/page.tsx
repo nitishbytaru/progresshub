@@ -5,16 +5,12 @@ import { BalanceCard, WeekdayCard } from "@/components/fit/insight-cards";
 import { MuscleMatrix } from "@/components/fit/muscle-matrix";
 import { TrendChart } from "@/components/fit/trend-chart";
 import { TrainingBoard } from "@/components/fit/training-board";
-import { getFoodRange, getProfile, getWeights, trainerReady } from "@/lib/fit";
-import { CoachStrip } from "@/components/fit/coach-strip";
-import { coachTips, nextWeekPlan, pace, weightTrend } from "@/lib/fit-coach";
-import { adaptiveTdee, sum, targets } from "@/lib/fit-nutrition";
-import { addDays } from "@/lib/fit-stats";
+import { getProfile, getWeights } from "@/lib/fit";
 import { balance, muscleMatrix, weekdayHabits } from "@/lib/fit-insights";
 import { analyze } from "@/lib/fit-stats";
 import { UNIT_COOKIE, isUnit } from "@/lib/fit-units";
 
-/** Home: the week as a loaded bar, weight, coach strip and split, then the deeper reads (trend, frequency, balance, weekdays). */
+/** Home: the week as a loaded bar, weight and split, then the deeper reads (trend, frequency, balance, weekdays). */
 export default function FitHome() {
   return (
     <>
@@ -40,35 +36,11 @@ async function Analysis() {
   const saved = jar.get(UNIT_COOKIE)?.value;
   const unit = isUnit(saved) ? saved : "kg";
   const s = analyze(logs, today, gymBefore);
-  const [ready, profile, food] = await Promise.all([trainerReady(), getProfile(), getFoodRange(addDays(today, -28), today)]);
-  const byDay = new Map<string, typeof food>();
-  food.forEach((e) => byDay.set(e.day, [...(byDay.get(e.day) ?? []), e]));
-  const foodDays = [...byDay].map(([day, es]) => ({ day, totals: sum(es) }));
-  const observed = adaptiveTdee(foodDays.map((d) => ({ day: d.day, kcal: d.totals.kcal })), logs.map((l) => ({ day: l.day, kg: l.kg })));
-  const t = profile ? targets(profile, logs[0].kg, today, observed?.tdee) : null;
-  const p = pace(logs, today);
-  const tips = coachTips({ logs, today, profile, targets: t, foodDays, trend: weightTrend(logs, today), pace: p, ready });
-  const tip = tips.find((x) => x.kind !== "train") ?? null;
-  // Due: groups never trained, else the one that has waited longest (same rule as the Split tiles).
-  const never = s.muscles.filter((m) => m.daysAgo === null && s.muscles.some((x) => x.lastDay));
-  const longest = Math.max(...s.muscles.map((m) => m.daysAgo ?? -1));
-  const due = (never.length ? never : s.muscles.filter((m) => m.daysAgo === longest && longest >= 0)).map((m) => m.muscle);
-  const todayLog = logs.find((l) => l.day === today && l.gym);
+  const profile = await getProfile();
   const matrix = muscleMatrix(logs, today);
-  const strip = (
-    <CoachStrip
-      ready={ready}
-      due={due}
-      trainedToday={todayLog ? todayLog.muscles : null}
-      totals={sum(byDay.get(today) ?? [])}
-      targets={t}
-      plan={nextWeekPlan(logs, today, profile?.gym_days_target ?? p.keepPace)}
-      tip={tip}
-    />
-  );
   return (
     <div className="grid grid-cols-1 gap-5 pt-4 md:grid-cols-12 md:gap-6 lg:gap-x-10 lg:gap-y-8 lg:pt-8">
-      <TrainingBoard s={s} unit={unit} today={today} weight={<WeightBlock s={s} unit={unit} />} after={strip} />
+      <TrainingBoard s={s} unit={unit} today={today} weight={<WeightBlock s={s} unit={unit} />} />
 
       {/* Insights (formerly their own tab): weight over time, then what you train and when. */}
       <TrendChart
