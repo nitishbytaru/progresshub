@@ -3,7 +3,7 @@ import { createAdminClient } from "../supabase/admin";
 import { hashToken, todayIn } from "../telegram/data";
 import { FOOD_BY_KEY, type CoreMeal } from "../fit-foods";
 import type { ParsedFood } from "../fit-ai";
-import { MUSCLES, isMuscle, type Muscle } from "../fit-units";
+import { MUSCLES, isMuscle, type Muscle, type Unit } from "../fit-units";
 import { targets, type FitProfile } from "../fit-nutrition";
 import { addDays } from "../progress";
 
@@ -65,10 +65,16 @@ export function checkDay(day: string, today: string): string | null {
 }
 
 // ---- Pending confirmations (button data is limited to 64 bytes, so the payload waits here).
+/**
+ * A step waiting for the user. Anything they didn't say stays null (unit, meal, `dayGiven`), and the
+ * bot asks for it with buttons before anything is saved; it never fills those in by itself.
+ */
 export type Pending =
-  | { kind: "weight"; day: string; kg: number }
-  | { kind: "gym"; day: string; gym: boolean; muscles: Muscle[] }
-  | { kind: "food"; day: string; meal: CoreMeal; items: ParsedFood[] };
+  | { kind: "weight"; day: string; dayGiven: boolean; value: number; unit: Unit | null }
+  | { kind: "gym"; day: string; dayGiven: boolean; gym: boolean; muscles: Muscle[]; forgot: boolean }
+  | { kind: "food"; day: string; dayGiven: boolean; meal: CoreMeal | null; items: ParsedFood[] }
+  /** Food with no amounts: waiting for "use usual portions" (or the user resends with amounts). */
+  | { kind: "foodtext"; day: string; dayGiven: boolean; meal: CoreMeal | null; text: string };
 
 export async function putPending(userId: string, payload: Pending): Promise<string | null> {
   const client = db();
