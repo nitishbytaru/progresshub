@@ -9,12 +9,12 @@ export function Panel({ label, title, i = 0, className = "", children }: { label
   );
 }
 
-/** Push / pull / legs as one segmented bar (chalk shades; groups, not single muscles). */
+/** Push / pull / legs as one segmented bar, in the plate colour of each group's lead muscle. */
 export function BalanceCard({ push, pull, legs, total }: { push: number; pull: number; legs: number; total: number }) {
   const parts = [
-    { l: "Push", v: push, cls: "bg-ink" },
-    { l: "Pull", v: pull, cls: "bg-ink-variant" },
-    { l: "Legs", v: legs, cls: "bg-steel" },
+    { l: "Push", v: push, cls: "bg-plate-chest" },
+    { l: "Pull", v: pull, cls: "bg-plate-back" },
+    { l: "Legs", v: legs, cls: "bg-plate-legs" },
   ];
   const lowest = total ? parts.reduce((a, b) => (b.v < a.v ? b : a)) : null;
   return (
@@ -55,7 +55,10 @@ export function WeekdayCard({ days }: { days: { label: string; gym: number; weig
         {days.map((d, i) => (
           <div key={d.label} className="flex h-full flex-1 flex-col items-center justify-end gap-1.5">
             <span className="font-display text-sm font-bold text-ink-variant">{d.gym || ""}</span>
-            <span className={`reveal-anim chart-grow w-full rounded-md ${d === best && d.gym ? "bg-ink" : "bg-ink-subtle/50"}`} style={{ height: `${Math.max(4, (d.gym / max) * 100)}%`, animationDelay: `${i * 50}ms` }} />
+            <span
+              className={`reveal-anim chart-grow w-full rounded-md ${d === best && d.gym ? "bg-viz-good shadow-[0_0_14px_-2px_var(--viz-good)]" : d.gym ? "bg-viz-line" : "bg-track"}`}
+              style={{ height: `${Math.max(4, (d.gym / max) * 100)}%`, animationDelay: `${i * 50}ms`, opacity: d === best || !d.gym ? 1 : 0.45 + 0.55 * (d.gym / max) }}
+            />
             <span className="text-[0.6875rem] font-bold text-ink-subtle">{d.label}</span>
           </div>
         ))}

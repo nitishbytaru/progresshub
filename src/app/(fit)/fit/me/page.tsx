@@ -11,14 +11,11 @@ import { SignOutButton } from "./sign-out";
 export const metadata: Metadata = { title: "Me" };
 
 export default function MePage() {
-  // Clear data + log out: a separate Account section under the profile.
+  // Account: Telegram + log out. Clearing data lives apart, in its own Danger zone at the very end.
   const account = (
     <div className="flex flex-col gap-4">
       <Suspense fallback={<div className="h-[130px] animate-pulse rounded-2xl bg-surface" aria-hidden />}>
         <TelegramLink />
-      </Suspense>
-      <Suspense fallback={<div className="h-[170px] animate-pulse rounded-2xl bg-surface" aria-hidden />}>
-        <ClearData />
       </Suspense>
       <SignOutButton />
     </div>
@@ -34,6 +31,18 @@ export default function MePage() {
       <Suspense fallback={<div className="h-[520px] animate-pulse rounded-2xl bg-surface" aria-hidden />}>
         <Profile account={account} />
       </Suspense>
+      <section
+        aria-label="Danger zone"
+        className="card-in mt-16 flex flex-col gap-4 border-t border-destructive/30 pt-6"
+        style={{ "--card-i": 3 } as CSSProperties}
+      >
+        <h2 className="text-xs font-bold tracking-[0.14em] text-destructive uppercase">Danger zone</h2>
+        <div className="md:max-w-[58%]">
+          <Suspense fallback={<div className="h-[170px] animate-pulse rounded-2xl bg-surface" aria-hidden />}>
+            <ClearData />
+          </Suspense>
+        </div>
+      </section>
     </>
   );
 }

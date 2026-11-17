@@ -158,6 +158,17 @@ export function TrendChart({
     .join(" ");
   const area = `${line} L${x(last.day).toFixed(1)},${PLOT_H} L0,${PLOT_H} Z`;
 
+  // Dot colours: toward the goal = good, away = bad. No goal: down = line blue, up = violet.
+  const goalDir = target !== null ? Math.sign(target - last.avg) : 0;
+  const dotColor = (i: number) => {
+    const prevKg = i ? pts[i - 1].kg : null;
+    if (prevKg === null) return "var(--steel)";
+    const d = pts[i].kg - prevKg;
+    if (Math.abs(d) < 0.05) return "var(--steel)";
+    if (!goalDir) return d < 0 ? "var(--viz-line)" : "var(--viz-violet)";
+    return Math.sign(d) === goalDir ? "var(--viz-good)" : "var(--viz-bad)";
+  };
+
   const gymByDay = new Map(gym.map((g) => [g.day, g.muscles]));
   const gymInRange = gym.filter((g) => g.day >= first.day && g.day <= last.day);
 
@@ -357,7 +368,7 @@ export function TrendChart({
                   x2={W}
                   y1={yU(goal)}
                   y2={yU(goal)}
-                  stroke="var(--chalk-variant)"
+                  stroke="var(--viz-goal)"
                   strokeDasharray="6 5"
                   strokeWidth={1.5}
                   vectorEffect="non-scaling-stroke"
@@ -375,6 +386,15 @@ export function TrendChart({
 
               {/* The line and its fill wipe in left to right (a clip, so it works on a stretched plot). */}
               <defs>
+                {/* The average line runs violet (oldest) to blue (latest); the fill fades into the floor. */}
+                <linearGradient id={`${clipId}-line`} x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stopColor="var(--viz-violet)" />
+                  <stop offset="100%" stopColor="var(--viz-line)" />
+                </linearGradient>
+                <linearGradient id={`${clipId}-fill`} x1="0" x2="0" y1="0" y2="1">
+                  <stop offset="0%" stopColor="var(--viz-line)" stopOpacity={0.22} />
+                  <stop offset="100%" stopColor="var(--viz-line)" stopOpacity={0} />
+                </linearGradient>
                 <clipPath id={clipId}>
                   <motion.rect
                     key={range}
@@ -389,11 +409,11 @@ export function TrendChart({
               </defs>
               <g key={range}>
                 <g clipPath={`url(#${clipId})`}>
-                  <motion.path d={area} fill="var(--chalk)" opacity={0.06} />
+                  <motion.path d={area} fill={`url(#${clipId}-fill)`} />
                   <motion.path
                     d={line}
                     fill="none"
-                    stroke="var(--chalk)"
+                    stroke={`url(#${clipId}-line)`}
                     strokeWidth={2.5}
                     strokeLinejoin="round"
                     strokeLinecap="round"
@@ -460,12 +480,14 @@ export function TrendChart({
             {pts.map((p, i) => (
               <motion.span
                 key={`${range}-${p.day}`}
-                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-[width,height,background-color] ${
-                  i === active
-                    ? "z-10 size-3 bg-ink ring-4 ring-ink/20"
-                    : "size-1.5 bg-ink-subtle"
+                className={`absolute -translate-x-1/2 -translate-y-1/2 rounded-full transition-[width,height,box-shadow] ${
+                  i === active ? "z-10 size-3.5" : "size-2"
                 }`}
-                style={pct(x(p.day), y(p.kg))}
+                style={{
+                  ...pct(x(p.day), y(p.kg)),
+                  background: dotColor(i),
+                  boxShadow: i === active ? `0 0 0 4px color-mix(in oklab, ${dotColor(i)} 30%, transparent), 0 0 0 1.5px var(--rubber)` : "0 0 0 1.5px var(--rubber)",
+                }}
                 initial={{ opacity: 0, scale: 0 }}
                 animate={
                   inView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0 }
@@ -486,7 +508,8 @@ export function TrendChart({
                 aria-hidden
               >
                 <motion.span
-                  className="absolute top-1/2 left-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-ink"
+                  className="absolute top-1/2 left-1/2 size-3 -translate-x-1/2 -translate-y-1/2 rounded-full border"
+                  style={{ borderColor: dotColor(pts.length - 1) }}
                   animate={{ scale: [1, 2.4], opacity: [0.8, 0] }}
                   transition={{
                     duration: 1.8,
@@ -495,7 +518,7 @@ export function TrendChart({
                     delay: 1.4,
                   }}
                 />
-                <span className="block size-2.5 rounded-full bg-ink" />
+                <span className="block size-3 rounded-full shadow-[0_0_0_1.5px_var(--rubber)]" style={{ background: dotColor(pts.length - 1) }} />
               </span>
             )}
 
@@ -506,6 +529,7 @@ export function TrendChart({
                   at={pct(x(high.day), y(high.kg))}
                   above
                   label="High"
+                  color="var(--viz-violet)"
                   value={fmtWeight(high.kg, unit)}
                   edge={x(high.day) / W}
                   show={inView}
@@ -514,6 +538,7 @@ export function TrendChart({
                   <Flag
                     at={pct(x(low.day), y(low.kg))}
                     label="Low"
+                    color="var(--viz-line)"
                     value={fmtWeight(low.kg, unit)}
                     edge={x(low.day) / W}
                     show={inView}
@@ -523,7 +548,7 @@ export function TrendChart({
             )}
             {goalInView && goal !== null && (
               <span
-                className="absolute left-1 -translate-y-full rounded-sm bg-surface px-1 pb-0.5 text-[0.6875rem] font-bold text-ink-variant"
+                className="absolute left-1 -translate-y-full rounded-sm bg-surface px-1 pb-0.5 text-[0.6875rem] font-bold text-viz-goal"
                 style={{ top: `${(yU(goal) / H) * 100}%` }}
                 aria-hidden
               >
@@ -564,6 +589,7 @@ export function TrendChart({
                     </dd>
                     <dt className="text-ink-subtle">vs last</dt>
                     <dd className="text-right font-display font-bold tabular-nums">
+                      {prev && <span className="mr-1 inline-block size-2 rounded-full align-middle" style={{ background: dotColor(active!) }} aria-hidden />}
                       {prev ? signed(shown.kg - prev.kg, unit) : "—"}
                     </dd>
                   </dl>
@@ -614,18 +640,37 @@ export function TrendChart({
 
         {/* Legend. */}
         <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink-subtle">
+          {goalDir ? (
+            <>
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-viz-good" aria-hidden />
+                Toward goal
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-viz-bad" aria-hidden />
+                Away from goal
+              </span>
+            </>
+          ) : (
+            <>
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-viz-line" aria-hidden />
+                Down
+              </span>
+              <span className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full bg-viz-violet" aria-hidden />
+                Up
+              </span>
+            </>
+          )}
           <span className="flex items-center gap-1.5">
-            <span className="size-1.5 rounded-full bg-ink-subtle" aria-hidden />
-            Weigh-in ({pts.length})
-          </span>
-          <span className="flex items-center gap-1.5">
-            <span className="h-0.5 w-4 rounded-full bg-ink" aria-hidden />
+            <span className="h-0.5 w-4 rounded-full bg-linear-to-r from-viz-violet to-viz-line" aria-hidden />
             7-day average
           </span>
           {goalInView && (
             <span className="flex items-center gap-1.5">
               <span
-                className="w-4 border-t-[1.5px] border-dashed border-ink-variant"
+                className="w-4 border-t-[1.5px] border-dashed border-viz-goal"
                 aria-hidden
               />
               Goal
@@ -655,9 +700,11 @@ function Flag({
   above = false,
   edge,
   show,
+  color,
 }: {
   at: { left: string; top: string };
   label: string;
+  color: string;
   value: string;
   above?: boolean;
   edge: number;
@@ -677,7 +724,8 @@ function Flag({
       transition={{ delay: 1.2, duration: 0.4 }}
       aria-hidden
     >
-      <span className="tracking-wide text-ink-subtle uppercase">{label}</span>
+      <span className="size-1.5 self-center rounded-full" style={{ background: color }} />
+      <span className="tracking-wide uppercase" style={{ color }}>{label}</span>
       <span className="font-display text-xs text-ink tabular-nums">
         {value}
       </span>

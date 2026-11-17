@@ -56,6 +56,11 @@
   --color-macro-protein: var(--macro-protein);
   --color-macro-carbs: var(--macro-carbs);
   --color-macro-fiber: var(--macro-fiber);
+  --color-viz-line: var(--viz-line);
+  --color-viz-violet: var(--viz-violet);
+  --color-viz-good: var(--viz-good);
+  --color-viz-bad: var(--viz-bad);
+  --color-viz-goal: var(--viz-goal);
 
   /* Shared shadcn primitives (src/components/ui: calendar, popover, button, input) read these names,
      so they render as Bumper Plates here and Midnight Lime in the main app with no code changes. */
@@ -128,6 +133,13 @@
   --macro-protein: #b3a6ff;
   --macro-carbs: #ffcf6e;
   --macro-fiber: #7fe0a8;
+  /* Analytics (data, Home charts only; user-approved 2026-11-17): the weight trend's line and dots,
+     Balance and Your week. Good = toward your goal, bad = away from it; never on text or buttons. */
+  --viz-line: #5ad1ff;
+  --viz-violet: #a78bfa;
+  --viz-good: #4ade80;
+  --viz-bad: #ff7a6b;
+  --viz-goal: #ffc24b;
 }
 
 body {

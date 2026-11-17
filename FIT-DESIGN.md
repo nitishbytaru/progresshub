@@ -278,6 +278,8 @@ Twelve muted kitchen tints colour the disc behind a food icon, one per food grou
 ### Macro colours (data: the fuel plate)
 The Food page's fuel plate and its tiles use one colour per measure: calories chalk `#f4f4f2`, protein violet `#b3a6ff`, carbs amber `#ffcf6e`, fiber mint `#7fe0a8` (`--macro-*` in fit.css). The app tracks fiber, not fat: fat is still stored per entry but never shown; the fiber target is 14 g per 1,000 kcal, at least 25 g. Each ring is labelled in its own colour along the curve, and the matching tile repeats the colour as a dot and fill bar. Used nowhere else (user-approved, 2026-11-15).
 
+**Analytics colours** (user-approved, 2026-11-17): Home's charts are coloured, numbers stay chalk. Weight trend: the 7-day average is a violet `#a78bfa` → blue `#5ad1ff` gradient line with a blue fade fill; weigh-in dots are green `#4ade80` when that day moved toward the goal and coral `#ff7a6b` when it moved away (no goal: blue = down, violet = up; steel = no change or first); Low flag blue, High flag violet, goal line and tag amber `#ffc24b`. Balance uses the plate colour of each group's lead muscle (push = chest red, pull = back blue, legs = legs yellow). Your week: bars in blue, brighter with more gym days, the best weekday green with a soft glow. Tokens `--viz-line`, `--viz-violet`, `--viz-good`, `--viz-bad`, `--viz-goal` in fit.css; used only on those Home charts.
+
 ### Food icons
 Every built-in food has an icon (`Food.icon` in `src/lib/fit-foods.ts`, drawn by `FoodIcon` in `src/components/fit/food-icon.tsx`): a lucide line icon, or one of the custom Indian staples (roti, rice, dosa, idli, samosa, shaker, bread, paneer) drawn on the same 24px grid with a 2px round stroke, in Rubber ink on its group-coloured disc. Custom and AI foods borrow the icon of the closest built-in (`guessFood`); unknown foods get a steel disc with a fork and knife.
 
@@ -403,4 +405,4 @@ The Coach page is Dumbo in his coach outfit (`outfit="coach"`: chalk cap with br
 - **Don't** add box shadows or glows; the system is flat.
 - **Don't** set a weight or count in Archivo, or a page headline in anything but uppercase Barlow Condensed.
 - **Don't** stack a second small label above a rim-label title.
-- **Don't** colour direction: weight change is ▲ or ▼ in chalk, never red or green.
+- **Don't** colour direction in text: weight change numbers are ▲ or ▼ in chalk. (Exception: chart dots on the Home analytics, see Analytics colours.)
