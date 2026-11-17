@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "bot:dev": "tsx --env-file=.env.local --conditions=react-server scripts/telegram-dev.ts"
+    "bot:dev": "tsx --env-file=.env.local --conditions=react-server scripts/telegram-dev.ts",
+    "fitbot:dev": "tsx --env-file=.env.local --conditions=react-server scripts/fit-telegram-dev.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",

@@ -2,7 +2,9 @@ import type { Metadata } from "next";
 import { Suspense, type CSSProperties } from "react";
 import { NotReady } from "@/components/fit/setup-notice";
 import { getFitDataCounts, getProfile, getUnit, getWeights, trainerReady } from "@/lib/fit";
+import { createClient } from "@/lib/supabase/server";
 import { ClearFitData } from "./clear-data";
+import { FitTelegram } from "./telegram";
 import { ProfileForm } from "./profile-form";
 import { SignOutButton } from "./sign-out";
 
@@ -12,6 +14,9 @@ export default function MePage() {
   // Clear data + log out: a separate Account section under the profile.
   const account = (
     <div className="flex flex-col gap-4">
+      <Suspense fallback={<div className="h-[130px] animate-pulse rounded-2xl bg-surface" aria-hidden />}>
+        <TelegramLink />
+      </Suspense>
       <Suspense fallback={<div className="h-[170px] animate-pulse rounded-2xl bg-surface" aria-hidden />}>
         <ClearData />
       </Suspense>
@@ -47,4 +52,10 @@ async function Profile({ account }: { account: React.ReactNode }) {
 
 async function ClearData() {
   return <ClearFitData counts={await getFitDataCounts()} />;
+}
+
+async function TelegramLink() {
+  const supabase = await createClient();
+  const { data } = await supabase.from("fit_telegram_links").select("linked_at").maybeSingle();
+  return <FitTelegram linkedAt={(data?.linked_at as string | undefined) ?? null} botUsername={process.env.NEXT_PUBLIC_TELEGRAM_FIT_BOT_USERNAME ?? null} />;
 }
