@@ -13,7 +13,6 @@ import { AnimatePresence, MotionConfig, motion, useInView } from "motion/react";
 import {
   addDays,
   daysBetween,
-  weekStart,
   type TrendPoint,
 } from "@/lib/fit-stats";
 import {
@@ -168,8 +167,6 @@ export function TrendChart({
     if (utc(d).getUTCDate() === 1) months.push(d);
 
   // Weekly change of the 7-day average: last average of each week vs the week before.
-  const weeks = weeklyChange(pts);
-  const maxWeek = Math.max(0.1, ...weeks.map((w) => Math.abs(w.delta ?? 0)));
 
   const shown = active === null ? null : pts[active];
   const prev = active ? pts[active - 1] : null;
@@ -613,54 +610,6 @@ export function TrendChart({
                 </span>
               ))}
           </div>
-
-          {/* Weekly change of the 7-day average, aligned to the plot. */}
-          <span className="self-center text-right text-[0.625rem] leading-tight font-bold text-ink-subtle uppercase">
-            ▲
-            <br />▼
-          </span>
-          <div
-            className="relative mt-2 h-12 border-y border-outline-variant"
-            role="img"
-            aria-label={`Weekly change: ${weeks.map((w) => `${fmtDay(w.start)} ${w.delta === null ? "no data" : signed(w.delta, unit)}`).join(", ")}`}
-          >
-            <span
-              className="absolute inset-x-0 top-1/2 border-t border-outline"
-              aria-hidden
-            />
-            {weeks.map((w, i) => {
-              if (w.delta === null) return null;
-              const left = Math.max(
-                0,
-                x(w.start < first.day ? first.day : w.start),
-              );
-              const right = Math.min(W, x(w.end > last.day ? last.day : w.end));
-              const h = (Math.abs(w.delta) / maxWeek) * 50;
-              const up = w.delta > 0;
-              return (
-                <motion.span
-                  key={`${range}-${w.start}`}
-                  title={`Week of ${fmtDay(w.start)}: ${signed(w.delta, unit)} ${unit}`}
-                  className={`absolute rounded-[2px] ${i === weeks.length - 1 ? "bg-ink" : "bg-ink-variant/70"}`}
-                  style={{
-                    left: `calc(${(left / W) * 100}% + 2px)`,
-                    width: `calc(${((right - left) / W) * 100}% - 4px)`,
-                    height: `${Math.max(h, 4)}%`,
-                    ...(up
-                      ? { bottom: "50%", transformOrigin: "bottom" }
-                      : { top: "50%", transformOrigin: "top" }),
-                  }}
-                  initial={{ scaleY: 0 }}
-                  animate={{ scaleY: inView ? 1 : 0 }}
-                  transition={{
-                    delay: 0.9 + i * 0.05,
-                    duration: 0.45,
-                    ease: [0.2, 1.3, 0.4, 1],
-                  }}
-                />
-              );
-            })}
-          </div>
         </div>
 
         {/* Legend. */}
@@ -693,35 +642,10 @@ export function TrendChart({
             </span>
             Gym day, by muscle
           </span>
-          <span className="flex items-center gap-1.5">
-            <span
-              className="h-2.5 w-3 rounded-[2px] bg-ink-variant/70"
-              aria-hidden
-            />
-            Weekly change (above line = up, below = down)
-          </span>
         </div>
       </section>
     </MotionConfig>
   );
-}
-
-/** Weeks (Mon–Sun) covering the points, each with the change in 7-day average vs the week before. */
-function weeklyChange(pts: TrendPoint[]) {
-  {
-    const byWeek = new Map<string, TrendPoint>();
-    pts.forEach((p) => byWeek.set(weekStart(p.day), p)); // ascending, so the last point of each week wins
-    const starts = [...byWeek.keys()];
-    return starts.map((start, i) => {
-      const prevEnd = i ? byWeek.get(starts[i - 1])! : pts[0];
-      const end = byWeek.get(start)!;
-      return {
-        start,
-        end: addDays(start, 6),
-        delta: i === 0 && end === pts[0] ? null : end.avg - prevEnd.avg,
-      };
-    });
-  }
 }
 
 function Flag({
