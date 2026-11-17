@@ -232,3 +232,18 @@ export async function getMealPrep(day: string): Promise<MealPrepRow | null> {
     ? { day: data.day, ingredients: (data.ingredients ?? []) as string[], meals: (data.meals ?? []) as PrepMeal[], warnings: (data.warnings ?? []) as PrepWarning[], generated_at: data.generated_at }
     : null;
 }
+
+export type FitDataCounts = { weighIns: number; sets: number; meals: number; days: number; foods: number };
+
+/** How many rows "Clear fit data" would delete, per kind (RLS scopes every count to the viewer). */
+export async function getFitDataCounts(): Promise<FitDataCounts> {
+  const supabase = await createClient();
+  const count = async (table: string) => {
+    const { count, error } = await supabase.from(table).select("*", { count: "exact", head: true });
+    return error ? 0 : (count ?? 0);
+  };
+  const [weighIns, sets, meals, days, foods] = await Promise.all(
+    ["weight_logs", "workout_sets", "food_logs", "fit_days", "custom_foods"].map(count),
+  );
+  return { weighIns, sets, meals, days, foods };
+}

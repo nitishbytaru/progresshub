@@ -1,6 +1,7 @@
 "use client";
 
-import { useActionState, useState, type ReactNode } from "react";
+import { useActionState, useEffect, useState, type CSSProperties, type ReactNode } from "react";
+import { animate, motion, useMotionValue, useReducedMotion, useTransform } from "motion/react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, ArrowRight, Check } from "lucide-react";
 import { DIET_LABEL, type Diet } from "@/lib/fit-foods";
@@ -17,6 +18,8 @@ import { UNIT_COOKIE, fmtWeight, type Unit } from "@/lib/fit-units";
 import { saveProfile, type ProfileState } from "./actions";
 import { fitBusy, fitError, fitToast } from "@/components/fit/fit-toast";
 import { PlateLoader } from "@/components/fit/plate-loader";
+import { Dumbo } from "@/components/fit/dumbo";
+import type { Mood } from "@/lib/fit-mascot";
 
 const rememberUnit = (u: Unit) => {
   document.cookie = `${UNIT_COOKIE}=${u}; path=/; max-age=31536000; samesite=lax`;
@@ -103,15 +106,20 @@ export function ProfileForm({
   latestKg,
   today,
   unit: savedUnit,
+  account,
 }: {
   profile: FitProfile | null;
   latestKg: number | null;
   today: string;
   unit: Unit;
+  /** Clear data + log out: its own section under the profile and targets. */
+  account?: ReactNode;
 }) {
   const router = useRouter();
   const setup = profile === null;
+  const reduce = useReducedMotion();
   const [step, setStep] = useState(0);
+  const [dir, setDir] = useState(1);
   const [unit, setUnitState] = useState<Unit>(savedUnit);
   const [sex, setSex] = useState<Sex>(profile?.sex ?? "male");
   const [birth, setBirth] = useState(String(profile?.birth_year ?? ""));
@@ -126,6 +134,10 @@ export function ProfileForm({
   const [rate, setRate] = useState(String(profile?.weekly_rate_kg || 0.5));
   const [diet, setDiet] = useState<Diet>(profile?.diet ?? "nonveg");
   const [gymDays, setGymDays] = useState(profile?.gym_days_target ?? 4);
+  // Unsaved changes: the save button wakes up (and pulses) only when something differs from the last save.
+  const snapshot = JSON.stringify([unit, sex, birth, height, activity, goal, target, rate, diet, gymDays]);
+  const [saved, setSaved] = useState(snapshot);
+  const dirty = snapshot !== saved;
 
   const [state, action, pending] = useActionState<ProfileState, FormData>(
     async (prev, fd) => {
@@ -138,6 +150,7 @@ export function ProfileForm({
           detail: setup ? "Your coach is ready" : "Targets updated",
           mood: "proud",
         });
+      if (r?.saved) setSaved(snapshot);
       if (r?.saved && setup) router.push("/coach");
       return r;
     },
@@ -340,136 +353,266 @@ export function ProfileForm({
     },
   ];
 
-  const visible = setup ? [sections[step]] : sections;
+  const tabs = sections.map((s) => s.title);
+  const go = (i: number) => {
+    setDir(i > step ? 1 : -1);
+    setStep(i);
+  };
+  const age = Number(birth) > 1900 ? Number(today.slice(0, 4)) - Number(birth) : null;
+  const summary = [
+    [height ? `${height} cm` : "—", age ? `${age}y` : null].filter(Boolean).join(" · "),
+    goal === "maintain" ? GOAL_LABEL[goal] : `${GOAL_LABEL[goal]} · ${rate}/wk`,
+    `${DIET_LABEL[diet]} · ${gymDays}d`,
+  ];
+  const slide = {
+    initial: reduce ? { opacity: 0 } : { opacity: 0, x: dir * 36, filter: "blur(6px)" },
+    animate: { opacity: 1, x: 0, filter: "blur(0px)" },
+    transition: { duration: reduce ? 0.15 : 0.45, ease: EASE },
+  };
 
   return (
-    <form action={action} className="grid gap-6 md:grid-cols-12 md:items-start">
-      <div className="flex flex-col gap-5 md:col-span-7">
-        {setup && (
+    <div className="grid gap-5 md:grid-cols-12 md:items-start md:gap-6">
+      <div className="card-in flex flex-col gap-4 md:col-span-7" style={{ "--card-i": 1 } as CSSProperties}>
+        {setup ? (
           <ol className="flex gap-2" aria-label="Setup steps">
             {sections.map((s, i) => (
               <li key={s.title} className="flex flex-1 flex-col gap-1.5">
-                <span
-                  className={`h-1.5 rounded-full ${i <= step ? "bg-ink" : "bg-track"}`}
-                />
-                <span
-                  className={`text-xs font-bold ${i === step ? "text-ink" : "text-ink-subtle"}`}
-                >
-                  {s.title}
+                <span className="relative h-1.5 overflow-hidden rounded-full bg-track">
+                  <motion.span
+                    className="absolute inset-0 origin-left rounded-full bg-ink"
+                    initial={false}
+                    animate={{ scaleX: i <= step ? 1 : 0 }}
+                    transition={{ duration: reduce ? 0 : 0.5, ease: EASE }}
+                  />
                 </span>
+                <span className={`text-xs font-bold transition-colors ${i === step ? "text-ink" : "text-ink-subtle"}`}>{s.title}</span>
               </li>
             ))}
           </ol>
+        ) : (
+          /* Tabs: each shows its current answer, so the whole profile reads at a glance. */
+          <div role="tablist" aria-label="Profile sections" className="grid grid-cols-3 gap-1 rounded-2xl border border-outline-variant bg-surface p-1">
+            {tabs.map((t, i) => {
+              const on = i === step;
+              return (
+                <button
+                  key={t}
+                  type="button"
+                  role="tab"
+                  id={`me-tab-${i}`}
+                  aria-selected={on}
+                  aria-controls={`me-pane-${i}`}
+                  onClick={() => go(i)}
+                  className={`relative flex min-h-14 min-w-0 flex-col items-center justify-center rounded-xl px-1 py-2 transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${on ? "text-primary-foreground" : "text-ink-variant hover:bg-hover hover:text-ink"}`}
+                >
+                  {on && (
+                    <motion.span
+                      layoutId="me-tab"
+                      aria-hidden
+                      className="absolute inset-0 rounded-xl bg-primary"
+                      transition={reduce ? { duration: 0 } : { type: "spring", stiffness: 420, damping: 34 }}
+                    />
+                  )}
+                  <span className="relative font-display text-lg leading-none font-bold uppercase">{t}</span>
+                  <span className={`relative mt-1 w-full truncate text-center font-mono text-[10px] ${on ? "text-primary-foreground/70" : "text-ink-subtle"}`}>
+                    {summary[i]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
         )}
-        {/* Keep every field mounted so hidden steps still submit. */}
-        {sections.map((s) => (
-          <section
-            key={s.title}
-            aria-label={s.title}
-            hidden={!visible.includes(s)}
-            className="flex flex-col gap-5 rounded-2xl border border-outline-variant bg-surface p-4 sm:p-6"
-          >
-            {!setup && (
-              <h2 className="font-display text-2xl font-bold uppercase">
-                {s.title}
-              </h2>
-            )}
-            {s.body}
-          </section>
-        ))}
 
-        <div className="flex items-center gap-3">
-          {setup && step > 0 && (
-            <button
-              type="button"
-              onClick={() => setStep(step - 1)}
-              className="inline-flex h-14 items-center gap-2 rounded-full border border-outline px-5 font-semibold text-ink-variant hover:bg-hover hover:text-ink"
-            >
-              <ArrowLeft className="size-4" aria-hidden /> Back
-            </button>
+        <form action={action} className="flex flex-col gap-4">
+          {/* Every field stays mounted so the hidden panes still submit; the active one slides in. */}
+          {sections.map((s, i) =>
+            i === step ? (
+              <motion.section
+                key={`${s.title}-on`}
+                id={`me-pane-${i}`}
+                role={setup ? undefined : "tabpanel"}
+                aria-labelledby={setup ? undefined : `me-tab-${i}`}
+                aria-label={setup ? s.title : undefined}
+                {...slide}
+                className="flex flex-col gap-5 rounded-2xl border border-outline-variant bg-surface p-4 sm:p-6"
+              >
+                {setup && <h2 className="font-display text-3xl leading-none font-bold uppercase">{s.title}</h2>}
+                {s.body}
+              </motion.section>
+            ) : (
+              <section key={`${s.title}-off`} hidden>
+                {s.body}
+              </section>
+            ),
           )}
-          {setup && step < sections.length - 1 ? (
-            <button
-              type="button"
-              onClick={() => setStep(step + 1)}
-              className="inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary-hover"
-            >
-              Next <ArrowRight className="size-4" aria-hidden />
-            </button>
-          ) : (
-            <button
-              type="submit"
-              disabled={pending}
-              className="inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary-hover disabled:opacity-60"
-            >
-              {!pending && <Check className="size-4" aria-hidden />}
-              {pending ? (
-                <>
-                  <PlateLoader size="sm" /> Saving…
-                </>
-              ) : setup ? (
-                "Start coaching"
-              ) : (
-                "Save profile"
-              )}
-            </button>
-          )}
-        </div>
-        <p aria-live="polite" className="min-h-5 text-sm text-ink-variant">
-          {state?.error ??
-            (state?.saved && !setup ? "Profile saved. Targets updated." : "")}
-        </p>
+
+          <div className="flex items-center gap-3">
+            {setup && step > 0 && (
+              <button
+                type="button"
+                onClick={() => go(step - 1)}
+                className="inline-flex h-14 items-center gap-2 rounded-full border border-outline px-5 font-semibold text-ink-variant hover:bg-hover hover:text-ink"
+              >
+                <ArrowLeft className="size-4" aria-hidden /> Back
+              </button>
+            )}
+            {setup && step < sections.length - 1 ? (
+              <button
+                type="button"
+                onClick={() => go(step + 1)}
+                className="group inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary-hover"
+              >
+                Next <ArrowRight className="size-4 transition-transform group-hover:translate-x-1" aria-hidden />
+              </button>
+            ) : (
+              <motion.button
+                type="submit"
+                disabled={pending || (!setup && !dirty)}
+                animate={dirty && !reduce && !pending ? { scale: [1, 1.025, 1] } : { scale: 1 }}
+                transition={dirty && !reduce ? { duration: 1.6, repeat: Infinity, ease: "easeInOut" } : { duration: 0.2 }}
+                className="inline-flex h-14 flex-1 items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground transition-opacity hover:bg-primary-hover disabled:opacity-40"
+              >
+                {pending ? (
+                  <>
+                    <PlateLoader size="sm" /> Saving…
+                  </>
+                ) : setup ? (
+                  <>
+                    <Check className="size-4" aria-hidden /> Start coaching
+                  </>
+                ) : dirty ? (
+                  <>
+                    <span aria-hidden className="size-2 rounded-full bg-primary-foreground" /> Save changes
+                  </>
+                ) : (
+                  <>
+                    <Check className="size-4" aria-hidden /> All saved
+                  </>
+                )}
+              </motion.button>
+            )}
+          </div>
+          <p aria-live="polite" className="sr-only">
+            {state?.error ?? (state?.saved && !setup ? "Profile saved. Targets updated." : "")}
+          </p>
+          {state?.error && <p className="text-sm text-ink">{state.error}</p>}
+        </form>
+
       </div>
 
-      {/* Live preview of what these settings mean. */}
+      {/* Live preview of what these settings mean. Phones: on top, it's the payoff. */}
       <aside
         aria-label="Your daily targets"
-        className="flex flex-col gap-4 rounded-2xl border border-outline-variant p-4 sm:p-6 md:sticky md:top-6 md:col-span-5"
+        className="card-in order-first flex flex-col gap-4 overflow-hidden rounded-2xl border border-outline-variant bg-surface p-4 sm:p-6 md:sticky md:top-6 md:order-none md:col-span-5"
+        style={{ "--card-i": 0 } as CSSProperties}
       >
-        <h2 className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">
-          Daily targets
-        </h2>
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">Daily targets</h2>
+            {preview ? (
+              <p className="mt-2 font-display text-6xl leading-none font-bold" aria-label={`${preview.kcal} kcal a day`}>
+                <Num value={preview.kcal} />
+                <span className="ml-1 text-xl text-ink-subtle">kcal</span>
+              </p>
+            ) : (
+              <p className="mt-2 font-display text-6xl leading-none font-bold text-ink-subtle">—</p>
+            )}
+          </div>
+          <Dumbo mood={preview ? MOOD[goal] : "curious"} size={84} className="-mt-1 -mr-2 shrink-0" />
+        </div>
+
         {preview ? (
           <>
-            <p className="font-display text-6xl leading-none font-bold">
-              {preview.kcal}
-              <span className="ml-1 text-xl text-ink-subtle">kcal</span>
-            </p>
-            <p className="text-sm text-ink-variant">
-              Burn ≈ {preview.tdee} kcal ·{" "}
-              {preview.adjust === 0
-                ? "eat at maintenance"
-                : `${preview.adjust > 0 ? "+" : ""}${preview.adjust} kcal/day`}
-              {preview.floored && " (held at a safe minimum)"}
-            </p>
-            <dl className="grid grid-cols-3 divide-x divide-outline-variant border-y border-outline-variant">
+            {/* Burn vs eat: two bars on one scale instead of a sentence. */}
+            <div
+              role="img"
+              aria-label={`Burn about ${preview.tdee} kcal, eat ${preview.kcal} kcal: ${preview.adjust === 0 ? "maintenance" : `${preview.adjust > 0 ? "+" : ""}${preview.adjust} kcal a day`}${preview.floored ? ", held at a safe minimum" : ""}`}
+              className="flex flex-col gap-2"
+            >
               {[
-                ["Protein", preview.protein],
-                ["Carbs", preview.carbs],
-                ["Fiber", preview.fiber],
-              ].map(([l, v]) => (
+                ["Burn", preview.tdee, "bg-steel"],
+                ["Eat", preview.kcal, "bg-ink"],
+              ].map(([l, v, c]) => (
+                <div key={l as string} className="grid grid-cols-[40px_1fr_52px] items-center gap-2">
+                  <span className="font-mono text-[11px] text-ink-subtle">{l}</span>
+                  <span className="h-2 overflow-hidden rounded-full bg-track">
+                    <motion.span
+                      className={`block h-full origin-left rounded-full ${c}`}
+                      initial={reduce ? false : { scaleX: 0 }}
+                      animate={{ scaleX: (v as number) / Math.max(preview.tdee, preview.kcal) }}
+                      transition={{ duration: reduce ? 0 : 0.8, ease: EASE }}
+                    />
+                  </span>
+                  <span className="text-right font-mono text-xs tabular-nums">
+                    <Num value={v as number} />
+                  </span>
+                </div>
+              ))}
+              <span className="self-end rounded-full border border-outline-variant px-2 py-0.5 font-mono text-[11px] text-ink-variant">
+                {preview.adjust === 0 ? "maintenance" : `${preview.adjust > 0 ? "+" : "−"}${Math.abs(preview.adjust)}/day`}
+                {preview.floored && " · safe min"}
+              </span>
+            </div>
+            <dl className="grid grid-cols-3 divide-x divide-outline-variant border-y border-outline-variant">
+              {(
+                [
+                  ["Protein", preview.protein],
+                  ["Carbs", preview.carbs],
+                  ["Fiber", preview.fiber],
+                ] as const
+              ).map(([l, v]) => (
                 <div key={l} className="flex flex-col items-center py-3">
-                  <dt className="text-xs text-ink-subtle">{l}</dt>
-                  <dd className="font-display text-2xl font-bold">
-                    {v}
+                  <dt className="font-mono text-[11px] text-ink-subtle">{l}</dt>
+                  <dd className="font-display text-3xl leading-none font-bold">
+                    <Num value={v} />
                     <span className="text-sm text-ink-subtle">g</span>
                   </dd>
                 </div>
               ))}
             </dl>
-            <p className="text-xs text-ink-subtle">
-              From your last weigh-in ({fmtWeight(latestKg!, unit)} {unit}).
-              Estimates; the coach adapts once you log food for 2 weeks.
+            <p
+              className="font-mono text-[11px] text-ink-subtle"
+              title="Estimates from your last weigh-in; the coach adapts once you log food for 2 weeks."
+            >
+              from {fmtWeight(latestKg!, unit)} {unit} · estimate
             </p>
           </>
         ) : (
-          <p className="text-sm text-ink-subtle">
-            {latestKg
-              ? "Fill in birth year and height to see your targets."
-              : "Log a weigh-in first; targets are based on your current weight."}
-          </p>
+          <p className="font-mono text-xs text-ink-subtle">{latestKg ? "add birth year + height" : "log a weigh-in first"}</p>
         )}
       </aside>
-    </form>
+
+      {account && (
+        <section
+          aria-label="Account"
+          className="card-in mt-4 flex flex-col gap-4 border-t border-outline-variant pt-6 md:col-span-12"
+          style={{ "--card-i": 2 } as CSSProperties}
+        >
+          <h2 className="text-xs font-bold tracking-[0.14em] text-ink-subtle uppercase">Account</h2>
+          <div className="grid gap-4 md:grid-cols-12 md:items-start">
+            <div className="md:col-span-7">{account}</div>
+          </div>
+        </section>
+      )}
+    </div>
   );
+}
+
+const EASE = [0.2, 0.9, 0.25, 1] as const;
+const MOOD: Record<Goal, Mood> = { lose: "flex", maintain: "happy", gain: "proud" };
+
+/** A number that glides to its new value whenever the inputs change it. */
+function Num({ value }: { value: number }) {
+  const reduce = useReducedMotion();
+  const mv = useMotionValue(value);
+  const text = useTransform(mv, (v) => Math.round(v).toLocaleString("en-US"));
+  useEffect(() => {
+    if (reduce) {
+      mv.set(value);
+      return;
+    }
+    const c = animate(mv, value, { duration: 0.7, ease: EASE });
+    return () => c.stop();
+  }, [value, reduce, mv]);
+  return <motion.span className="tabular-nums">{text}</motion.span>;
 }

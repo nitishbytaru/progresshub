@@ -16,13 +16,13 @@ export function SignOutButton() {
           mood: "sleepy",
         })
       }
-      className="mt-6 flex border-t border-outline-variant pt-6"
+      className="flex"
     >
       <button
         type="submit"
-        className="inline-flex h-12 items-center gap-2 rounded-full border border-outline px-6 text-base font-semibold text-ink-variant transition-colors hover:bg-hover hover:text-ink"
+        className="group inline-flex h-12 w-full items-center justify-center gap-2 rounded-2xl border border-outline-variant bg-surface px-6 text-base font-semibold text-ink-variant transition-colors hover:bg-hover hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
-        <LogOut className="size-4" aria-hidden />
+        <LogOut className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden />
         Log out
       </button>
     </form>
