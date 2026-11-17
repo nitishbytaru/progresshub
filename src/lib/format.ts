@@ -1,4 +1,4 @@
-import { toUTC } from "./progress";
+import { daysBetween, toUTC } from "./progress";
 
 const int = new Intl.NumberFormat("en-US");
 const compact = new Intl.NumberFormat("en-US", { notation: "compact", maximumFractionDigits: 1 });
@@ -16,3 +16,9 @@ const short = dateFmt({ month: "short", day: "numeric" });
 
 export const fmtDate = (d: string) => long.format(toUTC(d));
 export const fmtDateShort = (d: string) => short.format(toUTC(d));
+
+/** "today", "yesterday" or "5d ago" for a log date, relative to the viewer's today. */
+export function fmtAgo(date: string, today: string) {
+  const d = daysBetween(date, today);
+  return d <= 0 ? "today" : d === 1 ? "yesterday" : `${d}d ago`;
+}

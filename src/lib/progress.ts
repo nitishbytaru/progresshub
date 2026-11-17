@@ -39,6 +39,19 @@ export function daysBetween(a: string, b: string): number {
   return Math.round((toUTC(b) - toUTC(a)) / DAY_MS);
 }
 
+/** A creator with no log in more than this many days is inactive: off the race table and the ranking. */
+export const ACTIVE_DAYS = 3;
+
+/** True when the last log is at most ACTIVE_DAYS before `today` (today, yesterday … 3 days ago). */
+export function isActive(lastLoggedOn: string | null | undefined, today: string): boolean {
+  return !!lastLoggedOn && daysBetween(lastLoggedOn, today) <= ACTIVE_DAYS;
+}
+
+/** The oldest last-log date that still counts as active, for `.gte("last_logged_on", …)` filters. */
+export function activeCutoff(today: string = isoDate(Date.now())): string {
+  return addDays(today, -ACTIVE_DAYS);
+}
+
 /** Sorts ascending and derives the day-over-day change for each log. */
 export function withDeltas(entries: Entry[]): DayRow[] {
   const sorted = [...entries].sort((a, b) => toUTC(a.date) - toUTC(b.date));

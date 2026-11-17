@@ -4,8 +4,9 @@ import { PageSkeleton } from "@/components/progress/page-skeleton";
 import { getFinishDates, getLeaderboard, getToday, getViewer } from "@/lib/data";
 import { Users } from "lucide-react";
 import { fmt } from "@/lib/format";
-import { GOAL } from "@/lib/progress";
+import { GOAL, isActive } from "@/lib/progress";
 import { FinishersDialog, type Finisher } from "./finishers-dialog";
+import { InactiveDialog, type InactiveCreator } from "./inactive-dialog";
 import { LeaderboardTable, type Creator } from "./leaderboard-table";
 
 export const metadata: Metadata = { title: "Leaderboard" };
@@ -34,7 +35,20 @@ async function Leaderboard() {
     }))
     .sort((a, b) => (a.finishedOn ?? "").localeCompare(b.finishedOn ?? "") || b.total - a.total);
 
-  const creators: Creator[] = rows.filter((r) => r.total < GOAL).map((r) => ({
+  // No log in 3+ days: off the race table, into the Inactive list, until they log again.
+  const racing = rows.filter((r) => r.total < GOAL);
+  const inactiveRows = racing.filter((r) => !isActive(r.last_logged_on, today));
+  const inactive: InactiveCreator[] = inactiveRows.map((r) => ({
+    name: r.display_name || r.handle,
+    handle: r.handle,
+    total: r.total,
+    avatarUrl: r.avatar_url,
+    isYou: r.user_id === profile.id,
+    lastLoggedOn: r.last_logged_on,
+  }));
+  const youInactiveSince = inactive.find((c) => c.isYou)?.lastLoggedOn ?? null;
+
+  const creators: Creator[] = racing.filter((r) => isActive(r.last_logged_on, today)).map((r) => ({
     name: r.display_name || r.handle,
     handle: r.handle,
     total: r.total,
@@ -51,6 +65,8 @@ async function Leaderboard() {
       creators={creators}
       today={today}
       finishers={<FinishersDialog finishers={finishers} />}
+      inactive={<InactiveDialog creators={inactive} today={today} />}
+      youInactiveSince={youInactiveSince}
       count={
         // Phones: number + people icon only. sm and up: number + "creators racing".
         <div

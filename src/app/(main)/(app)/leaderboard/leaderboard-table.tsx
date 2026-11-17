@@ -2,11 +2,11 @@
 
 import { useMemo, useState } from "react";
 import Link from "next/link";
-import { Check, Flame, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, Check, Flame, Moon, Search, SlidersHorizontal } from "lucide-react";
 import { Avatar } from "@/components/shell/brand";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { fmt, fmtCompact, fmtPct, fmtSigned } from "@/lib/format";
-import { daysBetween, GOAL } from "@/lib/progress";
+import { fmt, fmtAgo, fmtCompact, fmtPct, fmtSigned } from "@/lib/format";
+import { GOAL } from "@/lib/progress";
 import { cn } from "@/lib/utils";
 
 export type Creator = {
@@ -21,12 +21,6 @@ export type Creator = {
   lastGain: number | null;
   lastLoggedOn: string;
 };
-
-/** "today", "yesterday" or "5d ago" for a log date, relative to the viewer's today. */
-function ago(date: string, today: string) {
-  const d = daysBetween(date, today);
-  return d <= 0 ? "today" : d === 1 ? "yesterday" : `${d}d ago`;
-}
 
 const SORTS = {
   total: { label: "Closest to 500K", by: (c: Creator) => c.total },
@@ -48,9 +42,13 @@ type Props = {
   /** Finishers flag button and the "N creators racing" count, placed in the header row. */
   finishers: React.ReactNode;
   count: React.ReactNode;
+  /** The Inactive list button (creators with no log in 3+ days), placed beside the finishers flag. */
+  inactive?: React.ReactNode;
+  /** The viewer's last log date when they're inactive: shows a "log to rejoin" banner. */
+  youInactiveSince?: string | null;
 };
 
-export function LeaderboardTable({ creators, today, finishers, count }: Props) {
+export function LeaderboardTable({ creators, today, finishers, count, inactive, youInactiveSince }: Props) {
   const [sort, setSort] = useState<SortKey>("total");
   const [query, setQuery] = useState("");
   const [sortOpen, setSortOpen] = useState(false);
@@ -77,7 +75,10 @@ export function LeaderboardTable({ creators, today, finishers, count }: Props) {
         <h1 className="sr-only sm:not-sr-only sm:order-1 sm:mr-auto text-[1.75rem] leading-tight font-bold tracking-[-0.025em] sm:text-[2.5rem]">
           Race to <span className="text-primary">500K</span>
         </h1>
-        <div className="order-1 sm:order-2">{finishers}</div>
+        <div className="order-1 flex gap-2 sm:order-2">
+          {finishers}
+          {inactive}
+        </div>
         <div className="order-3 sm:order-3">{count}</div>
         <div aria-hidden className="hidden h-0 basis-full sm:order-4 sm:block" />
         {/* sm and up: sort tabs. Phones use the filters button beside search instead. */}
@@ -150,6 +151,24 @@ export function LeaderboardTable({ creators, today, finishers, count }: Props) {
         </Popover>
         </div>
       </div>
+
+      {youInactiveSince && (
+        <Link
+          href="/progress"
+          aria-label={`You're off the race table: your last log was ${fmtAgo(youInactiveSince, today)}. Log today to rejoin.`}
+          className="panel-dark flex items-center gap-3 rounded-2xl border border-primary/40 px-4 py-3 transition-colors hover:bg-hover focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary sm:px-5"
+        >
+          <Moon className="size-4 shrink-0 text-muted-foreground" aria-hidden />
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">You&apos;re inactive</span>
+            <span className="block font-mono text-[11px] text-subtle">last log {fmtAgo(youInactiveSince, today)}</span>
+          </span>
+          <span className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full bg-primary px-3.5 text-sm font-semibold text-primary-foreground">
+            Log to rejoin
+            <ArrowRight className="size-3.5" strokeWidth={2.5} aria-hidden />
+          </span>
+        </Link>
+      )}
 
       <div className="panel-dark overflow-hidden rounded-2xl">
         {ranked.length === 0 ? (
@@ -248,7 +267,7 @@ export function LeaderboardTable({ creators, today, finishers, count }: Props) {
                     <span className={cn("font-mono text-sm font-semibold", c.lastGain && c.lastGain > 0 && "text-primary")}>
                       {c.lastGain == null ? "—" : fmtSigned(c.lastGain)}
                     </span>
-                    <span className="font-mono text-[11px] text-subtle">{c.lastGain == null ? "first log" : ago(c.lastLoggedOn, today)}</span>
+                    <span className="font-mono text-[11px] text-subtle">{c.lastGain == null ? "first log" : fmtAgo(c.lastLoggedOn, today)}</span>
                   </span>
                   <span className={cn("hidden text-right font-mono text-sm md:block", sort === "pace" && "font-semibold")}>
                     {fmtSigned(c.pace7)}

@@ -4,7 +4,7 @@ import { headers } from "next/headers";
 import { connection } from "next/server";
 import { cache } from "react";
 import { SUPABASE_KEY, SUPABASE_URL } from "./supabase/env";
-import { forecast, GOAL, paceOver, streak, withDeltas, type Entry } from "./progress";
+import { activeCutoff, forecast, GOAL, paceOver, streak, withDeltas, type Entry } from "./progress";
 
 /** Cookie-less client: reads only what the database already exposes to everyone (public profiles). */
 const anon = () =>
@@ -33,15 +33,16 @@ export const getPublicProfile = cache(async (handle: string): Promise<PublicProf
 export const getRank = cache(async (userId: string) => {
   await connection();
   const db = anon();
-  const { data: me } = await db.from("leaderboard").select("total").eq("user_id", userId).maybeSingle();
-  if (!me || Number(me.total) >= GOAL) return null;
-  const racing = () => db.from("leaderboard").select("user_id", { count: "exact", head: true }).lt("total", GOAL);
+  const { data: me } = await db.from("leaderboard").select("total, last_logged_on").eq("user_id", userId).maybeSingle();
+  // Finished (500K) or inactive (no log in 3+ days): not in the ranking.
+  if (!me || Number(me.total) >= GOAL || (me.last_logged_on as string) < activeCutoff()) return null;
+  const racing = () => db.from("leaderboard").select("user_id", { count: "exact", head: true }).lt("total", GOAL).gte("last_logged_on", activeCutoff());
   const [{ count: ahead }, { count: of }, above, below] = await Promise.all([
     racing().gt("total", me.total),
     racing(),
     // The nearest totals just above and below, for "+3.1K to #1" / "leads by 2K".
-    db.from("leaderboard").select("total").gt("total", me.total).lt("total", GOAL).order("total", { ascending: true }).limit(1).maybeSingle(),
-    db.from("leaderboard").select("total").lt("total", me.total).order("total", { ascending: false }).limit(1).maybeSingle(),
+    db.from("leaderboard").select("total").gt("total", me.total).lt("total", GOAL).gte("last_logged_on", activeCutoff()).order("total", { ascending: true }).limit(1).maybeSingle(),
+    db.from("leaderboard").select("total").lt("total", me.total).gte("last_logged_on", activeCutoff()).order("total", { ascending: false }).limit(1).maybeSingle(),
   ]);
   const mine = Number(me.total);
   return {
@@ -62,7 +63,7 @@ export const getRacers = cache(async (userId: string, limit = 8) => {
   const { data } = await anon()
     .from("leaderboard")
     .select("user_id, handle, avatar_url, total")
-    .lt("total", GOAL)
+    .lt("total", GOAL).gte("last_logged_on", activeCutoff())
     .order("total", { ascending: false })
     .limit(500);
   const board = (data ?? []) as { user_id: string; handle: string; avatar_url: string | null; total: number }[];
@@ -81,7 +82,7 @@ export const getRacers = cache(async (userId: string, limit = 8) => {
 export async function getRankForTotal(total: number) {
   await connection();
   const db = anon();
-  const racing = () => db.from("leaderboard").select("user_id", { count: "exact", head: true }).lt("total", GOAL);
+  const racing = () => db.from("leaderboard").select("user_id", { count: "exact", head: true }).lt("total", GOAL).gte("last_logged_on", activeCutoff());
   const [ahead, board] = await Promise.all([racing().gt("total", total), racing()]);
   if (ahead.error || board.error) return null;
   return { rank: (ahead.count ?? 0) + 1, of: (board.count ?? 0) + 1 };
