@@ -71,3 +71,68 @@ export function balance(logs: FitLog[], today: string) {
   const total = push + pull + legs;
   return { push, pull, legs, total };
 }
+
+export type StreakStats = {
+  /** Weeks in a row with at least one gym day (this week counts once it has one). */
+  weekStreak: number;
+  bestWeekStreak: number;
+  /** False when the streak is carried by last week: train this week to keep it. */
+  thisWeek: boolean;
+  /** Gym days this calendar month / year, and this month's days (for the strip). */
+  month: number;
+  monthDays: { day: string; gym: boolean; future: boolean }[];
+  year: number;
+  /** Gym days per month this year, Jan → Dec (future months are null). */
+  perMonth: (number | null)[];
+  monthIndex: number;
+};
+
+/** Gym streak and counts for the Home streak card. `logs` cover at least this calendar year. */
+export function streakStats(logs: FitLog[], today: string): StreakStats {
+  const gym = new Set(logs.filter((l) => l.gym).map((l) => l.day));
+  const yearStart = `${today.slice(0, 4)}-01-01`;
+  const monthStart = `${today.slice(0, 7)}-01`;
+
+  // Week streak, walking back from this week (or last week when this one has no gym day yet).
+  const weekHas = (start: string) => [0, 1, 2, 3, 4, 5, 6].some((i) => gym.has(addDays(start, i)));
+  let wk = weekStart(today);
+  const thisWeek = weekHas(wk);
+  if (!thisWeek) wk = addDays(wk, -7);
+  let weekStreak = 0;
+  while (weekHas(wk) && weekStreak < 520) {
+    weekStreak++;
+    wk = addDays(wk, -7);
+  }
+  // Best run of weeks over the logged history.
+  const days = [...gym].sort();
+  let bestWeekStreak = 0;
+  if (days.length) {
+    let run = 0;
+    for (let w = weekStart(days[0]); w <= weekStart(today); w = addDays(w, 7)) {
+      run = weekHas(w) ? run + 1 : 0;
+      bestWeekStreak = Math.max(bestWeekStreak, run);
+    }
+  }
+
+  const monthDays: StreakStats["monthDays"] = [];
+  for (let d = monthStart; d.slice(0, 7) === monthStart.slice(0, 7); d = addDays(d, 1)) {
+    monthDays.push({ day: d, gym: gym.has(d), future: d > today });
+  }
+  const monthIndex = Number(today.slice(5, 7)) - 1;
+  const perMonth = Array.from({ length: 12 }, (_, m) => {
+    if (m > monthIndex) return null;
+    const key = `${today.slice(0, 4)}-${String(m + 1).padStart(2, "0")}`;
+    return days.filter((d) => d.startsWith(key)).length;
+  });
+
+  return {
+    weekStreak,
+    bestWeekStreak,
+    thisWeek,
+    month: days.filter((d) => d >= monthStart && d <= today).length,
+    monthDays,
+    year: days.filter((d) => d >= yearStart && d <= today).length,
+    perMonth,
+    monthIndex,
+  };
+}

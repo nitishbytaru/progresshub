@@ -6,7 +6,8 @@ import { MuscleMatrix } from "@/components/fit/muscle-matrix";
 import { TrendChart } from "@/components/fit/trend-chart";
 import { TrainingBoard } from "@/components/fit/training-board";
 import { getProfile, getWeights } from "@/lib/fit";
-import { balance, muscleMatrix, weekdayHabits } from "@/lib/fit-insights";
+import { balance, muscleMatrix, streakStats, weekdayHabits } from "@/lib/fit-insights";
+import { StreakCard } from "@/components/fit/streak-card";
 import { analyze } from "@/lib/fit-stats";
 import { UNIT_COOKIE, isUnit } from "@/lib/fit-units";
 
@@ -40,7 +41,13 @@ async function Analysis() {
   const matrix = muscleMatrix(logs, today);
   return (
     <div className="grid grid-cols-1 gap-5 pt-4 md:grid-cols-12 md:gap-6 lg:gap-x-10 lg:gap-y-8 lg:pt-8">
-      <TrainingBoard s={s} unit={unit} today={today} weight={<WeightBlock s={s} unit={unit} />} />
+      <TrainingBoard
+        s={s}
+        unit={unit}
+        today={today}
+        weight={<WeightBlock s={s} unit={unit} />}
+        after={<StreakCard s={streakStats(logs, today)} today={today} />}
+      />
 
       {/* Insights (formerly their own tab): weight over time, then what you train and when. */}
       <TrendChart

@@ -102,10 +102,10 @@ export function TrainingBoard({
 
       {after}
 
-      {/* 30-day split: one plate face per group, tap to trace it. */}
+      {/* 30-day split: one plate face per group, tap to trace it. Sits right of the streak card (`after`). */}
       <InView
         aria-label="Muscle split, last 30 days"
-        className="card-in rounded-2xl border border-outline-variant bg-surface p-4 sm:p-5 md:col-span-12 lg:p-6"
+        className="card-in rounded-2xl border border-outline-variant bg-surface p-4 sm:p-5 md:col-span-5 lg:p-6"
         style={{ ["--card-i" as string]: 2 }}
       >
         <div className="flex items-baseline justify-between pb-3">
@@ -127,7 +127,7 @@ export function TrainingBoard({
             Tag muscles when you log a gym day to see your split.
           </p>
         ) : (
-          <ul className="grid grid-cols-3 gap-2">
+          <ul className="grid grid-cols-3 gap-1">
             {MUSCLES.map((m) => {
               const stat = s.muscles.find((x) => x.muscle === m)!;
               const on = highlight === m;
