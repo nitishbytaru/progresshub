@@ -54,12 +54,19 @@ const FLOOR = 18;
 const H = PLOT_H + FLOOR;
 const ease = [0.2, 0.9, 0.25, 1] as const;
 
-/** A signed delta in the viewer's unit, direction as ▲/▼ (never coloured). */
-const signed = (kg: number, unit: Unit, digits = 1) => {
+/** A signed delta in the viewer's unit: only the ▲/▼ is coloured (by the dot rule); the number stays chalk. */
+function Delta({ kg, unit, digits = 1, color }: { kg: number; unit: Unit; digits?: number; color: string }) {
   const v = fromKg(kg, unit);
-  if (Math.abs(v) < 0.05) return "±0.0";
-  return `${v > 0 ? "▲" : "▼"} ${Math.abs(v).toFixed(digits)}`;
-};
+  if (Math.abs(v) < 0.05) return <>±0.0</>;
+  return (
+    <>
+      <span style={{ color }} aria-hidden>
+        {v > 0 ? "▲" : "▼"}
+      </span>
+      <span className="sr-only">{v > 0 ? "up" : "down"}</span> {Math.abs(v).toFixed(digits)}
+    </>
+  );
+}
 
 /** Round tick step so the axis shows about four lines. */
 function niceStep(span: number) {
@@ -160,14 +167,12 @@ export function TrendChart({
 
   // Dot colours: toward the goal = good, away = bad. No goal: down = line blue, up = violet.
   const goalDir = target !== null ? Math.sign(target - last.avg) : 0;
-  const dotColor = (i: number) => {
-    const prevKg = i ? pts[i - 1].kg : null;
-    if (prevKg === null) return "var(--steel)";
-    const d = pts[i].kg - prevKg;
+  const deltaColor = (d: number) => {
     if (Math.abs(d) < 0.05) return "var(--steel)";
     if (!goalDir) return d < 0 ? "var(--viz-line)" : "var(--viz-violet)";
     return Math.sign(d) === goalDir ? "var(--viz-good)" : "var(--viz-bad)";
   };
+  const dotColor = (i: number) => (i ? deltaColor(pts[i].kg - pts[i - 1].kg) : "var(--steel)");
 
   const gymByDay = new Map(gym.map((g) => [g.day, g.muscles]));
   const gymInRange = gym.filter((g) => g.day >= first.day && g.day <= last.day);
@@ -213,13 +218,13 @@ export function TrendChart({
   const stats = [
     {
       l: "Change",
-      v: signed(change, unit),
+      v: <Delta kg={change} unit={unit} color={deltaColor(change)} />,
       u: unit,
       d: `${fmtDay(first.day)} → ${fmtDay(last.day)}`,
     },
     {
       l: "Per week",
-      v: signed(perWeek, unit, 2),
+      v: <Delta kg={perWeek} unit={unit} digits={2} color={deltaColor(perWeek)} />,
       u: `${unit}/wk`,
       d: "7-day avg",
     },
@@ -589,8 +594,7 @@ export function TrendChart({
                     </dd>
                     <dt className="text-ink-subtle">vs last</dt>
                     <dd className="text-right font-display font-bold tabular-nums">
-                      {prev && <span className="mr-1 inline-block size-2 rounded-full align-middle" style={{ background: dotColor(active!) }} aria-hidden />}
-                      {prev ? signed(shown.kg - prev.kg, unit) : "—"}
+                      {prev ? <Delta kg={shown.kg - prev.kg} unit={unit} color={dotColor(active!)} /> : "—"}
                     </dd>
                   </dl>
                   <div className="mt-2 flex flex-wrap gap-1 border-t border-outline-variant pt-2">
