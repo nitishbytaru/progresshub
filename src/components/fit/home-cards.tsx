@@ -1,4 +1,5 @@
 import type { CSSProperties } from "react";
+import { Tri, goalDir } from "./tri";
 import Link from "next/link";
 import { Plus } from "lucide-react";
 import { InView } from "@/components/progress/in-view";
@@ -32,10 +33,9 @@ export function EmptyHome() {
 }
 
 /** Today's weight, stamped big, with the 30-day change and the 7-day average, low and high. */
-export function WeightBlock({ s, unit }: { s: FitStats; unit: Unit }) {
+export function WeightBlock({ s, unit, goal = null }: { s: FitStats; unit: Unit; goal?: string | null }) {
   const latest = s.latest!;
   const change = s.change30 === null ? null : fromKg(s.change30, unit);
-  const arrow = change === null || change === 0 ? "" : change > 0 ? "▲" : "▼";
   return (
     <section aria-label="Body weight" className="card-in flex flex-col items-center pt-2 pb-1 text-center" style={{ "--card-i": 1 } as CSSProperties}>
       <p className="font-display text-[5.5rem] leading-[0.85] font-bold tracking-[-0.02em] sm:text-[6rem]">
@@ -48,7 +48,7 @@ export function WeightBlock({ s, unit }: { s: FitStats; unit: Unit }) {
           <>
             {" · "}
             <span className="font-semibold text-ink" aria-label={`${change > 0 ? "up" : change < 0 ? "down" : "no change"} ${Math.abs(change).toFixed(1)} ${unit} since ${s.change30From}`}>
-              {arrow}
+              <Tri d={change} dir={goalDir(goal)} />
               {Math.abs(change).toFixed(1)} {unit}
             </span>{" "}
             since {fmtDay(s.change30From!)}

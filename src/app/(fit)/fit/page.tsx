@@ -45,7 +45,7 @@ async function Analysis() {
         s={s}
         unit={unit}
         today={today}
-        weight={<WeightBlock s={s} unit={unit} />}
+        weight={<WeightBlock s={s} unit={unit} goal={profile?.goal ?? null} />}
         after={<StreakCard s={streakStats(logs, today)} today={today} />}
       />
 

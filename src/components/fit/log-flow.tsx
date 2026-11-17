@@ -1,5 +1,7 @@
 "use client";
 
+import { Tri, goalDir } from "./tri";
+
 import {
   useEffect,
   useMemo,
@@ -970,7 +972,7 @@ export function LogFlow({
                             }}
                             className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-display text-2xl font-bold ${verdict === "toward" ? "bg-primary text-primary-foreground" : "border border-outline text-ink"}`}
                           >
-                            {delta > 0 ? "▲" : delta < 0 ? "▼" : "="}{" "}
+                            {delta ? <Tri d={delta} dir={goalDir(effGoal)} /> : "="}{" "}
                             {Math.abs(fromKg(delta, unit)).toFixed(1)} {unit}
                             <span className="text-sm font-semibold opacity-70">
                               since {dShort.format(utc(prev!.day))}
@@ -1175,7 +1177,7 @@ export function LogFlow({
                             {fromKg(kg, unit).toFixed(1)} {unit}
                             {delta !== null && delta !== 0 && (
                               <span className="ml-1 text-sm text-ink-subtle">
-                                {delta > 0 ? "▲" : "▼"}
+                                <Tri d={delta} dir={goalDir(effGoal)} />
                                 {Math.abs(fromKg(delta, unit)).toFixed(1)}
                               </span>
                             )}

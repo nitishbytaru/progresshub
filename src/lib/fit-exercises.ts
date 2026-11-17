@@ -44,8 +44,8 @@ const ROWS: [string, string, Muscle, Exercise["kind"], boolean?][] = [
   ["leg-press", "Leg press", "legs", "compound"], ["rdl", "Romanian deadlift", "legs", "compound"],
   ["lunge", "Walking lunge", "legs", "compound"], ["bulgarian-split", "Bulgarian split squat", "legs", "compound"],
   ["leg-extension", "Leg extension", "legs", "isolation"], ["leg-curl", "Leg curl", "legs", "isolation"],
-  ["calf-raise", "Calf raise", "legs", "isolation"], ["hip-thrust", "Hip thrust", "legs", "compound"],
-  ["goblet-squat", "Goblet squat", "legs", "compound"], ["hack-squat", "Hack squat", "legs", "compound"],
+  ["calf-raise", "Calf raise", "legs", "isolation", true], ["hip-thrust", "Hip thrust", "legs", "compound"],
+  ["goblet-squat", "Goblet squat", "legs", "compound", true], ["hack-squat", "Hack squat", "legs", "compound"],
 ];
 
 /**

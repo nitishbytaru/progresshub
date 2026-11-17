@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, type CSSProperties } from "react";
+import { Tri, goalDir, type GoalDir } from "./tri";
 import { MotionConfig, motion } from "motion/react";
 import { Pencil, Plus } from "lucide-react";
 import { addDays, type FitLog } from "@/lib/fit-stats";
@@ -36,7 +37,8 @@ function dayStreak(has: (d: string) => boolean, today: string) {
  * (sliced into the muscles trained, rubber on rest days) under a trace of the week's weigh-ins; empty
  * pegs wait to be logged. Tapping a day loads it into the flow to log or edit. The last seven weigh-ins follow.
  */
-export function LogHistory({ logs, today, week, unit }: { logs: FitLog[]; today: string; week: string[]; unit: Unit }) {
+export function LogHistory({ logs, today, week, unit, goal = null }: { logs: FitLog[]; today: string; week: string[]; unit: Unit; goal?: string | null }) {
+  const dir = goalDir(goal);
   const [picked, setPicked] = useState<string | null>(null);
   const byDay = new Map(logs.map((l) => [l.day, l]));
   const weekLogs = week.flatMap((d) => byDay.get(d) ?? []);
@@ -81,7 +83,12 @@ export function LogHistory({ logs, today, week, unit }: { logs: FitLog[]; today:
             <Stat label="Gym" value={String(gym)} tag="days" />
             <Stat
               label="Change"
-              value={change === null ? "–" : change === 0 ? "0.0" : `${change > 0 ? "▲" : "▼"}${Math.abs(change).toFixed(1)}`}
+              value={change === null ? "–" : change === 0 ? "0.0" : (
+                <>
+                  <Tri d={change} dir={dir} />
+                  {Math.abs(change).toFixed(1)}
+                </>
+              )}
               tag={unit}
               title={change === null ? "Not enough weigh-ins yet" : `${change > 0 ? "Up" : change < 0 ? "Down" : "No change"} ${Math.abs(change).toFixed(1)} ${unit} this week`}
             />
@@ -186,13 +193,13 @@ export function LogHistory({ logs, today, week, unit }: { logs: FitLog[]; today:
           </div>
         </div>
 
-        {logs.length > 0 && <RecentLadder logs={logs.slice(0, 7)} older={logs[7]} today={today} unit={unit} picked={picked} onPick={pick} />}
+        {logs.length > 0 && <RecentLadder dir={dir} logs={logs.slice(0, 7)} older={logs[7]} today={today} unit={unit} picked={picked} onPick={pick} />}
       </section>
     </MotionConfig>
   );
 }
 
-function Stat({ label, value, tag, title }: { label: string; value: string; tag: string; title?: string }) {
+function Stat({ label, value, tag, title }: { label: string; value: React.ReactNode; tag: string; title?: string }) {
   return (
     <div className="flex flex-col gap-1 px-3 py-2.5" title={title}>
       <dt className="text-[0.6875rem] font-bold tracking-[0.12em] text-ink-subtle uppercase">{label}</dt>
@@ -211,7 +218,7 @@ const dayNum = new Intl.DateTimeFormat("en", { day: "numeric", timeZone: "UTC" }
  * (lighter left, heavier right) with a line down to the next row, so the rows read as a trend.
  * Rows slide in one after another, the links wipe down, the picked row gets a gliding chalk highlight.
  */
-function RecentLadder({ logs, older, today, unit, picked, onPick }: { logs: FitLog[]; older?: FitLog; today: string; unit: Unit; picked: string | null; onPick: (d: string) => void }) {
+function RecentLadder({ logs, older, today, unit, picked, onPick, dir }: { logs: FitLog[]; older?: FitLog; today: string; unit: Unit; picked: string | null; onPick: (d: string) => void; dir: GoalDir }) {
   const kgs = logs.map((l) => l.kg);
   const lo = Math.min(...kgs);
   const hi = Math.max(...kgs);
@@ -279,7 +286,12 @@ function RecentLadder({ logs, older, today, unit, picked, onPick }: { logs: FitL
                 {/* Change + weight */}
                 <span className="relative flex items-center gap-2.5">
                   <span className={`w-12 rounded-full border px-1.5 py-0.5 text-center font-display text-xs font-semibold tabular-nums ${diff ? "border-outline-variant text-ink-variant" : "border-transparent text-ink-subtle"}`}>
-                    {diff === null ? "" : diff === 0 ? "0.0" : `${diff > 0 ? "▲" : "▼"}${Math.abs(diff).toFixed(1)}`}
+                    {diff === null ? "" : diff === 0 ? "0.0" : (
+                      <>
+                        <Tri d={diff} dir={dir} />
+                        {Math.abs(diff).toFixed(1)}
+                      </>
+                    )}
                   </span>
                   <span className="w-12 text-right font-display text-xl font-bold tabular-nums transition-transform group-hover:-translate-x-0.5">{fmtWeight(l.kg, unit)}</span>
                   <Pencil className="size-3.5 text-ink-subtle transition-all group-hover:text-ink sm:opacity-0 sm:group-hover:opacity-100" aria-hidden />

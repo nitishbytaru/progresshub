@@ -405,4 +405,4 @@ The Coach page is Dumbo in his coach outfit (`outfit="coach"`: chalk cap with br
 - **Don't** add box shadows or glows; the system is flat.
 - **Don't** set a weight or count in Archivo, or a page headline in anything but uppercase Barlow Condensed.
 - **Don't** stack a second small label above a rim-label title.
-- **Don't** colour direction in text: weight change numbers are ▲ or ▼ in chalk. (Exception: chart dots on the Home analytics, see Analytics colours.)
+- **Do** colour only the ▲/▼ of a change, never its number (user-approved, 2026-11-17): toward your goal green `--viz-good`, away coral `--viz-bad`, no goal (or kcal) blue down / violet up, no change steel. One helper for all of fit: `Tri` / `toneColor` in `src/components/fit/tri.tsx` (weight block, week rack, weigh-in ladder, log flow, trend stats, coach chat deltas; protein up = good).

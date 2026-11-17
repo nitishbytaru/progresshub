@@ -88,7 +88,7 @@ async function Logger() {
           <LogFlow inline data={{ today, logs, gymBefore, unit, goal, goalFromProfile: Boolean(profile) }} />
         </div>
         <div className="min-w-0 md:col-span-5">
-          <LogHistory logs={logs} today={today} unit={unit} week={Array.from({ length: 7 }, (_, i) => addDays(weekStart(today), i))} />
+          <LogHistory logs={logs} today={today} unit={unit} goal={goal} week={Array.from({ length: 7 }, (_, i) => addDays(weekStart(today), i))} />
         </div>
       </div>
       }

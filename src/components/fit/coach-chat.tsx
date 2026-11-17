@@ -12,10 +12,10 @@ import { PLATE } from "@/lib/fit-units";
 import { Dumbo } from "./dumbo";
 import { fitError, fitToast } from "./fit-toast";
 import { PlateLoader } from "./plate-loader";
+import { Tri } from "./tri";
 
 const EASE = [0.2, 0.9, 0.25, 1] as const;
 const weekdayOf = (day: string) => WEEKDAYS[(new Date(`${day}T00:00:00Z`).getUTCDay() + 6) % 7];
-const signed = (v: number) => `${v > 0 ? "▲" : "▼"}${Math.abs(Math.round(v))}`;
 
 function Plates({ d }: { d: CoachDay }) {
   if (d.rest || !d.muscles.length) return <span className="text-ink-subtle">Rest</span>;
@@ -76,10 +76,24 @@ function ProposalView({ p }: { p: Proposal }) {
                 <span className="font-semibold">{now.dish}</span>
                 <span className="flex flex-wrap gap-1.5 font-mono text-[11px] text-ink-variant">
                   <span className="rounded-full border border-outline-variant px-2 py-0.5">
-                    {Math.round(now.kcal)} kcal{was && Math.abs(dk) >= 1 ? ` ${signed(dk)}` : ""}
+                    {Math.round(now.kcal)} kcal
+                    {was && Math.abs(dk) >= 1 && (
+                      <>
+                        {" "}
+                        <Tri d={dk} dir={0} eps={1} />
+                        {Math.abs(Math.round(dk))}
+                      </>
+                    )}
                   </span>
                   <span className="rounded-full border border-outline-variant px-2 py-0.5">
-                    {Math.round(now.protein)} g protein{was && Math.abs(dp) >= 1 ? ` ${signed(dp)}` : ""}
+                    {Math.round(now.protein)} g protein
+                    {was && Math.abs(dp) >= 1 && (
+                      <>
+                        {" "}
+                        <Tri d={dp} dir={1} eps={1} />
+                        {Math.abs(Math.round(dp))}
+                      </>
+                    )}
                   </span>
                 </span>
               </div>
