@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { CoachChat } from "@/components/fit/coach-chat";
 import { CoachMeals } from "@/components/fit/coach-meals";
 import { CoachWeek } from "@/components/fit/coach-week";
 import { Dumbo } from "@/components/fit/dumbo";
-import { getFoodRange, getMealPrep, getProfile, getWeekPlan, getWeights } from "@/lib/fit";
+import { getCoachChat, getFoodRange, getMealPrep, getProfile, getWeekPlan, getWeights } from "@/lib/fit";
+import { createClient } from "@/lib/supabase/server";
 import { mergeWeek, musclesText } from "@/lib/fit-coach-plan";
 import { MEALS, type CoreMeal } from "@/lib/fit-foods";
 import type { Mood } from "@/lib/fit-mascot";
@@ -23,7 +25,16 @@ export default function CoachPage() {
 async function Coach() {
   const [profile, { today, logs }] = await Promise.all([getProfile(), getWeights(120)]);
   const monday = weekStart(today);
-  const [plan, prep, food] = await Promise.all([getWeekPlan(monday), getMealPrep(today), getFoodRange(addDays(today, -28), today)]);
+  const supabase = await createClient();
+  const [plan, prep, food, chat, usage] = await Promise.all([
+    getWeekPlan(monday),
+    getMealPrep(today),
+    getFoodRange(addDays(today, -28), today),
+    getCoachChat(today),
+    supabase.from("ai_usage").select("count").eq("day", today).eq("kind", "coach").maybeSingle(),
+  ]);
+  // Shared with the week planner and meal prep (COACH_AI_CAP in actions.ts).
+  const aiLeft = Math.max(0, 30 - Number(usage.data?.count ?? 0));
 
   // Training: the plan lined up with what was actually logged.
   const week = mergeWeek(plan, logs, today);
@@ -67,6 +78,14 @@ async function Coach() {
     mood = "sleepy";
   }
 
+  // Just changed something in the chat: the hero says that instead.
+  const lastApplied = [...chat].reverse().find((t) => t.role === "dumbo" && t.status === "applied");
+  const appliedAt = lastApplied?.role === "dumbo" && lastApplied.appliedAt ? Date.parse(lastApplied.appliedAt) : 0;
+  if (lastApplied?.role === "dumbo" && appliedAt && (!plan || appliedAt >= Date.parse(plan.generated_at))) {
+    line = lastApplied.text;
+    mood = lastApplied.mood;
+  }
+
   return (
     <div className="flex flex-col gap-5 pt-6 pb-6 sm:pt-10 md:gap-6">
       {/* Coach hero: Dumbo in his cap, saying what's next. */}
@@ -84,6 +103,8 @@ async function Coach() {
           </p>
         </div>
       </section>
+
+      <CoachChat turns={chat} hasPlan={Boolean(plan)} hasPrep={Boolean(prep?.meals.length)} aiLeft={aiLeft} />
 
       <CoachWeek
         days={week.days}

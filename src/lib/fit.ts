@@ -6,6 +6,7 @@ import { UNIT_COOKIE, isMuscle, isUnit, type Muscle, type Unit } from "./fit-uni
 import type { CustomExerciseRow } from "./fit-exercises";
 import type { CoachDay, WeekPlanRow } from "./fit-coach-plan";
 import type { MealPrepRow, PrepMeal, PrepWarning } from "./fit-coach-meals";
+import { MAX_TURNS, type ChatTurn } from "./fit-coach-chat";
 import type { Diet, Meal } from "./fit-foods";
 import type { FitProfile } from "./fit-nutrition";
 
@@ -246,4 +247,15 @@ export async function getFitDataCounts(): Promise<FitDataCounts> {
     ["weight_logs", "workout_sets", "food_logs", "fit_days", "custom_foods"].map(count),
   );
   return { weighIns, sets, meals, days, foods };
+}
+
+/** Today's Coach Dumbo chat thread (empty before the first message, or before the table exists). */
+export async function getCoachChat(day: string): Promise<ChatTurn[]> {
+  const supabase = await createClient();
+  const { data, error } = await supabase.from("coach_chats").select("turns").eq("day", day).maybeSingle();
+  if (error) {
+    if (missingTable(error)) return [];
+    throw error;
+  }
+  return ((data?.turns ?? []) as ChatTurn[]).slice(-MAX_TURNS);
 }
