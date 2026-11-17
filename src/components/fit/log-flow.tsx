@@ -19,6 +19,7 @@ import { Dialog as D } from "@base-ui/react/dialog";
 import {
   ArrowLeft,
   CalendarDays,
+  CircleHelp,
   Check,
   ChevronDown,
   Minus,
@@ -137,6 +138,8 @@ export function LogFlow({
   const [revealed, setRevealed] = useState(false);
   const [gym, setGym] = useState<boolean | null>(null);
   const [muscles, setMuscles] = useState<Muscle[]>([]);
+  // "Don't remember": an old gym day saved without muscles, on purpose.
+  const [forgot, setForgot] = useState(false);
   const [mood, setMood] = useState<Mood>("idle");
   const [tint, setTint] = useState("var(--steel)");
   const [speech, setSpeech] = useState(() => say("hello", today));
@@ -200,6 +203,7 @@ export function LogFlow({
     setRevealed(false);
     setGym(null);
     setMuscles([]);
+    setForgot(false);
     setMood("idle");
     setTint("var(--steel)");
     setSpeech(say("hello", nextSeed()));
@@ -230,6 +234,7 @@ export function LogFlow({
     setRevealed(false);
     setGym(existing ? existing.gym : null);
     setMuscles(existing?.muscles ?? []);
+    setForgot(false);
     setMood("curious");
     const label =
       d === today
@@ -321,6 +326,7 @@ export function LogFlow({
     } else {
       setMood("sleepy");
       setMuscles([]);
+    setForgot(false);
       setSpeech(say("rest", day));
     }
   };
@@ -331,6 +337,7 @@ export function LogFlow({
     const on = muscles.includes(m);
     const next = on ? muscles.filter((x) => x !== m) : [...muscles, m];
     setMuscles(next);
+    setForgot(false);
     if (on) {
       setTint(next.length ? PLATE[next.at(-1)!].fill : "var(--steel)");
       setMood(next.length ? "proud" : "curious");
@@ -441,7 +448,9 @@ export function LogFlow({
         : step === 3
           ? muscles.length
             ? "Load the bar"
-            : "Skip muscles"
+            : forgot
+              ? "Save gym day"
+              : "Skip muscles"
           : "Next";
   const onPrimary = () => {
     if (step === 0) {
@@ -1112,6 +1121,34 @@ export function LogFlow({
                           </motion.button>
                         );
                       })}
+                      {/* Old days: you went, but can't recall what you trained. Saves the gym day bare (steel plate). */}
+                      <motion.button
+                        type="button"
+                        aria-pressed={forgot}
+                        onClick={() => {
+                          dirty.current = true;
+                          setMuscles([]);
+                          setForgot((f) => !f);
+                          setTint("var(--steel)");
+                          setMood("curious");
+                        }}
+                        whileTap={reduce ? undefined : { scale: 0.97 }}
+                        className={`col-span-2 flex h-16 items-center justify-center gap-3 rounded-3xl border border-dashed transition-colors sm:col-span-3 ${forgot ? "border-ink bg-surface-high text-ink" : "border-outline text-ink-variant hover:bg-hover hover:text-ink"}`}
+                      >
+                        <motion.span
+                          key={forgot ? "forgot-on" : "forgot"}
+                          initial={false}
+                          animate={forgot && !reduce ? { rotate: [0, -14, 14, 0] } : {}}
+                          transition={{ duration: 0.5 }}
+                          className={`grid size-9 place-items-center rounded-full ${forgot ? "bg-steel text-background" : "shadow-[inset_0_0_0_3px_var(--steel)]"}`}
+                        >
+                          {forgot ? <Check className="size-4" aria-hidden /> : <CircleHelp className="size-4" aria-hidden />}
+                        </motion.span>
+                        <span className="text-left">
+                          <span className="block text-sm font-bold">Don&apos;t remember</span>
+                          <span className="block font-mono text-[11px] text-ink-subtle">save as gym day, no muscles</span>
+                        </span>
+                      </motion.button>
                     </div>
                   </>
                 )}

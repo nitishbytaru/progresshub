@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { AnimatePresence, LayoutGroup, motion } from "motion/react";
-import { Minus, Plus, Search, Sparkles } from "lucide-react";
+import { Minus, PencilLine, Plus, Search, Sparkles } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -193,7 +193,7 @@ export function AddFoodDialog({
       }
     });
 
-  const describe = () =>
+  const describe = (input: string = text) =>
     start(async () => {
       setMsg(null);
       fitToast({
@@ -202,7 +202,7 @@ export function AddFoodDialog({
         detail: "Dumbo is doing the maths",
         mood: "thinking",
       });
-      const r = await describeMeal(text);
+      const r = await describeMeal(input);
       if (r.error) {
         setMsg(r.error);
         fitError(r.error, "Couldn't read that", "ai-meal");
@@ -424,7 +424,52 @@ export function AddFoodDialog({
                       );
                     })}
                   </AnimatePresence>
-                  {q.trim() && !tiles.length && <li className="col-span-full py-4 text-sm text-ink-subtle">No match. Try Describe, or add it as a Custom food.</li>}
+                  {q.trim() && !tiles.length && (
+                    /* Not in the list: one tap to have the AI estimate it, or to save it as your own food. */
+                    <motion.li
+                      key="no-match"
+                      className="col-span-full flex flex-col gap-2 py-2"
+                      initial={{ opacity: 0, y: 6 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ duration: 0.2 }}
+                    >
+                      <p className="font-mono text-xs text-ink-subtle">“{q.trim()}” isn&apos;t in the list</p>
+                      <button
+                        type="button"
+                        disabled={pending}
+                        onClick={() => {
+                          const query = q.trim();
+                          reset();
+                          setText(query);
+                          setTab("describe");
+                          describe(query);
+                        }}
+                        className="flex min-h-14 items-center gap-3 rounded-xl bg-primary px-4 text-left text-primary-foreground transition-colors hover:bg-primary-hover disabled:opacity-50"
+                      >
+                        <Sparkles className="size-5 shrink-0" aria-hidden />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-bold">Estimate “{q.trim()}”</span>
+                          <span className="block text-xs text-primary-foreground/70">AI fills the macros, you check them</span>
+                        </span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const query = q.trim();
+                          reset();
+                          setCf((c) => ({ ...c, name: query.charAt(0).toUpperCase() + query.slice(1) }));
+                          setTab("custom");
+                        }}
+                        className="flex min-h-14 items-center gap-3 rounded-xl border border-outline px-4 text-left text-ink transition-colors hover:bg-hover"
+                      >
+                        <PencilLine className="size-5 shrink-0 text-ink-variant" aria-hidden />
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-bold">Save “{q.trim()}” as my food</span>
+                          <span className="block text-xs text-ink-subtle">enter the label once, search it any time</span>
+                        </span>
+                      </button>
+                    </motion.li>
+                  )}
                 </motion.ul>
               </motion.div>
             )}
@@ -527,7 +572,7 @@ export function AddFoodDialog({
                 <button
                   type="button"
                   disabled={pending || !text.trim()}
-                  onClick={describe}
+                  onClick={() => describe()}
                   className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-primary font-bold text-primary-foreground hover:bg-primary-hover disabled:opacity-50"
                 >
                   {!pending && <Sparkles className="size-4" aria-hidden />}
